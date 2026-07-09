@@ -21,7 +21,50 @@ Spike is for the person who found a laptop in a closet and wants it to work. The
 
 Spike is not for power users. It's not for developers. It's not for people who want to configure every aspect of their system. It's for people who want their computer to work and then want to get on with their lives.
 
-If someone needs to open a terminal to configure something, that's a design failure.
+If someone needs to open a terminal to change a setting, that's a design failure.
+Golden Rules
+
+These two rules govern every design decision in Spike. They are non-negotiable and apply to every component: the installer, the desktop shell, settings, recovery tools, and all documentation.
+Rule 1: Users Never Edit Config Files
+
+Every user-facing setting has a graphical interface in Settings. If a setting exists and a user might want to change it, there is a GUI for it. Config files still exist on disk, but they are managed by the system. A user should never need to open a text editor to change how their system behaves.
+
+If a setting has no GUI, it is not user-facing. That is a deliberate design choice, not an oversight.
+
+Examples of this rule in action:
+Setting	Has GUI?	Where
+Wi-Fi password	Yes	Settings → Network or tray applet
+Display brightness	Yes	Settings → Display or brightness applet
+Swap size	No	Install-time decision based on hardware
+Module blacklisting	Read-only view	Settings → Advanced → Kernel Modules
+Swappiness	Yes (SSD only)	Settings → Memory (increase only)
+GRUB timeout	Yes	Settings → Advanced → Boot
+CPU governor	Yes	Settings → Power
+Rule 2: Users Never Touch A Terminal Unless They Want To
+
+The terminal exists. It is installed (Konsole). It works. Power users and developers are welcome to use it. But no normal system task — installing software, changing settings, troubleshooting, connecting to Wi-Fi, updating, recovering files, or managing the system — should ever require opening Konsole and typing a command.
+
+If the only way to accomplish a task is through the terminal, that is a bug, not a feature. It should be reported and fixed with a GUI.
+
+Examples of this rule in action:
+Task	Terminal Required?	GUI Alternative
+Install software	No	Discover
+Change network settings	No	Settings → Network / tray applet
+Update system	No	Discover update page
+Check disk usage	No	Settings → Advanced → Storage
+Recover files	No	Spike Rescue tool
+Manage boot options	No	Settings → Advanced → Boot
+Change language	No	Settings → Language
+Configure Bluetooth	No	Settings → Bluetooth / tray applet
+Check system info	No	Settings → About
+View logs	No	Settings → Advanced → Diagnostics (or Konsole with preset commands)
+
+Exceptions:
+
+    Developers — Those contributing to Spike development naturally need the terminal for building, debugging, and testing
+    Power users who opt in — The terminal is available for users who want to explore advanced features on their own
+    Educational contexts — If a user learns terminal commands for themselves, they're free to use them — but the system should still work without them
+
 Core Values
 Respect The Hardware
 
@@ -31,11 +74,9 @@ Simplicity Is A Feature
 Every decision Spike makes should reduce complexity for the user, not add it. One download, not two. One installer that handles everything, not a partitioning screen that demands technical knowledge. One settings application, not a scattered collection of config files. One software center, not a choice between five package managers.
 
 When faced with the choice between "powerful but complex" and "simple but sufficient," Spike chooses simple. Every time.
-Nothing Should Require A Terminal
+Nothing Should Require A Terminal (Reinforcement Of Golden Rule 2)
 
-If a user needs to change a setting, there must be a graphical interface for it. If there is no graphical interface, the setting doesn't exist as far as the user is concerned. Config files still exist on disk, but they are managed by the system, not by the user.
-
-The terminal exists for developers and power users who want it. It is never required for normal system use, configuration, or troubleshooting.
+This is Golden Rule 2, restated as a value: if a user needs to open a terminal to configure something, that's a design failure. The terminal exists for those who want it. It is never required for normal system use, configuration, or troubleshooting.
 Every Notification Matters
 
 When a user hears a notification sound, they should be able to find what it was. Always. Without exception. A missed notification is a trust failure. If the user can't find it in the history, they stop trusting the system. Spike's notification daemon writes every notification to disk before displaying it. History survives crashes. Nothing is ever lost.
@@ -51,13 +92,15 @@ What Spike Is Not
     Spike is not a developer workstation
     Spike is not a clone of Windows or macOS
 
+Spike is a complete, coherent operating system that feels designed — not assembled. The difference matters.
 What Spike Is
 
     Spike is a complete, beginner-friendly operating system
     Spike is designed for old hardware that other systems have abandoned
     Spike is a cohesive desktop experience that feels designed, not assembled
     Spike is a system that adapts to the hardware it runs on
-    Spike is an OS where every setting has a graphical interface
+    Spike is an OS where every setting has a graphical interface (Golden Rule 1)
+    Spike is an OS where no normal task requires the terminal (Golden Rule 2)
     Spike is a distribution that makes software installation simple through Discover and Flatpak
     Spike is a project that treats old hardware with respect and dignity
     Spike is a community where beginners are welcomed, not judged
@@ -65,8 +108,6 @@ What Spike Is
     Spike is an environmental project that keeps laptops out of landfills
     Spike is a rescue tool for computers that were thrown away too soon
 
-
-Spike is a complete, coherent operating system that feels designed — not assembled. The difference matters.
 The Name
 
 Spike is named after a real dog. A loyal, scrappy companion who doesn't quit. The logo is his likeness, surrounded by circuitry, because the mission is about bringing technology back to life. The dog represents loyalty, endurance, and care. The circuitry represents the technology being saved.
