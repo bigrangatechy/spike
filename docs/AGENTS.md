@@ -1,1155 +1,1220 @@
-AGENTS.md — Spike Project Master Reference
-Purpose
+Spike — AGENTS.md
 
-This document is the complete project reference. It contains everything needed to understand, maintain, contribute to, or extend the Spike Linux distribution. It is written for:
+    Master Reference & Agent Guide This document is the single source of truth for AI agents (and human contributors) working on the Spike Linux distribution. It summarizes every architectural decision, every subsystem, every document, and every cross-reference. If a detail is not in this document, it should be in one of the linked specification documents. If it's in neither, the decision hasn't been made yet.
 
-    AI agents — to understand the project context and provide consistent guidance
-    Human contributors — to understand architecture, constraints, and workflows
-    Future maintainers — to inherit a well-documented system
+1. Project Overview
 
-This document supersedes chat context. If something conflicts between this document and other communication channels, this document wins.
-Table of Contents
+Project:     Spike
+Organization: BigRangaTech
+Type:        Linux distribution (Ubuntu Server LTS base)
+Mission:     "Let's Make Tech Repairable Again"
+Target:      Old/disposable laptops — specifically dual-core Celeron
+             N4020 (Gemini Lake Refresh, 2019) with 4GB RAM
+Goal:        A lightweight OS that still feels like a complete, polished,
+             "real" operating system — not a stripped-down afterthought
+Named after: The creator's real dog, Spike (a herding dog)
+License:     GPLv2+ (code), CC-BY-SA 4.0 (documentation and artwork)
+Governance:  BDFL model initially, with documented succession plan
+Philosophy:  Build software that outlasts the creator. Documentation-first
+             methodology: discuss until convergent, write docs, then code.
 
-    Project Identity
-    Core Philosophy
-    Golden Rules
-    Architecture Overview
-    Documentation Structure
-    Codebase Layout
-    Critical Constraints
-    Hardware Targets
-    Component Specifications
-    Development Workflow
-    Testing Requirements
-    Troubleshooting Guide
-    Common Mistakes
-    References
+2. Mission & Philosophy
 
-1. Project Identity
-Project Name
+Spike exists to save cheap, "disposable" laptops from landfill/recycling.
 
-    Name: Spike
-    Organization: BigRangaTech
-    Slogan: "Let's Make Tech Repairable Again"
-    License: GPLv2+ (code), CC-BY-SA 4.0 (docs/artwork)
-    Domain: https://spike.bigrangatech.com/
-    Parent Domain: https://bigrangatech.com/
+Core values:
+├── Repairable: Hardware should be servicable, software should be understandable
+├── Accessible: Beginners should feel competent, not overwhelmed
+├── Complete: A lightweight OS that doesn't feel lightweight to use
+├── Private: Zero telemetry, zero data collection — privacy is the default
+├── Long-lived: Built to outlast its creator, with documented succession
+└── Honest: No dark patterns, no upsells, no hidden data collection
 
-Origin Story
+Golden Rules (from design discussions):
+├── Rule 1: Users never edit config files (Settings GUI handles everything)
+├── Rule 2: CLI tools exist for developers, not users
+└── Rule 3: If it's not documented, it doesn't exist
 
-Spike is named after a real dog — loyal, scrappy, doesn't quit. The logo depicts a herding dog with circuit-board flanks, representing the mission to bring technology back to life. The dog symbolizes endurance and care; the circuits represent the technology being saved.
-Mission
+3. Target Hardware
 
-Build a Linux distribution that rescues older/cheap laptops (specifically dual-core Celeron with 4GB RAM) from landfill. Transform machines deemed "dead" by modern software into usable, dignified systems.
-Target Users
+Primary target:
+├── CPU: Intel Celeron N4020 (Gemini Lake Refresh, 2019)
+│   ├── 2 cores, 2 threads
+│   ├── Base: 1.10 GHz, Burst: 2.80 GHz
+│   ├── Bogomips: ~2300 per core
+│   └── Classification: "capable" (dual-core, acceptable bogomips)
+├── RAM: 4GB
+├── GPU: Intel UHD Graphics 600
+│   ├── Driver: i915
+│   ├── VA-API driver: iHD (intel-media-va-driver-non-free)
+│   ├── Hardware decode: H.264, H.265 (8-bit), VP8, VP9
+│   └── Does NOT support: AV1
+├── Storage: SATA SSD (primary), HDD, SD card, USB 3.0 (all supported)
+│   ├── Minimum: 128GB
+│   └── eMMC: NOT SUPPORTED (wear-out risk, based on user experience)
+└── Network: Wi-Fi (various chipsets), Ethernet
 
-    People with old laptops who don't know what Linux is
-    Beginners who want their computer to work without learning technical skills
-    Anyone who believes old hardware deserves a second life
-    NOT for power users, developers, or those seeking terminal-heavy workflows
+Development/test machines:
+├── ThinkPad P50 (Xeon, M2000M) — dev/regression machine
+├── AMD A4 Lenovo — worst-case validation (low bogomips, ZRAM skipped)
+└── Celeron N4020 laptop — primary target validation
 
-Core Values
-
-    Respect the hardware — adapt to what's available, don't demand more
-    Simplicity is a feature — choose simple over powerful when uncertain
-    Every notification matters — never lose a notification, ever
-    Old hardware deserves dignity — treat abandoned machines with respect
-    Built to outlast — design for longevity, documentation before code
-    Kindness is mandatory — community has zero tolerance for bullying beginners
-
-Timeline
-
-    Alpha: 8 months from start
-    Beta: 18 months from start
-    Production: After beta stabilization
-    End of Life: Defined in EOL-Policy.md (minimum 5 years per release)
-
-2. Core Philosophy
-The Two Golden Rules
-Rule 1: Users Never Edit Config Files
-
-Every user-facing setting has a graphical interface in Settings. Config files exist on disk but are managed by the system. A user should never need to open a text editor to change how their system behaves.
-
-What this means:
-
-    If a setting has no GUI, it is not user-facing
-    Settings are stored in /etc and /usr/share, not edited by users
-    Advanced settings (swappiness, GRUB timeout, etc.) have GUI controls
-    Kernel parameters and module blacklists are view-only, not editable
-    If you add a feature, you must add its GUI setting
-
-Rule 2: Users Never Touch A Terminal Unless They Want To
-
-The terminal exists (Konsole) and works. But no normal system task — installing software, changing settings, troubleshooting, connecting to Wi-Fi, updating, recovering files — should ever require opening a terminal.
-
-What this means:
-
-    If the only way to accomplish a task requires terminal, that is a BUG
-    Every task must have a GUI alternative
-    Power users may opt in to terminal, but normal users should never need it
-    Documentation never instructs users to use the terminal
-    Settings pages include a "Report a Problem" button, not terminal instructions
-
-Why These Rules Matter
-
-They preserve dignity and accessibility for beginners. A user who needs to open Konsole to fix their Wi-Fi is a user who has failed the mission. Every design decision must enforce these rules.
-3. Golden Rules Enforcement Checklist
-
-Before merging any feature, verify:
-
-Feature checklist:
-□ Does this feature require users to edit config files?
-  → If yes, redesign or mark as non-user-facing
-□ Does this feature require users to use the terminal?
-  → If yes, redesign or mark as non-user-facing
-□ Is there a GUI setting for every configurable aspect?
-  → If no, add it before merge
-□ Is this documented in the user guide?
-  → If no, write documentation before merge
-□ Does this violate any critical constraints in Section 7?
-  → If yes, reconsider design
-□ Does this work on Tier 1 hardware (Celeron N4020, 4GB RAM)?
-  → If no, optimize or defer
-□ Will this increase idle memory beyond 400MB (Standard) / 800MB (Plus)?
-  → If yes, benchmark and justify or refactor
+CPU classification thresholds:
+├── "low-end": bogomips < 2000/core (e.g., AMD A4) → ZRAM skipped, swap only
+├── "capable": bogomips ≥ 2200/core, dual-core+ (e.g., Celeron N4020) → ZRAM enabled
+├── "modern": Core i3/i5/i7/i9, Ryzen, Athlon (post-2018) → full capabilities
+└── "Celeron/Pentium class": model name contains Celeron/Pentium/Atom (pre-2018)
 
 4. Architecture Overview
 Base System
 
-    Base: Ubuntu Server LTS (next version, currently targeting 26.04 "Resolute Raccoon")
-    Why not Debian? Stale kernel and Mesa versions hurt old Intel graphics
-    Why not Alpine? musl libc causes compatibility issues with proprietary firmware
-    Why not Fedora? Short support cycle, not suitable for long-term stability
-    Why not Arch? Breakage risk too high for beginner users
-    Why not Buildroot? No package manager, no upgrade path, security nightmare
-    Why not Ubuntu Desktop? Snap bloat, unnecessary services, heavier default
+Base:        Ubuntu Server LTS (not Desktop — clean starting point)
+Kernel:      Ubuntu LTS kernel (fresher than Debian Stable, 10-year ESM)
+Architecture: x86_64 only (no 32-bit — Y2038 acknowledged for future i386 fork)
+Display:     Wayland (KWin) + XWayland fallback
+Desktop:     Custom lightweight KDE-feel shell (panel, launcher, session)
+             NOT full KDE Plasma — standalone KWin + custom shell
+Init system: systemd
+Package mgr: apt (system) + Flatpak (user applications via Discover)
+Snap:        REMOVED entirely (snapd not installed)
 
-Kernel
+Variant System
 
-    Version: Ubuntu LTS kernel (Linux 7.0 at launch target)
-    No custom kernel — use upstream Ubuntu kernel
-    No kernel recompilation — just configure parameters and modules
-    Module blacklisting: Done at install time based on detected hardware
-    NVIDIA support: nouveau by default, proprietary driver optional post-install
+Single ISO. Two variants. Same codebase, different resource allocation.
 
-Display Stack
+Variant is selected at install time based on hardware detection.
+User can override (warning shown if mismatched).
+Post-install variant switching available (no reinstall needed).
 
-    Compositor: Wayland native (KWin standalone, NOT Plasma)
-    Fallback: XWayland (not full X11)
-    No Akonadi — contact database not needed
-    No Baloo — file indexer adds overhead
-    No KIO slaves — standard file access only
-    No plasma-session/plasma-workspace — replaced by custom Spike Shell
+See: VARIANT-DIFFERENCES.md (authoritative — 14 differences documented)
 
-Desktop Shell
+Complete Variant Comparison (14 Differences)
+#	Feature	Spike Standard	Spike Plus
+1	ZRAM cap	4GB max	Uncapped (up to RAM size)
+2	Animations	Off	On (150-200ms transitions)
+3	Compositor effects	Minimal (no blur/transparency/shadows)	Full (blur, transparency, shadows)
+4	Plymouth theme	spike-minimal (static logo, progress dots)	spike-full (animated logo, progress bar)
+5	CPU governor	powersave	schedutil
+6	Bluetooth codecs	SBC only	SBC, AAC, LDAC, aptX
+7	Flatpak runtimes	KDE + GNOME pre-seeded	All common runtimes pre-seeded
+8	Applet polling	Conservative intervals (10s/30s)	Standard intervals (5s/15s)
+9	Qt rendering	Software rasterizer preferred	OpenGL preferred
+10	Spike button hover	No glow effect	Subtle purple glow
+11	Hybrid sleep	ON (safety net for low RAM)	OFF (sufficient RAM)
+12	Idle RAM target	<400MB	<800MB
+13	Background services	Minimal set	Standard set (additional hw-conditional services)
+14	Memory budget	Tighter allocation (~280-370MB idle)	Relaxed allocation (~420-650MB idle)
 
-    Name: Spike Shell
-    Written in: Qt6 C++ (Qt Widgets, not QML — lower memory)
-    Components:
-        Panel (applet host, layout manager)
-        Launcher (Kickoff-style app menu)
-        Notification Daemon (bulletproof history, disk-before-display)
-        Settings Panel (hybrid: custom pages + KDE KCM modules)
-        Session Manager (login, logout, shutdown, autostart)
-        Theme Engine (colors, styles, icons, fonts, decorations)
-        14 Tray Applets (network, volume, battery, brightness, notifications, devices, updates, clock, session, night light, Bluetooth, airplane mode, keyboard layout, 1 TBD)
+Everything NOT listed above is identical between variants.
+5. Documentation Structure
 
-Software Management
+70 total documents across three tiers:
 
-    Package manager: apt (from Ubuntu base)
-    Additional: Flatpak via Discover (KDE Software Center)
-    NO Snap — stripped entirely from ISO
-    Repositories: Ubuntu official repos + Flathub
-    Updates: Security automatic, non-security via Discover notification only
+TIER 1 — Top-Level Specifications (34 files)
+│
+├── README.md                 → Project introduction and quick start
+├── INDEX.md                  → Master document index (this structure)
+├── LICENSE                   → GPLv2+ (code), CC-BY-SA 4.0 (docs/artwork)
+├── AGENTS.md                 → Master reference for AI agents (THIS FILE)
+├── PHILOSOPHY.md             → Mission, values, golden rules
+├── GOVERNANCE.md             → BDFL model, succession plan, decision authority
+├── ROADMAP.md                → Development timeline, milestones, release plan
+├── END-OF-LIFE-POLICY.md     → EOL schedule, LTS commitment, support tiers
+│
+├── ARCHITECTURE.md           → System overview, component diagram, data flow
+├── DESIGN-DECISIONS.md       → The "why" document — rationale for every decision
+├── MEMORY.md                 → Adaptive ZRAM/swap, memory ladder, earlyoom
+├── DESKTOP.md                → Spike Shell: panel, launcher, notifications, session
+├── BOOT-PROCESS.md           → Boot sequence, Plymouth, SDDM, systemd services
+├── POWER-MANAGEMENT.md       → Power profiles, CPU governor, suspend, battery
+├── MULTIMEDIA.md             → PipeWire, VA-API, Bluetooth audio, Firefox tuning
+├── NETWORKING.md             → NetworkManager, Wi-Fi firmware, firewall, VPN
+├── KERNEL.md                 → Module blacklisting, boot params, GPU drivers, sysctl
+├── VARIANT-DIFFERENCES.md   → Exhaustive Standard vs Plus comparison (14 diffs)
+│
+├── INSTALLER.md              → 10-step installer, detection, partitioning, backup
+├── DISASTER-RECOVERY.md      → 4-layer recovery model, Spike Rescue, restore
+├── CONFIGURATION.md          → spike-config: state store, templates, changelog
+│
+├── SECURITY.md               → Threat model, AppArmor, firewall, updates, hardening
+├── PRIVACY.md               → Zero telemetry, app permissions, data retention, browser
+│
+├── PERFORMANCE-BASELINES.md  → Boot time, memory, app launch benchmarks (alpha+)
+├── BRANDING.md               → Logo, splash, GRUB theme, colors, typography
+│
+├── USER-GUIDE.md             → Getting started, daily use, settings walkthrough
+├── TROUBLESHOOTING.md        → Common problems and solutions
+├── FAQ.md                    → Frequently asked questions
+├── MIGRATION-GUIDE.md        → Coming from Windows/macOS/other Linux
+├── SUPPORT.md                → How to get help, report bugs, contribute feedback
+│
+├── ACCESSIBILITY.md          → Screen reader, keyboard nav, contrast, font scaling
+├── TRANSLATIONS.md           → i18n framework, translation contribution
+│
+├── CODE_OF_CONDUCT.md        → Community standards
+├── CONTRIBUTING.md           → How to contribute (phased model, DCO)
+└── CHANGELOG.md              → Version history (per release)
+│
+TIER 2 — User Guide Sub-documents (17 files)
+│
+├── user-guide/
+│   ├── 01-getting-started.md
+│   ├── 02-desktop-tour.md
+│   ├── 03-installing-apps.md
+│   ├── 04-file-management.md
+│   ├── 05-settings-overview.md
+│   ├── 06-network-and-wifi.md
+│   ├── 07-bluetooth.md
+│   ├── 08-sound-and-video.md
+│   ├── 09-power-and-battery.md
+│   ├── 10-printing.md
+│   ├── 11-backup-and-recovery.md
+│   ├── 12-users-and-accounts.md
+│   ├── 13-keyboard-shortcuts.md
+│   ├── 14-software-updates.md
+│   ├── 15-accessibility.md
+│   ├── 16-troubleshooting.md
+│   └── 17-glossary.md
+│
+TIER 3 — Developer Guide Sub-documents (19 files)
+│
+├── dev-guide/
+│   ├── 01-dev-environment.md
+│   ├── 02-build-system.md
+│   ├── 03-iso-construction.md
+│   ├── 04-package-management.md
+│   ├── 05-testing-framework.md
+│   ├── 06-ci-cd.md
+│   ├── 07-release-process.md
+│   ├── 08-spike-config-internals.md
+│   ├── 09-installer-internals.md
+│   ├── 10-shell-development.md
+│   ├── 11-theme-engine.md
+│   ├── 12-hardware-detection.md
+│   ├── 13-translation-workflow.md
+│   ├── 14-security-review.md
+│   ├── 15-performance-profiling.md
+│   ├── 16-debugging-guide.md
+│   ├── 17-coding-standards.md
+│   ├── 18-git-workflow.md
+│   └── 19-architecture-deep-dive.md
 
-Filesystem
+Phase 2 Document Status
 
-    Type: ext4 everywhere (no Btrfs — rescue/restore loop replaces snapshot need)
-    No LVM, no ZFS, no f2fs
-    Automatic partitioning only — no manual option, no dual boot
-    Minimum 128GB storage
-    Supported: SATA SSD, NVMe, SATA HDD, SD card (UHS-I+), USB 3.0+
-    NOT supported: eMMC, USB 2.0
-    Adaptive mount flags:
-        SSD: noatime, discard
-        HDD: noatime, commit=60
-        SD/USB: noatime, commit=60, discard
+COMPLETED (8 documents — fully drafted with detailed specs):
+├── ✅ POWER-MANAGEMENT.md     → Power profiles, CPU, suspend, battery
+├── ✅ MULTIMEDIA.md            → PipeWire, VA-API, Firefox, Bluetooth audio
+├── ✅ NETWORKING.md            → NetworkManager, firmware, firewall, VPN
+├── ✅ DISASTER-RECOVERY.md     → 4-layer recovery, Spike Rescue, restore
+├── ✅ SECURITY.md              → Threat model, AppArmor, updates, hardening
+├── ✅ PRIVACY.md               → Zero telemetry, permissions, data retention
+├── ✅ CONFIGURATION.md         → spike-config architecture, state store
+└── ✅ VARIANT-DIFFERENCES.md   → Exhaustive Standard vs Plus comparison
 
-Memory Management
+REMAINING (high priority — core technical specs):
+├── 🔲 BOOT-PROCESS.md          → Boot sequence, Plymouth, SDDM, services
+├── 🔲 KERNEL.md                → Modules, boot params, GPU drivers, sysctl
+├── 🔲 DESKTOP.md               → Spike Shell: panel, launcher, notifications
+├── 🔲 MEMORY.md                → ZRAM/swap spec, memory ladder, earlyoom
+├── 🔲 ARCHITECTURE.md          → System overview, component diagram
+├── 🔲 DESIGN-DECISIONS.md      → Rationale for every major decision
+├── 🔲 INSTALLER.md             → 10-step installer, detection, partitioning
+└── 🔲 PERFORMANCE-BASELINES.md → Benchmarks (needs hardware testing, alpha+)
 
-    ZRAM: Adaptive, enabled only on capable CPUs (bogomips ≥ ~2200/core), zstd compression
-    ZRAM size: Equal to RAM, max 4GB on Standard, uncapped on Plus
-    Swap file: 8GB (SSD/HDD), 4GB (SD/USB), priority 10
-    Swappiness: SSD=15, HDD=5, SD/USB=10, adjustable slider for SSD only (range 15-60)
-    Earlyoom: 10% memory/swap threshold, protects essential processes
-    Transparent hugepages: madvise (not always)
-    zswap.enabled=0 kernel param (prevent conflict with ZRAM)
+REMAINING (lower priority — meta, user-facing, community):
+├── 🔲 README.md, INDEX.md, PHILOSOPHY.md, CHANGELOG.md
+├── 🔲 GOVERNANCE.md, ROADMAP.md, END-OF-LIFE-POLICY.md
+├── 🔲 BRANDING.md
+├── 🔲 TROUBLESHOOTING.md, FAQ.md, MIGRATION-GUIDE.md, SUPPORT.md
+├── 🔲 ACCESSIBILITY.md, TRANSLATIONS.md
+├── 🔲 CODE_OF_CONDUCT.md, CONTRIBUTING.md
+├── 🔲 All 17 user-guide sub-documents
+└── 🔲 All 19 dev-guide sub-documents
 
-Boot Process
+6. Organization & Branding
 
-    Bootloader: GRUB2 (migration to Limine planned for future)
-    Hidden menu: Default, 3-5 second ESC window
-    3 consecutive boot failures → menu appears with recovery highlighted
-    Recovery entry always present when menu shown
-    Boot failure counter: /boot/.spike/boot-count
-    Themed GRUB: Spike branding, dark background with circuit traces
+Organization:  BigRangaTech (existing org with multiple projects)
+Product:       Spike (dedicated project under BigRangaTech)
+Logo:          Herding dog (Spike the real dog) with circuit board flanks,
+               purple/cyan glow, circular emblem
+Splash screen: BigRangaTech branded, Spike dog, dark background with
+               glowing circuit traces
+Slogan:        "Let's Make Tech Repairable Again"
+Colors:        Purple (#6d4aff) and cyan/teal as system accent colors
+GRUB theme:    Dark background, Spike emblem, BigRangaTech branding,
+               purple/cyan accents
+Typography:    Noto Sans (default), Noto Sans Mono (monospace)
+Icon theme:    Breeze (KDE default)
+Each BigRangaTech project gets its own dedicated docs and eventually
+its own website.
 
-Audio/Video
+7. Base & System Architecture
+Base Distribution
 
-    Audio: PipeWire + WirePlumber (no PulseAudio)
-    Settings: 44100Hz, stereo-only, medium resampling, logging suppressed, no JACK
-    Video acceleration: VA-API
-        Intel: intel-media-va-driver-non-free (LIBVA_DRIVER_NAME=iHD)
-        AMD: mesa-va-drivers (LIBVA_DRIVER_NAME=radeonsi)
-    Firefox tuning: AV1 disabled, VP9 hardware decode forced (Gemini Lake supports VP9, not AV1)
+Ubuntu Server LTS was chosen over alternatives:
+
+Considered and rejected:
+├── Debian Stable — older kernel/Mesa, slower security updates
+├── Fedora — 13-month lifecycle too short for rescue laptops
+├── Arch — rolling release instability unsuitable for beginners
+├── Alpine — musl libc breaks some Flatpaks and proprietary apps
+├── Buildroot — no package manager, no upgrade path, KDE apps need real system
+└── Ubuntu Desktop — includes Snap, Canonical branding, desktop bloat
+
+Ubuntu Server LTS provides:
+├── Fresher kernel and Mesa than Debian Stable
+├── 10-year ESM support lifecycle
+├── Clean starting point (no desktop, no Snap, no Canonical branding)
+├── Massive package repository
+├── Well-documented, well-tested base
+└── Security updates flowing from Canonical
+
+Architecture: x86_64 only
+├── No 32-bit version (would require forking i386 libraries)
+├── 32-bit deferred conditionally — only pursued if proven necessary
+└── Y2038 problem acknowledged for potential future 32-bit project
+
+Display & Desktop
+
+Display server:    Wayland (KWin as compositor)
+XWayland:          Available as fallback for X11-only applications
+Desktop shell:     Custom lightweight shell (Spike Shell)
+                   NOT full KDE Plasma — standalone KWin + custom components
+
+Spike Shell components:
+├── Panel (bottom, 3 zones: left/center/right, 32px height default)
+├── Application launcher (Kickoff-style, categories, search, favorites)
+├── Notification daemon (disk-before-display invariant)
+├── Session manager (login, logout, autostart filtering)
+├── Tray applet framework
+├── Settings panel (hybrid: custom pages + KDE KCM modules)
+└── First-run experience (welcome wizard)
+
+KDE standalone apps included (NOT full Plasma):
+├── Discover (software manager — Flatpak frontend)
+├── Dolphin (file manager)
+├── Konsole (terminal emulator)
+├── System Settings modules (KCMs)
+├── Kate (text editor)
+├── Ark (archive manager)
+├── Spectacle (screenshot tool)
+└── KCalc (calculator)
+
+Flatpak via Discover for user applications:
+├── Pre-seeded KDE + GNOME Flatpak runtimes on ISO (Standard)
+├── Pre-seeded all common runtimes (Plus)
+├── Firefox (Flatpak, Spike-tuned prefs)
+├── LibreOffice (Flatpak)
+└── User installs any additional apps via Discover
+
+Bootloader
+
+Bootloader:  GRUB2 (current)
+Future:      Documented migration path to Limine (not imminent)
+
+GRUB configuration:
+├── Theme: Spike/BigRangaTech logo on dark background, purple/cyan accents
+├── Boot menu hidden by default
+├── 3-5 second ESC window to show menu
+├── Recovery entry always present
+├── Boot failure counter: after 3 consecutive failures, GRUB menu shows
+│   automatically with recovery entry highlighted, 10-15 second timeout
+├── GRUB_DISABLE_OS_PROBER=true (no dual boot detection)
+├── GRUB_DISABLE_SUBMENU=y (flat kernel list)
+└── GRUB_TERMINAL_OUTPUT=gfxterm (themed graphical output)
+
+Boot parameters:
+├── quiet splash zswap.enabled=0 transparent_hugepage=madvise
+├── zswap disabled (ZRAM is used instead — they conflict)
+└── THP set to madvise (prevents khugepaged overhead)
+
+Partitioning & Storage
+
+Partitioning: Fully automatic, no manual option (targeting beginners)
+Filesystem:   ext4 everywhere (Btrfs considered and rejected for simplicity)
+
+Partitions:
+├── /boot/efi — 512MB FAT32 (UEFI systems)
+│   OR /boot — 1GB ext4 (BIOS/Legacy systems)
+├── / — rest of disk, ext4
+└── /swapfile — 8GB (SSD/HDD) or 4GB (SD/USB)
+
+Mount flags (adaptive based on storage type):
+├── SSD/NVMe:  defaults,noatime
+├── HDD:       defaults,noatime,commit=60
+├── SD/USB:    defaults,noatime,commit=60,discard
+
+Storage detection: lsblk -d -o NAME,ROTA (rotational flag)
+Minimum storage: 128GB
+
+Supported storage:
+├── SATA SSD ✅
+├── SATA HDD ✅
+├── NVMe SSD ✅
+├── SD card (UHS-I+, 128GB+) ✅
+├── USB 3.0 thumb drive (128GB+) ✅
+└── eMMC ❌ (NOT SUPPORTED — wear-out risk)
+
+No dual boot support.
+No disk encryption (LUKS) — deliberate decision for beginner recovery simplicity.
+
+8. Memory Management
+
+Full memory ladder:
+Physical RAM (4GB) → ZRAM compressed (~8-10GB effective) → Swap file (8GB) → Earlyoom
+
+ZRAM:
+├── Compression: zstd
+├── Disksize: Equal to RAM (Standard: capped at 4GB, Plus: uncapped)
+├── Priority: 100
+├── Only enabled on capable CPUs (dual-core+, bogomips ≥ ~2200/core)
+├── Low-end CPUs (AMD A4): ZRAM skipped, swap only
+└── zswap disabled on kernel command line (conflicts with ZRAM)
+
+Swap file:
+├── Size: 8GB (SSD/HDD), 4GB (SD/USB)
+├── Priority: 10 (lower than ZRAM's 100)
+├── Located at /swapfile
+└── Created at install time
+
+Swappiness (per storage type):
+├── SSD: 15 (prefer RAM, use swap sparingly)
+├── HDD: 5 (avoid swap — too slow)
+├── SD/USB: 10 (balance wear and performance)
+└── User-adjustable slider in Settings (SSD only, increase only, range 15-60)
+
+Earlyoom:
+├── Threshold: 10% of memory+swap remaining
+├── Protected processes: spike-shell, kwin_wayland, systemd, pipewire, wireplumber
+├── Preferred kill targets: firefox, chromium, libreoffice, gimp, blender
+└── Safety valve to prevent system freeze on memory exhaustion
+
+HDD warning message:
+"Swap performance on HDD may be slow. Consider upgrading to a SATA SSD
+ for significantly better performance."
+
+See: MEMORY.md (full spec), CONFIGURATION.md (memory module)
+
+9. Component Specifications
+Power Management
+
+See: POWER-MANAGEMENT.md (complete)
+
+Three power profiles:
+├── Performance (AC power): CPU governor = schedutil/performance,
+│   Wi-Fi/BT/USB autosuspend OFF, no dimming
+├── Battery Saver (battery <50%): CPU governor = powersave,
+│   Wi-Fi/BT/USB autosuspend ON, aggressive dimming
+└── Critical (battery <20%): CPU governor = powersave, dim to 30%,
+│   urgent notifications, auto-shutdown countdown at 5%
+
+CPU governor:
+├── Standard variant: powersave (default)
+├── Plus variant: schedutil (default)
+├── Intel_pstate preferred for Intel CPUs
+├── Performance mode available as temporary override (AC only)
+└── Reverts to variant default when profile changes
+
+Screen management:
+├── Screen blank: 15 min (AC), 5 min (battery)
+├── Dimming: 5 min idle (AC), 3 min (battery), target 50% brightness
+├── Lid close: suspend (default, configurable)
+├── Power button: suspend (default, configurable)
+└── Night Light: manual schedule or sunset-to-sunrise (requires location)
+
+Sleep states:
+├── Suspend: Default sleep action
+├── Hibernate: Available if swap ≥ RAM
+├── Hybrid sleep: ON for Standard (safety net), OFF for Plus
+└── Require password on wake: YES (default)
+
+Battery health:
+├── Monitoring: percentage, capacity, cycle count, charge limiting (if supported)
+├── Warnings: 20% (notification), 10% (urgent), 5% (auto-shutdown countdown)
+├── Health history: monthly readings stored in /var/lib/spike/power/
+└── Battery data never transmitted off-device
+
+Peripheral power saving:
+├── Wi-Fi power saving: adaptive (off on AC, on on battery saver)
+├── Bluetooth power saving: adaptive (off on AC, on on battery saver)
+├── USB autosuspend: adaptive (off on AC, on on battery saver)
+└── HDD spindown: 10 min (battery), 15 min (AC), HDD only
+
+Multimedia
+
+See: MULTIMEDIA.md (complete)
+
+Audio stack:
+├── PipeWire (daemon) + WirePlumber (session manager, minimal config)
+├── Sample rate: 44100Hz (locked, prevents dynamic switching overhead)
+├── Channels: 2 (stereo only)
+├── Resampler quality: 1 (low, saves CPU — same for both variants)
+├── Logging: suppressed (level 1, warnings only)
+├── No JACK / pro audio features
+└── Volume: 0-150% (boost above 100% is software amplification)
+
+Bluetooth audio:
+├── Conditional on hardware detection (udev)
+├── Codecs:
+│   ├── Standard: SBC only
+│   └── Plus: SBC, AAC, LDAC, aptX
+├── Codec negotiation: PipeWire/WirePlumber (best available per device)
+├── User can override codec per device
+└── Audio routing priority: Bluetooth → HDMI → headphone jack → speakers
+
+Video acceleration (VA-API):
+├── Intel: intel-media-va-driver-non-free (LIBVA_DRIVER_NAME=iHD)
+├── AMD: mesa-va-drivers (LIBVA_DRIVER_NAME=radeonsi)
+├── NVIDIA: vdpau-va-driver (or proprietary via VDPAU)
+├── N4020 hardware decode: H.264, H.265 (8-bit), VP8, VP9
+├── AV1: NOT supported on Gemini Lake → disabled in Firefox
+└── VA-API config is IDENTICAL between variants
+
+Firefox tuning:
+├── media.ffmpeg.vaapi.enabled = true
+├── media.ffmpeg.vaapi.force-enabled = true
+├── media.ffvpx.enabled = false (disable FFmpeg VPX software decoder)
+├── media.av1.enabled = false (force VP9 fallback → hardware decode)
+├── gfx.webrender.all = true
+└── Prefs stored in: /usr/share/spike/firefox/spike-prefs.js
+
+Screen capture:
+├── Spectacle (KDE) — full screen, region, window, active screen
+├── Wayland portal API for app-initiated capture
+└── Print Screen key → Spectacle region capture
+
+WebRTC:
+├── Video calls supported in Firefox
+├── Camera: uvcvideo (universal USB camera driver)
+├── Microphone: via PipeWire
+├── Echo cancellation + noise suppression: enabled (PipeWire)
+├── Camera/mic access via portal permissions (ask by default)
+└── Camera/mic indicators in panel when active (non-negotiable)
+
+Keyboard shortcuts:
+├── Print Screen → Spectacle region capture
+├── Volume Up/Down/Mute → native keys
+├── Brightness Up/Down → native keys
+├── Play/Pause/Next/Prev → media keys
+└── Super key → Open launcher
 
 Networking
 
-    Stack: NetworkManager
-    Firmware: ALL Wi-Fi firmware on ISO (Intel iwlwifi, Atheros ath, Realtek rtl, Broadcom bcmwl-kernel-source)
-    Bluetooth: Conditional on hardware detection (udev-triggered for dongles)
-    Firewall: ufw, deny incoming by default, allow outgoing
-    No telemetry, no data collection
-
-Variants
-
-Single ISO, two configurations selected at install time:
-Feature	Spike Standard	Spike Plus
-Target RAM	4GB	8GB+
-Idle memory	<400MB	<800MB
-Animations	Off	On
-Services	Minimal	Standard
-Plymouth	Minimal/static	Animated
-ZRAM cap	4GB max	Uncapped
-CPU governor	powersave	schedutil
-Recommends	Celeron/Pentium, ≤4GB	Modern i3/i5/i7/Ryzen, 8GB+
-5. Documentation Structure
-Total Count: 69 Documents
-
-docs/
-├── Top-level (33 files) — Architecture, policies, references
-│   ├── README.md
-│   ├── INDEX.md
-│   ├── PHILOSOPHY.md (with Golden Rules)
-│   ├── ARCHITECTURE.md
-│   ├── DESIGN-DECISIONS.md
-│   ├── KERNEL.md
-│   ├── MEMORY.md
-│   ├── DESKTOP.md
-│   ├── INSTALLER.md
-│   ├── DISASTER-RECOVERY.md
-│   ├── CONFIGURATION.md
-│   ├── BOOT-PROCESS.md
-│   ├── POWER-MANAGEMENT.md
-│   ├── MULTIMEDIA.md
-│   ├── NETWORKING.md
-│   ├── SECURITY.md
-│   ├── PRIVACY.md
-│   ├── AGENTS.md (this document — master reference)
-│   ├── PERFORMANCE-BASELINES.md
-│   ├── CHANGELOG.md
-│   ├── ROADMAP.md
-│   ├── GOVERNANCE.md
-│   ├── END-OF-LIFE-POLICY.md
-│   ├── TROUBLESHOOTING.md
-│   ├── FAQ.md
-│   ├── MIGRATION-GUIDE.md
-│   ├── SUPPORT.md
-│   ├── ACCESSIBILITY.md
-│   ├── CODE_OF_CONDUCT.md
-│   ├── CONTRIBUTING.md
-│   ├── BRANDING.md
-│   ├── HARDWARE.md
-│   └── LICENSE
-│
-├── user-guide/ (17 files + screenshots/) — Beginner-focused
-│   ├── INDEX.md
-│   ├── 01-getting-started.md
-│   ├── 02-connecting-wifi.md
-│   ├── 03-managing-files.md
-│   ├── 04-installing-apps.md
-│   ├── 05-customizing-appearance.md
-│   ├── 06-managing-system.md
-│   ├── 07-system-settings.md
-│   ├── 08-backing-up-data.md
-│   ├── 09-troubleshooting.md
-│   ├── 10-using-terminal.md (educational only, not required for any task)
-│   ├── 11-accessibility.md
-│   ├── 12-printing.md
-│   ├── 13-bluetooth.md
-│   ├── 14-recovery.md
-│   ├── 15-glossary.md
-│   ├── 16-tips.md
-│   └── screenshots/ (organized by topic)
-│
-└── dev-guide/ (19 files) — Developer-focused
-    ├── INDEX.md
-    ├── 01-getting-started.md
-    ├── 02-repo-structure.md
-    ├── 03-build-environment.md
-    ├── 04-building-spike.md
-    ├── 05-building-components.md
-    ├── 06-spike-shell-architecture.md
-    ├── 07-installer-internals.md
-    ├── 08-rescue-tool-internals.md
-    ├── 09-spike-config-internals.md
-    ├── 10-branding-and-theming.md
-    ├── 11-testing.md
-    ├── 12-debugging.md
-    ├── 13-git-workflow.md
-    ├── 14-contribution-phases.md
-    ├── 15-coding-conventions.md
-    ├── 16-translation-workflow.md
-    ├── 17-release-process.md
-    ├── 18-accessibility-development.md
-    └── 19-appendix-reference.md
-
-Documentation Rules
-User Guide
-
-    Written for absolute beginners
-    No jargon without glossary link
-    No terminal instructions (ever)
-    Every step has a screenshot
-    Every document independently maintainable
-    Cross-referenced to related docs
-    Same content powers Settings app reader and website
-
-Dev Guide
-
-    Technical, precise, exact commands
-    Tested examples (verified on P50 dev machine)
-    Developer-standard English, jargon acceptable WITH context
-    Numbered steps, expected output, common errors
-    Cross-references to DESIGN-DECISIONS.md and AGENTS.md
-    Every feature requires corresponding doc update
-
-Writing Standards
-
-    User guide: Plain English, one concept per paragraph, active voice
-    Dev guide: Precise, imperative mood for commands, include copyable code
-    Both: Spell-check, consistent terminology, no Wikipedia-length definitions
-    Glossary: One-word or one-sentence definitions, no essays
-
-6. Codebase Layout
-Repository Structure (Monorepo)
-
-spike/
-├── .github/                          → GitHub metadata, issue templates, workflows
-│   ├── ISSUE_TEMPLATE/
-│   ├── PULL_REQUEST_TEMPLATE.md
-│   └── workflows/
-├── docs/                             → All 69 documentation files
-│   ├── (top-level docs)
-│   ├── user-guide/
-│   │   ├── INDEX.md
-│   │   ├── *.md (17 files)
-│   │   └── screenshots/
-│   └── dev-guide/
-│       ├── INDEX.md
-│       └── *.md (19 files)
-├── src/                              → All source code
-│   ├── spike-shell/                  → Custom desktop shell
-│   │   ├── ui/                       → Qt Widgets frontend
-│   │   ├── panel/                    → Panel and applets
-│   │   ├── launcher/                 → Application menu
-│   │   ├── notify/                   → Notification daemon
-│   │   ├── settings/                 → Settings window
-│   │   ├── session/                  → Session management
-│   │   ├── theme/                    → Theme engine
-│   │   ├── tray/                     → Tray applet framework
-│   │   └── CMakeLists.txt
-│   ├── spike-installer/              → Graphical installer
-│   │   ├── ui/                       → Installation screens
-│   │   ├── detect/                   → Hardware detection modules
-│   │   ├── partition/                → Partitioning logic
-│   │   ├── backup/                   → Data backup
-│   │   ├── restore/                  → Data restore
-│   │   └── CMakeLists.txt
-│   ├── spike-rescue/                 → Live ISO rescue tool
-│   │   ├── scan/                     → Mount and scan partitions
-│   │   ├── copy/                     → File copying with verification
-│   │   └── CMakeLists.txt
-│   ├── spike-config/                 → Configuration generators
-│   │   ├── memory/                   → ZRAM, swap, earlyoom
-│   │   ├── boot/                     → GRUB, kernel params
-│   │   ├── security/                 → AppArmor, ufw
-│   │   ├── network/                  → NetworkManager config
-│   │   ├── multimedia/               → PipeWire, VA-API
-│   │   └── storage/                  → Mount options, fstab
-│   └── spike-branding/               → Visual identity
-│       ├── grub-theme/               → GRUB2 theme
-│       ├── plymouth/                 → Boot splash
-│       ├── kwin-decorations/         → Window decorations
-│       ├── wallpapers/               → Wallpapers
-│       ├── icons/                    → Icon overrides
-│       └── qt-stylesheets/           → Qt styling
-├── build/                            → Build configuration
-│   ├── iso-build/
-│   │   ├── spike-standard.conf       → Standard variant config
-│   │   ├── spike-plus.conf           → Plus variant config
-│   │   └── shared-packages.conf      → Common packages
-│   ├── package-configs/              → Package selection configs
-│   ├── live-environment/             → Live ISO base environment
-│   └── signing/                      → Release signing keys
-├── scripts/                          → Utility scripts
-│   ├── build-iso.sh
-│   ├── test-installer.sh
-│   ├── hardware-test.sh
-│   ├── install-dev-env.sh
-│   ├── mirror-sync.sh                → GitLab → GitHub sync
-│   └── changelog-gen.sh
-├── ci/                               → CI/CD configuration
-│   ├── dockerfiles/
-│   └── jobs/
-├── .editorconfig                     → Editor settings
-├── .gitignore                        → Git ignore rules
-├── .gitattributes                    → Git attributes
-├── CMakeLists.txt                    → Root CMake config
-├── CODE_OF_CONDUCT.md                → Pointer to docs/CODE_OF_CONDUCT.md
-├── CONTRIBUTING.md                   → Pointer to docs/CONTRIBUTING.md
-├── LICENSE                           → GPLv2+ license
-└── README.md                         → Project overview + download links
-
-Component Responsibilities
-Component	Responsibility	Safe to Modify	Dangerous Areas
-spike-shell/ui	Panel, launcher, tray applets	Qt widget code, CSS	Main event loop
-spike-shell/notify	Notification daemon	History logic, UI	Disk-before-display invariant
-spike-shell/session	Session manager	Autostart logic	Shutdown flow, GRUB failure counter
-spike-installer/detect	Hardware detection	Detection logic	Module blacklist generation
-spike-installer/partition	Partitioning	Partition sizes	Data destruction
-spike-rescue/copy	File recovery	Checksum logic	Read-only mount enforcement
-spike-config/*	System configuration	Tunable values	Critical kernel params
-spike-branding/*	Visual identity	Colors, logos	GRUB theme syntax, KWin config
-build/*	ISO generation	Package lists	Signing procedures
-7. Critical Constraints
-NEVER VIOLATE THESE
-
-These constraints are non-negotiable. Any code change that violates them will be rejected.
-Memory Constraints
-
-□ Never exceed 400MB idle on Spike Standard (4GB RAM target)
-□ Never exceed 800MB idle on Spike Plus (8GB+ RAM target)
-□ Never add Akonadi, Baloo, or cloud-init
-□ Never enable full Plasma workspace (only KWin standalone)
-□ Never load Settings pages at startup (on-demand only)
-□ Never cache more than 100 notification history entries in memory
-□ Always check memory pressure before background tasks
-
-Golden Rule Violations
-
-□ Never require terminal for normal tasks
-□ Never require config file editing for user-facing settings
-□ Never expose a setting without providing its GUI control
-□ Never use terminal commands in user guide documentation
-□ Always provide GUI alternative for any CLI tool
-
-Hardware Constraints
-
-□ Never support eMMC storage (wearout issue)
-□ Never support USB 2.0 drives (too slow)
-□ Never require manual partitioning (automatic only)
-□ Never enable dual boot option (single drive, single OS)
-□ Never require 32-bit x86 support (x86_64 only)
-
-Security Constraints
-
-□ Never disable firewall (ufw deny incoming is mandatory)
-□ Never disable AppArmor (Ubuntu defaults are minimum)
-□ Never store passwords in plaintext
-□ Never collect telemetry or usage data
-□ Never force automatic reboots (gentle notification only)
-□ Never allow root SSH login
-
-Privacy Constraints
-
-□ No network access without explicit user consent
-□ No background data collection
-□ No remote phone home features
-□ No crash reporting that uploads user data
-□ All logs stay local, never transmitted
-
-Stability Constraints
-
-□ Never break ABI without major version bump
-□ Never remove user-visible features without migration path
-□ Never change default behavior without explicit opt-in
-□ Always maintain backward compatibility within major version
-□ Document breaking changes in CHANGELOG.md and MIGRATION-GUIDE.md
-
-8. Hardware Targets
-Primary Target (Tier 1 — Must Be Daily-Driver Usable)
-
-CPU:       Intel Celeron N4020 (Gemini Lake Refresh, 2019)
-Cores:     2
-Threads:   2
-Base:      1.10 GHz
-Turbo:     2.80 GHz
-Cache:     4MB
-RAM:       4GB DDR4-2400 (soldered)
-GPU:       Intel UHD Graphics 600 (12 EU, 300-650 MHz)
-Storage:   240GB SATA SSD (or HDD/SD/USB as fallback)
-Display:   1440×900 or 1366×768 (typical 14" laptop)
-
-Worst Case Test (Tier 2 — Must Boot and Function)
-
-CPU:       AMD A4 (older, slower than Celeron)
-RAM:       4GB
-GPU:       AMD Radeon HD (integrated)
-Storage:   500GB SATA HDD
-Machine:   Lenovo ThinkPad with AMD A4
-
-Dev Machine (Tier 3 — Regression Check Only)
-
-CPU:       Intel Xeon (ThinkPad P50)
-RAM:       32GB
-GPU:       NVIDIA Quadro M2000M
-Storage:   512GB NVMe
-Use:       Development and regression testing only
-
-Hardware Detection Requirements
-
-The installer must detect and classify:
-
-CPU:
-├── Bogomips per core
-├── Number of cores
-├── CPU family/model (for driver selection)
-└── Classification: capable (ZRAM) vs low-end (skip ZRAM)
-
-Storage:
-├── Type: SSD/HDD/NVMe/SD/USB/eMMC
-├── Capacity
-├── Rotational flag (/sys/block/[dev]/queue/rotational)
-├── USB version (if USB device)
-└── Reject: eMMC, USB 2.0
-
-GPU:
-├── Vendor: Intel/AMD/NVIDIA
-├── Model name
-├── VA-API driver to install
-└── Enable/disable specific features (AV1 disabled on unsupported)
-
-Memory:
-├── Total RAM
-├── Classification: Standard (≤4GB) vs Plus (≥8GB)
-└── Recommend variant accordingly
-
-Network:
-├── Wi-Fi adapter present?
-├── Ethernet adapter present?
-├── Wi-Fi interface name
-└── Load appropriate firmware
-
-Bluetooth:
-├── Bluetooth adapter present?
-└── Conditionally load Bluetooth applet
-
-9. Component Specifications
-Spike Shell
-Panel
-
-Position: Bottom (default) or Top (Settings)
-Height: 32px default (24-48px adjustable)
-Auto-hide: Optional (Settings → Appearance → Panel)
-Layout: Three zones (left, center, right)
-Technology: wlr-layer-shell for overlay positioning
-
-Left zone applets:
-├── Spike button (opens launcher)
-├── Launcher button (favorites)
-└── Window list (running apps)
-
-Right zone applets:
-├── Notifications (badge)
-├── Network
-├── Volume
-├── Battery (conditional)
-├── Brightness (conditional)
-├── Bluetooth (conditional)
-├── Update Notifier
-├── Removable Devices
-├── Clock / Calendar
-├── Session Menu
-├── Night Light
-├── Keyboard Layout (conditional)
-└── Airplane Mode (conditional)
-
-Memory budget: 15-20MB (panel itself, not counting applets)
-
-Launcher
-
-Style: Kickoff-style (KDE-inspired)
-Sections:
-├── Favorites (pre-populated, user-editable)
-├── Recently Used (last 5, cleared on logout)
-├── All Applications (by category)
-└── Search (live, case-insensitive)
-
-Categories:
-├── Internet
-├── Office
-├── Media
-├── Graphics
-├── Games
-├── System
-├── Accessories
-└── Development (conditional)
-
-Database sources:
-├── /usr/share/applications/
-├── ~/.local/share/applications/
-└── Flatpak exports (.local and /var/lib/flatpak/exports/share/applications/)
-
-Features:
-├── Single-click launch
-├── Focus existing window if app is running
-├── Recent app badge (🟢)
-├── Keyboard navigation (Super, Escape, arrows, Tab)
-└── inotify-watch for live updates
-
-Memory budget: 15-25MB
-
-Notification Daemon
-
-Protocol: freedesktop.org Notifications DBus
-Storage: ~/.local/share/spike/notifications/history.json
-Retention: 3 days default (adjustable 1-31 days)
-Max count: 500 default (adjustable 10-1000)
-
-Invariant: DISK-BEFORE-DISPLAY
-Every notification is written to history.json atomically BEFORE being shown.
-If display layer crashes, notification is still in history.
-
-Atomic write process:
-├── Write to history.json.tmp
-├── fsync(history.json.tmp)
-├── rename(history.json.tmp, history.json)
-├── fsync(directory)
-
-Tray badge persists until user opens history viewer
-History viewer accessible by clicking notification applet
-Do Not Disturb mode suppresses popups (not history)
-Transient hint ignored — all notifications persist to disk
-
-Crash recovery:
-├── systemd restarts daemon (Restart=always)
-├── On restart: read history from disk, restore state
-├── Counter continues from last persisted value
-└── Notifications sent during downtime are lost (acceptable)
-
-Memory budget: 5-8MB
-
-Settings Panel
-
-Type: Hybrid (custom pages + KDE KCM modules)
-Load: On-demand only (never at startup)
-
-Custom pages (Spike-specific):
-├── Appearance
-├── Notifications
-├── Memory
-├── Boot
-├── Storage
-├── Diagnostics
-├── Users (subset)
-└── About (with integrated user guide reader)
-
-KDE KCM modules loaded (standard system settings):
-├── Display
-├── Sound
-├── Power
-├── Keyboard
-├── Mouse/Touchpad
-├── Bluetooth
-├── Printer
-├── Network
-├── VPN
-├── Date & Time
-├── Accessibility
-└── Software Sources
-
-Search: Live search across all page titles and keywords
-Help: Context-aware (?) button → opens integrated user guide
-User guide location: /usr/share/spike/user-guide/
-Offline reader: Integrated into Settings → About
-
-Memory budget: 0MB (not running), ~10-20MB when open
-
-Spike Installer
-Flow (10 Steps)
-
-1. Welcome + Language selection
-2. Timezone selection (IP geolocation if online)
-3. Wi-Fi connection (optional)
-4. Username + password creation
-5. Computer name (hostname suggestion)
-6. Variant selection (Standard/Plus, auto-recommended)
-7. Data backup to USB (optional, scans for personal files)
-8. Storage confirmation + wipe warning (type "ERASE" to confirm)
-9. Installation (automated, progress bar)
+See: NETWORKING.md (complete)
+
+Network manager: NetworkManager (sole manager)
+DHCP client:     dhclient
+DNS resolver:     systemd-resolved (caches locally, no app can bypass)
+
+Wi-Fi firmware (ALL pre-installed on ISO):
+├── Intel: iwlwifi
+├── Atheros: ath9k, ath10k
+├── Realtek: rtl8723de (ant_sel=2 for improved signal), rtl88xx
+├── Broadcom: bcmwl (requires MOK enrollment if Secure Boot enabled;
+│   b43/ssb/bcma/brcmsmac blacklisted)
+└── No firmware downloads needed post-install
+
+Wi-Fi power saving: follows power profile (Performance: off, Battery Saver: on)
+
+DNS configuration:
+├── Default: router-provided via DHCP
+├── Fallback: 1.1.1.1, 8.8.8.8
+├── DNS-over-TLS: supported (disabled by default, user can enable)
+├── DNS-over-HTTPS: available in Firefox (disabled system-wide)
+└── No app can bypass system DNS (prevents DNS leaks)
+
+Firewall (ufw):
+├── Default incoming: DENY
+├── Default outgoing: ALLOW
+├── Pre-configured rule: 5353/udp allow (mDNS for printer discovery)
+├── GUI in Settings → Network → Firewall
+└── ufw enabled at boot
+
+VPN support: OpenVPN, WireGuard, IPSec/L2TP (via NetworkManager)
+Mobile broadband: conditional on modem detection (ModemManager)
+Captive portal: automatic detection, auto-opens Firefox to login page
+Wi-Fi hotspot: supported (Settings → Network → Hotspot)
+Airplane mode: via rfkill (disables Wi-Fi and Bluetooth)
+Network diagnostics: GUI with ping/DNS/speed tests, exportable report
+Network tray applet: signal strength, connection status, quick connect
+MAC randomization: off by default (optional per-network for public Wi-Fi)
+
+See also: PRIVACY.md (DNS privacy, MAC randomization, VPN privacy)
+
+Disaster Recovery
+
+See: DISASTER-RECOVERY.md (complete)
+
+4-Layer Recovery Model:
+
+Layer 1 — Boot Failure Counter (automatic):
+├── Initramfs increments counter on each boot
+├── After 3 consecutive failures: GRUB menu shows automatically
+├── Recovery entry highlighted, 10-15 second timeout
+├── Successful boot resets counter to 0
+└── Previous kernel fallback available
+
+Layer 2 — Recovery Mode (GRUB entry):
+├── Recovery entry always present in GRUB menu
+├── Boots into minimal environment (single-user root shell)
+├── No graphics, no network, minimal services
+├── User can run diagnostic commands, fix configs, rollback
+└── spike-config --rollback available
+
+Layer 3 — Spike Rescue Tool (GUI on live ISO):
+├── Boot from Spike USB installer
+├── "Rescue my data" option (instead of install)
+├── Mounts broken system READ-ONLY
+├── Scans for user data (Linux/Windows/macOS partitions)
+├── Copies to USB with SHA256 verification
+├── Preserves folder structure
+└── Handles filesystem errors gracefully
+
+Layer 4 — Reinstall with Restore:
+├── Installer detects existing Spike installation
+├── Offers "Fresh install" or "Fresh install and restore my data"
+├── If SpikeBackup folder found on USB: restores after install
+├── Fixes file ownership/permissions (chown to new user)
+├── Restores personal files only:
+│   Documents, Pictures, Videos, Music, Downloads, Desktop
+├── Does NOT restore: system configs, app configs, browser data
+└── Fresh system with user's files back in place
+
+Recovery promise: "Your personal files are always recoverable"
+
+7 failure scenarios documented:
+1. Kernel update broke boot → Layer 1 (previous kernel)
+2. Config change broke boot → Layer 2 (recovery mode + rollback)
+3. System won't boot at all → Layer 3 (live ISO rescue)
+4. Disk corruption → Layer 3 (read-only mount, copy what's salvageable)
+5. Forgot password → Layer 2 (root shell, passwd command)
+6. Failed upgrade → Layer 4 (reinstall + restore)
+7. Dead hard drive → Layer 3 (boot from USB, recover to new drive)
+
+Security
+
+See: SECURITY.md (complete)
+
+Threat model: Protecting a beginner user's laptop on untrusted networks
+(NOT enterprise, NOT nation-state, NOT physical tamper resistance)
+
+Authentication:
+├── Standard user/sudo model (Ubuntu default)
+├── Root account locked
+├── One user password for login, sudo, polkit, screen unlock
+├── Min 6 characters, no complexity requirements, no expiration
+└── No auto-login by default (optional in settings)
+
+AppArmor: Enabled with Ubuntu defaults, no custom profiles
+
+Firewall (ufw):
+├── Deny incoming, allow outgoing
+├── Pre-configured mDNS rule (5353/udp)
+└── See NETWORKING.md for full firewall spec
+
+Automatic updates:
+├── Security updates: auto-install (background, idle 10+ min, low CPU)
+│   Via spike-update.timer every 6 hours
+├── Non-security updates: notify via Discover (user installs)
+├── Flatpak updates: notify only (user installs via Discover)
+└── NEVER force reboot — gentle notification only
+
+Secure Boot: Supported but not required
+├── Works with Secure Boot on or off
+├── Broadcom Wi-Fi drivers need MOK enrollment if Secure Boot enabled
+└── MOK enrollment prompt at first boot if Broadcom detected
+
+Browser security (Firefox):
+├── Enhanced Tracking Protection: Strict
+├── HTTPS-Only mode: Enabled
+├── Popup blocking: Enabled
+├── No Flash/Java
+├── DRM: Enabled (user choice for streaming)
+└── Prefs managed by spike-config (see CONFIGURATION.md)
+
+No SSH server installed (client only)
+No antivirus (defense in depth via sandboxing, AppArmor, firewall,
+no auto-execution)
+
+Kernel security:
+├── sysctl network hardening (rp_filter, accept_redirects, etc.)
+├── Module blacklisting for unused/non-hotpluggable modules
+├── Never disable: USB, network, audio, Bluetooth, hot-pluggable bus drivers
+└── Kernel updates via standard Ubuntu LTS security updates
+
+No telemetry whatsoever:
+├── ubuntu-report: removed
+├── apport: removed
+├── whoopsie: removed
+├── popularity-contest: removed
+├── landscape: removed
+├── motd-news: removed
+└── snapd: removed (includes Canonical telemetry)
+
+Screen locking:
+├── Auto-lock on screen blank
+├── Require password on wake
+├── Lock on user switch
+└── Cannot be disabled below 1 minute (security floor)
+
+Contributor security checklist:
+├── No secrets in code
+├── No hardcoded credentials
+├── Dependencies checked for known vulnerabilities
+├── Config files validated before write
+└── No network calls from system services except documented ones
+
+Privacy
+
+See: PRIVACY.md (complete)
+
+Core principle: "The laptop belongs to the user. The data belongs to the user.
+Spike exists to serve, not to observe."
+
+Privacy is not a toggle — it is the baseline. There is no "privacy mode"
+because privacy is always on.
+
+Data collection: ZERO. Absolute and non-negotiable.
+├── No telemetry, no analytics, no crash reports, no usage stats
+├── No "anonymous" statistics, no "opt-out" telemetry
+├── BDFL-level decision recorded in DESIGN-DECISIONS.md
+└── If a future contributor proposes adding telemetry: the answer is no
+
+Removed Ubuntu components (stripped at ISO build):
+├── ubuntu-report, apport, whoopsie, popularity-contest,
+│   landscape-client, ubuntu-advantage-tools, motd-news, cloud-init, snapd
+└── None can be accidentally enabled
+
+Complete list of network connections Spike makes:
+1. apt update → archive.ubuntu.com (package lists, no user data, every 6 hrs)
+2. Flatpak remote check → flathub.org (app metadata, no user data, every 6 hrs)
+3. NTP sync → pool.ntp.org (time request, no user data, on boot + periodic)
+4. Connectivity check → connectivity-check.ubuntu.com (HTTP GET, no body)
+5. Captive portal detection → redirect target (HTTP GET, no body)
+That is the COMPLETE list. Nothing else connects anywhere.
+
+Application permissions (portal-based):
+├── xdg-desktop-portal (Wayland-native permission system)
+├── Categories: files, camera, microphone, screen, notifications, background
+├── Permission states: Allowed, Ask, Denied, N/A
+├── Dialog: [Allow] [Always Allow] [Deny] [Always Deny]
+├── Stored per-application, revocable in Settings → Privacy
+├── New apps default to: Ask
+└── Pre-configured defaults for Firefox, VLC, LibreOffice, Spectacle
+
+Camera/microphone indicators:
+├── Panel icon appears when camera or mic is actively in use
+├── Shows which app is using the device
+├── Click to disable/mute immediately
+├── INDICATORS ARE NON-NEGOTIABLE (cannot be hidden or disabled)
+└── Kill switch available in Settings → Privacy → Camera & Microphone
+
+Camera/microphone kill switch:
+├── Disable camera: unloads uvcvideo module (apps get "not available")
+├── Disable microphone: mutes all capture devices in PipeWire (apps get silence)
+├── State persists across reboots
+├── Panel shows disabled indicator
+└── Separate from Airplane Mode (not radio-based)
+
+Firefox privacy (Spike-managed):
+├── Enhanced Tracking Protection: Strict (blocks trackers, fingerprinting, crypto miners)
+├── HTTPS-Only: Enabled (upgrade all HTTP to HTTPS, warn on no-HTTPS sites)
+├── Do Not Track: Enabled (supplemental, most sites ignore)
+├── Third-party cookies: Blocked (via ETP Strict)
+├── URL tracking parameter stripping: Enabled (utm_source, fbclid, gclid, etc.)
+├── DNS-over-HTTPS: Disabled by default (user can enable in Firefox)
+├── Cookie deletion on close: Disabled (convenience, user can enable)
+└── Firefox data isolated by Flatpak sandbox
+
+Location services:
+├── Opt-in (disabled by default)
+├── Accuracy: Approximate (city-level, IP-based — no GPS on most target laptops)
+├── Used for: installer timezone detection, Night Light sunset/sunrise
+├── geoclue2 daemon (does not start if disabled)
+├── No street-level tracking possible
+└── Apps cannot request location if disabled at portal level
+
+Data retention:
+├── System logs: 7 days (journald, configurable 1-30)
+├── Spike connection log: 7 days (configurable 1-30)
+├── Notification history: 3 days (configurable 1-31, max 500 entries)
+├── Launcher recently used: cleared on every logout
+├── Battery health history: unlimited (until user resets)
+├── Clipboard: NOT stored (in-memory only, cleared on logout)
+├── All data stays local, never transmitted off-device
+└── User can clear all in Settings → Privacy → Data Retention
+
+Multi-user isolation:
+├── Home directories: 750 permissions (other users cannot access)
+├── Notifications: per-session (not visible to other users)
+├── Launcher: per-user (favorites, recently used)
+├── Settings: user prefs in ~/.config/spike/, system-wide = admin only
+├── Browser: per-user Firefox data (isolated by Flatpak)
+├── Clipboard: cleared on user switch
+└── No guest session available (deliberate — complexity + data leakage risk)
+
+Cloud services:
+├── NO cloud integration whatsoever
+├── No cloud storage sync, no cloud backup, no cloud auth, no cloud settings sync
+├── No Spike cloud account exists
+├── No "sign in with..." prompts anywhere
+├── Users can install cloud clients via Discover (standard Flatpak sandbox)
+└── Spike does not recommend or endorse cloud providers
+
+MAC randomization: off by default (per-network randomization optional for public Wi-Fi)
+DNS privacy: DoT available (disabled by default), DoH available in Firefox
+
+Network audit trail:
+├── Active connections viewable in Settings → Diagnostics → Network Connections
+├── Connection log: /var/log/spike/connections.log (7-day retention)
+├── Data source: ss -tunp (parsed, displayed in GUI)
+└── Users can verify no unexpected connections
+
+Configuration (spike-config)
+
+See: CONFIGURATION.md (complete)
+
+spike-config is the configuration engine for Spike.
+NOT a daemon — runs on-demand (invoked by Settings GUI or systemd triggers).
+
+Architecture:
+┌─────────────┐     DBus      ┌──────────────────┐     generates     ┌──────────┐
+│ Settings GUI │ ──────────▶ │  spike-config    │ ────────────────▶ │ Config   │
+│ (thin client)│              │  (state store +  │                   │ Files    │
+└─────────────┘              │   template engine)│                   │ (/etc/)  │
+                              └────────┬─────────┘                   └──────────┘
+                                       │
+                              ┌────────┴────────┐
+                              │  Change Log      │
+                              │  (changelog.json) │
+                              └─────────────────┘
+
+State store:
+├── Location: /var/lib/spike/config/state.json
+├── Format: JSON (versioned)
+├── Single source of truth for all configuration
+├── Contains: hardware detection, memory, boot, security, updates,
+│   multimedia, power, network, privacy, installer, desktop settings
+├── Permissions: 644 (root:root)
+└── If lost/corrupted: regenerated from hardware detection + defaults.json
+
+Template engine:
+├── Templates: /usr/lib/spike/config/templates/*.tpl
+├── Variables: {{variable}} substituted from state store
+├── Validation: syntax check, no leftover {{}}, no empty critical fields
+├── Atomic write: write to .tmp → fsync → rename → fsync(dir)
+└── Guarantee: config file is always OLD or NEW version, never corrupted
+
+Change log:
+├── Location: /var/lib/spike/config/changelog.json
+├── Append-only JSON array
+├── Records: timestamp, module, setting, old_value, new_value, source,
+│   files_regenerated, services_reloaded
+├── Max 5000 entries (oldest pruned)
+└── Enables rollback (spike-config --rollback <entry-id>)
+
+Modules (config file generators):
+├── memory     → sysctl.d/99-spike-memory.conf, zram-generator.conf,
+│               udev zram rules, earlyoom config
+├── boot       → /etc/default/grub, boot-count, Plymouth theme
+├── security   → ufw rules, sudoers, module blacklist
+├── network    → NetworkManager.conf, resolved.conf, /etc/hosts
+├── multimedia → pipewire.conf, wireplumber, environment, Firefox prefs,
+│               GPU driver modprobe
+├── power      → logind.conf, battery health tmpfiles, cron weekly
+├── privacy    → journald.conf, audit rules
+├── desktop    → sddm.conf, spike-shell.conf, Qt stylesheet, KWin decoration,
+│               dconf (GTK apps)
+└── updates    → apt.conf.d/99-spike-updates, unattended-upgrades config,
+                spike-update.timer
+
+Idempotent: running spike-config --generate-all produces identical output
+every time given the same state store. No duplicates, no stale settings.
+
+CLI interface (DEVELOPERS ONLY — not in user guide):
+├── spike-config --generate-all
+├── spike-config --generate <module>
+├── spike-config --detect (hardware detection)
+├── spike-config --state (dump state store)
+├── spike-config --state-set <module> <key> <value>
+├── spike-config --changelog
+├── spike-config --rollback <entry-id>
+└── spike-config --validate
+
+State store recovery:
+├── If state.json missing/corrupted: regenerate from defaults.json + hardware detect
+├── defaults.json: /usr/lib/spike/config/defaults.json (per-variant defaults)
+├── All config files regenerated based on new state
+├── User notified: "Configuration reset to defaults. Please review settings."
+└── No "unrecoverable config" state ever exists
+
+DBus interface: org.spike.Config
+├── GetState(), GetModuleState(module), SetSetting(module, key, value)
+├── GenerateAll(), GenerateModule(module), DetectHardware()
+├── GetChangelog(count), Rollback(entry_id), ValidateAll()
+├── Signals: StateChanged, ConfigRegenerated
+└── Settings GUI never writes config files directly — always via spike-config
+
+Variant Differences
+
+See: VARIANT-DIFFERENCES.md (complete — authoritative source)
+
+Single ISO. Two variants. 14 differences. Everything else identical.
+
+The 14 differences:
+ 1. ZRAM cap: 4GB (Standard) vs uncapped (Plus)
+ 2. Animations: Off (Standard) vs On (Plus)
+ 3. Compositor effects: Minimal (Standard) vs Full (Plus)
+ 4. Plymouth theme: spike-minimal (Standard) vs spike-full (Plus)
+ 5. CPU governor: powersave (Standard) vs schedutil (Plus)
+ 6. Bluetooth codecs: SBC only (Standard) vs SBC+AAC+LDAC+aptX (Plus)
+ 7. Flatpak runtimes: KDE+GNOME (Standard) vs all common (Plus)
+ 8. Applet polling: Conservative (Standard) vs Standard (Plus)
+ 9. Qt rendering: Software preferred (Standard) vs OpenGL preferred (Plus)
+10. Spike button hover: No glow (Standard) vs Glow (Plus)
+11. Hybrid sleep: ON (Standard) vs OFF (Plus)
+12. Idle RAM target: <400MB (Standard) vs <800MB (Plus)
+13. Background services: Minimal set (Standard) vs Standard set (Plus)
+14. Memory budget: Tighter ~280-370MB (Standard) vs Relaxed ~420-650MB (Plus)
+
+Identical between variants: kernel, filesystem, partitioning, installer,
+desktop shell, networking, security, privacy, disaster recovery,
+configuration system, updates, community model, ISO, packages.
+
+Variant selection:
+├── Installer recommends based on RAM + CPU detection
+├── User can override (warning if mismatched)
+├── Post-install switching available (no reinstall)
+├── Switch calls: spike-config --state-set system variant <plus|standard>
+├── Then: spike-config --generate-all
+├── Some changes immediate, some require re-login, some require reboot
+└── See VARIANT-DIFFERENCES.md for full selection algorithm
+
+10. Installer
+
+10-step installer flow:
+1. Language
+2. Timezone (IP-based geolocation, user confirms)
+3. Wi-Fi (connect to download firmware/updates if needed)
+4. Username
+5. Password (with reminder hint field)
+6. Hostname (suggests spike-laptop, user can change)
+7. Storage confirmation (data backup option, wipe warning)
+8. Variant selection (recommended based on hardware, user can override)
+9. Install (automated, progress bar, no user interaction needed)
 10. Reboot to desktop
 
-Average time: 8-12 minutes on Celeron N4020 with SSD
-
-Hardware Detection Modules
-
-detect/cpu.cpp → bogomips, cores, classification
-detect/storage.cpp → type, size, rejection (eMMC/USB 2.0)
-detect/gpu.cpp → vendor, model, driver selection
-detect/network.cpp → Wi-Fi/Ethernet adapter detection
-detect/bluetooth.cpp → Bluetooth adapter detection
-detect/modem.cpp → Mobile broadband detection
-
-Installation Tasks (20 Steps)
-
-1. Partition drive (UEFI or BIOS)
-2. Create swap file
-3. Configure ZRAM (if CPU capable)
-4. Configure swappiness
-5. Install base system packages
-6. Install GPU drivers
-7. Install audio (PipeWire + WirePlumber)
-8. Install networking (NetworkManager + all firmware)
-9. Generate module blacklist
-10. Pre-seed Flatpak runtimes
-11. Install Spike Shell
-12. Apply GRUB2 configuration
-13. Apply Plymouth theme
-14. Apply Spike theme (Qt/KWin)
-15. Configure security (AppArmor, ufw)
-16. Create user account
-17. Configure CPU governor
-18. Write kernel tunables
-19. Final configuration (locale, timezone, keyboard)
-20. Unmount and finalize
-
-Data Backup
-
-Scans for: Windows/Linux/macOS user directories
-Copies: Documents, Photos, Videos, Music, Downloads, Desktop
-Checksum: SHA256 verification on every file
-Partial corruption: Log failed files, continue with rest
-Size requirement: USB must have ≥ total file size
-Folder preservation: Exact structure replicated on USB
-Output: /run/media/usb/SpikeBackup/
-
-Data Restore
-
-Trigger: During installation, if "Fresh install and restore" selected
-Mount: USB drive containing SpikeBackup/
-Copy: To /home/[new_username]/
-Ownership: chown -R [new_user]:[new_user]
-Verification: SHA256 checksum on all files
-Not restored: System settings, app configs, passwords (security measure)
-Only restored: Personal files (documents, photos, media)
-
-Spike Rescue Tool
-Purpose
-
-Recover personal files from a broken Spike installation via live ISO.
-Flow
-
-1. Boot from Spike ISO
-2. Click "Rescue My Files" icon on desktop
-3. Scan for installed operating systems
-4. If Spike detected: offer recovery or reinstall-with-restore
-5. Mount source partition READ-ONLY
-6. Scan for user data
-7. Prompt for USB destination
-8. Copy files with SHA256 verification
-9. Log any failed files
-10. Report summary: N files recovered, M files failed
-
-Safety Guarantees
-
-Read-only mount prevents further damage to filesystem
-Failed files logged but don't abort operation
-Checksum verification ensures integrity
-User can preview file counts before committing
-No system modifications made (data recovery only)
-
-Spike Config System
-Generates At Install Time
-
-/etc/modprobe.d/spike-blacklist.conf → Module blacklist
-/etc/default/grub → Boot parameters
-/etc/systemd/zram-generator.conf → ZRAM configuration
-/etc/sysctl.d/99-spike-memory.conf → Swappiness, VM tuning
-/etc/sysctl.d/99-spike-fs.conf → Filesystem tuning
-/etc/sysctl.d/99-spike-network.conf → Network tuning
-/etc/udev/rules.d/99-spike-zram.rules → ZRAM udev trigger
-/etc/ld.so.conf.d/spike.conf → Library paths
-/usr/share/spike/themes/qt-stylesheet.qss → UI styling
-/usr/share/spike/branding/kwin-decoration.rc → Window decoration
-
-No Post-Install Editing Required
-
-All settings accessible via Settings GUI. Config files exist on disk but users never edit them directly.
-10. Development Workflow
-GitLab CE Primary, GitHub Mirror
-
-Primary:     git.bigrangatech.com (GitLab CE, self-hosted)
-Mirror:      github.com/bigrangatech/spike (read-only mirror)
-
-Workflow:
-├── Developers fork from GitLab (not GitHub)
-├── Merge requests submitted to GitLab
-├── Issues tracked on GitLab
-├── CI/CD pipelines run on GitLab CI
-├── Releases published on GitLab
-├── GitHub mirrors automatically via scripts/mirror-sync.sh
-└── GitHub README states: "This is a mirror. Contribute at git.bigrangatech.com"
-
-Contribution Phases
-
-Pre-alpha (now through alpha start):
-├── Read-only repository
-├── Issues open (feedback welcome)
-├── No code contributions accepted yet
-└── Translations accepted
-
-Alpha (months 1-8):
-├── Bug reports welcome
-├── Hardware testing encouraged
-├── Translations open
-├── Code patches: case-by-case, must include DCO
-└── Review: BDFL only, no formal reviews
-
-Beta (months 9-18):
-├── Full contributions open
-├── DCO mandatory for all code
-├── Code review required
-├── Branch protection on main
-└── Contributors form team, BDFL breaks ties
-
-Coding Conventions
-
-C++ (Qt):
-├── Follow Qt naming conventions
-├── camelCase for methods/variables
-├── PascalCase for classes
-├── Member variables: m_prefix or trailing underscore
-├── Comments: Qt Doc style (/** */ for public APIs)
-├── No raw pointers, use QPointer/QSharedPointer/unique_ptr
-├── Connect signals using function pointers (not QString)
-└── Use Qt container types (QList, QMap, QString)
-
-Bash/Shell:
-├── Use strict mode (set -euo pipefail)
-├── Quote all variables
-├── Meaningful variable names
-├── Comments for complex operations
-├── Error messages to stderr
-└── Exit codes meaningful
-
-Python (scripts):
-├── Python 3 compatible
-├── PEP 8 style
-├── Docstrings for functions
-├── Logging, not print()
-└── Type hints where practical
-
-DCO (Developer Certificate of Origin)
-
-Required for all code contributions. Signed with:
-git commit -s -m "Commit message"
-
-DCO sign-off certifies:
-├── You wrote this contribution or have right to submit it
-├── You understand it will be licensed under GPLv2+
-├── You agree to the terms of the DCO
-└── Attribution will be preserved in commit history
-
-Branch Protection Rules (Post-Beta)
-
-main branch protected:
-├── No direct pushes
-├── Pull/Merge request required
-├── Code review from at least 1 maintainer
-├── CI/CD must pass
-├── DCO signature required
-└── Squash merge preferred (clean history)
-
-11. Testing Requirements
-Hardware Testing Matrix
-
-Tier 1 (Daily-driver usable, MUST PASS):
-├── Intel Celeron N4020 (Gemini Lake, 4GB RAM)
-├── Must boot, install, and run smoothly
-└── All features functional
-
-Tier 2 (Must boot and function, SHOULD PASS):
-├── AMD A4 Lenovo (worst case performance)
-├── Boot and install succeed
-└── Performance may be degraded, features functional
-
-Tier 3 (Regression check only):
-├── ThinkPad P50 (Xeon, NVIDIA Quadro)
-├── Ensures nothing breaks on higher-end hardware
-└── Not representative of target users
-
-Performance Baselines (Measured During Alpha)
-
-Cold boot time: <40 seconds (target on SSD)
-Idle memory (Standard): <400MB
-Idle memory (Plus): <800MB
-Discover launch time: <2 seconds
-Firefox launch time: <3 seconds
-Application launch time: <2 seconds (average)
-Shutdown time: <5 seconds
-Hibernate resume: <10 seconds (if implemented)
-
-Testing Checklist Per Feature
-
-Before merging a feature:
-□ Works on Tier 1 hardware (Celeron N4020)
-□ Doesn't exceed memory budget
-□ Has corresponding user guide update
-□ Has corresponding dev guide update
-□ Tested on physical hardware (not just VM)
-□ No regression on existing features
-□ DCO signed
-□ Code review passed (post-beta)
-□ CI/CD pipeline passed
-□ Documentation in docs/ directory
-□ Screenshot added to user-guide/screenshots/ (if GUI change)
-
-12. Troubleshooting Guide
-Common Issues and Solutions
-Installer Fails Partway Through
-
-Problem: Installer crashed, system partially installed
-Solution: Reboot from live ISO, run "Rescue My Files" to recover data, then fresh install
-
-Boot Fails After Installation
-
-Problem: System won't boot, GRUB shows error or black screen
-Solution:
-├── 3 consecutive failures trigger GRUB menu (automatic)
-├── Select recovery entry from GRUB menu
-├── Boot into recovery mode
-├── Run spike-rescue to recover data to USB
-└── Fresh install and restore from backup
-
-Memory Pressure / Swap Thrashing
-
-Problem: System is slow, high disk usage
-Cause: Swap thrashing, ZRAM not enabled, or insufficient RAM
-Check:
-├── free -h (check swap usage)
-├── zramctl (verify ZRAM active)
-├── systemctl status earlyoom
-└── dmesg | grep -i oom (check for OOM killer events)
-
-Fix:
-├── Close memory-intensive applications (Firefox tabs, etc.)
-├── Verify ZRAM is enabled (should be on Celeron)
-├── Check if earlyoom is protecting key processes
-├── Consider hardware upgrade (more RAM) if persistent
-└── Adjust swappiness if SSD (Settings → Advanced → Memory)
-
-Network Manager Won't Connect
-
-Problem: Wi-Fi won't connect, or no networks detected
-Check:
-├── nmcli device (verify Wi-Fi adapter detected)
-├── lsmod | grep iwlwifi (Intel) / ath9k (Atheros) / rtl (Realtek)
-├── systemctl status NetworkManager
-└── dmesg | grep -i firmware (check for missing firmware)
-
-Fix:
-├── Restart NetworkManager: sudo systemctl restart NetworkManager
-├── Reload driver module (sudo modprobe -r iwlwifi; sudo modprobe iwlwifi)
-├── Verify firmware present: ls /lib/firmware/intel/
-└── Reinstall firmware package if missing
-
-Notification History Lost
-
-Problem: Notifications disappeared, can't find them in history
-This should NEVER happen. If it does, it's a critical bug.
-
-Investigation:
-├── Check ~/.local/share/spike/notifications/history.json exists
-├── Check file permissions (should be readable by user)
-├── Check disk space (full disk might prevent writes)
-├── Check spike-notify service status
-└── Look for segmentation faults in journalctl
-
-Report: File issue on GitLab with full logs attached
-
-Display Resolution Wrong
-
-Problem: Screen resolution incorrect or stretched
-Check:
-├── xrandr --query (list available modes)
-├── /usr/share/spike-branding/display-profiles/ (custom profiles)
-└── Settings → Display
-
-Fix:
-├── Select correct resolution in Settings → Display
-├── Check if custom profile exists for detected monitor
-└── If persistent, report with xrandr output attached
-
-Audio Not Working
-
-Problem: No sound from speakers or headphones
-Check:
-├── pactl info (verify PipeWire active)
-├── wpctl status (check WirePlumber state)
-├── pactl list sinks (list audio outputs)
-└── pavucontrol (volume control GUI)
-
-Fix:
-├── Restart PipeWire: systemctl --user restart pipewire pipewire-pulse wireplumber
-├── Check muted status in pavucontrol
-├── Verify correct output device selected
-└── Reinstall PipeWire packages if needed
-
-Black Screen After Login
-
-Problem: SDDM shows login, but after login: black screen or frozen cursor
-This is usually a compositor or shell crash.
-
-Diagnosis:
-├── Boot into recovery mode (GRUB menu)
-├── SSH into system or use terminal console (Ctrl+Alt+F2)
-├── journalctl -xb | grep -i spike (look for shell errors)
-├── journalctl -xb | grep -i kwin (check compositor status)
-└── cat /tmp/spike-shell.log (if exists)
-
-Quick fix:
-├── Reboot, try different TTY (Ctrl+Alt+F3) and kill/start spike-session
-├── Or: Reboot into live ISO, backup data, fresh install
-└── Preventative: Check for kernel panics or driver issues before merge
-
-13. Common Mistakes
-What NOT to Do
-
-❌ Don't add features that require terminal usage
-→ Always provide GUI alternative first
-
-❌ Don't increase idle memory beyond budget
-→ Measure before and after changes
-
-❌ Don't modify GRUB without testing on all bootloader modes
-→ Test UEFI and BIOS modes
-
-❌ Don't skip hardware testing on Tier 1 machine
-→ Celeron N4020 is non-negotiable
-
-❌ Don't add dependencies without justification
-→ Every package increases memory and attack surface
-
-❌ Don't edit config files directly in code
-→ Use template + substitution during install
-
-❌ Don't assume users have internet access
-→ Everything must work offline
-
-❌ Don't prioritize aesthetics over performance
-→ If animations hurt performance, disable them
-
-❌ Don't change default behavior without opt-in
-→ Preserve predictability for users
-
-❌ Don't forget to update documentation
-→ Every feature requires corresponding docs
-
-What TO Do
-
-✅ DO test on actual target hardware
-✅ DO document every design decision in DESIGN-DECISIONS.md
-✅ DO write tests for critical code paths
-✅ DO follow Golden Rules religiously
-✅ DO keep changes small and focused
-✅ DO provide clear error messages
-✅ DO include recovery paths for all operations
-✅ DO benchmark performance changes
-✅ DO consider edge cases (what if disk is full?)
-✅ DO ask for clarification if unsure (better than guessing wrong)
-
-14. References
-Documentation Links
-
-Full documentation tree:
-├── docs/README.md → Entry point
-├── docs/INDEX.md → Routing document
-├── docs/PHILOSOPHY.md → Mission and values
-├── docs/ARCHITECTURE.md → System overview
-├── docs/DESIGN-DECISIONS.md → Rationale for every decision
-├── docs/kernel.md → Kernel parameters and module config
-├── docs/memory.md → ZRAM, swap, earlyoom
-├── docs/desktop.md → Spike Shell specification
-├── docs/installer.md → Installer design
-├── docs/dev-guide/index.md → Developer manual
-└── docs/user-guide/index.md → User manual (offline)
-
-Website:
-└── https://spike.bigrangatech.com/docs/
-
-External Resources
-
-Qt Documentation:
-├── https://doc.qt.io/qt-6/
-└── https://doc.qt.io/qt-6/qml-overview.html (reference, not for use)
-
-KDE Frameworks:
-├── https://develop.kde.org/
-└── https://api.kde.org/
-
-Wayland Protocols:
-├── https://wayland.freedesktop.org/
-└── https://gitlab.freedesktop.org/wayland/wlr-protocols
-
-Linux Kernel Docs:
-├── https://www.kernel.org/doc/html/latest/
-└── https://docs.kernel.org/admin-guide/
-
-Flatpak Docs:
-├── https://docs.flatpak.org/
-└── https://www.flatpak.org/doc/
-
-PipeWire Docs:
-├── https://pipewire.pages.freedesktop.org/
-└── https://docs.pipewire.org/
-
-NetworkManager Docs:
-├── https://networkmanager.dev/docs/api/
-└── https://developer.gnome.org/NetworkManager/stable/
-
-PipeWire DBus API:
-├── https://pipewire.org/docs/dbustopic.html
-└── https://freedesktop.org/software/pipewire-doc/
-
-Contact and Support
-
-Primary support: https://spike.bigrangatech.com/support/
-Issue tracker: https://git.bigrangatech.com/spike/-/issues
-Discussion: https://bigrangatech.com/discussion (forum or Matrix room)
-Abuse reports: abuse@bigrangatech.com
-Documentation bugs: docs/issues on GitLab
-
-Version History
-
-0.1.0-alpha → Initial alpha, limited testing
-0.2.0-alpha → Expanded testing, hardware matrix
-0.3.0-beta → Public beta, broader testing
-1.0.0-production → First production release
-1.x.x → Point releases, bug fixes
-2.0.0 → Major version, potential breaking changes
-
-Document Maintenance
-
-This document (AGENTS.md) must be kept synchronized with all other documentation. If something changes:
-
-    Update this document FIRST
-    Then update other affected documents (DESIGN-DECISIONS.md, component specs)
-    Commit with clear description: "Update AGENTS.md with [change]"
-    Update CHANGELOG.md with the modification
-
-If this document becomes outdated, it is the PRIMARY source of truth for Spike project context. Other documents may lag, but this document should always reflect current state.
-
-Last Updated: July 2026 Maintained By: BDFL (Ranga) Review Frequency: Monthly (during alpha), Quarterly (during beta) Status: Active and authoritative
+Data backup (Step 7):
+├── Installer scans for user data (Windows/Linux/macOS personal files)
+├── Offers backup to USB before wiping
+├── Verifies copy with checksums (SHA256)
+├── Preserves folder structure
+└── If existing Spike installation detected:
+    "Fresh install" or "Fresh install and restore my data"
+
+Partitioning (Step 9):
+├── Fully automatic, no manual option
+├── ext4 everywhere
+├── /boot/efi (512MB FAT32) or /boot (1GB ext4) + / (rest, ext4) + /swapfile
+├── Mount flags adaptive per storage type
+└── Minimum 128GB
+
+Hardware detection (runs during Step 9):
+├── detect/cpu.cpp → CPU model, cores, bogomips, classification
+├── detect/storage.cpp → Storage type, size, rotational, eMMC/USB check
+├── detect/gpu.cpp → GPU vendor, model, driver, VA-API driver
+├── detect/network.cpp → Wi-Fi/Ethernet, driver module
+├── detect/bluetooth.cpp → Bluetooth adapter presence
+└── detect/modem.cpp → Mobile broadband modem presence
+
+Installation tasks (automated during Step 9):
+1.  Partition disk
+2.  Format partitions
+3.  Mount filesystems
+4.  Copy base system (from ISO, not debootstrap — faster)
+5.  Install kernel
+6.  Install GRUB2 (with Spike theme)
+7.  Create user account
+8.  Lock root account
+9.  Configure ZRAM/swap (based on CPU + storage + variant)
+10. Install Flatpak + pre-seed runtimes (based on variant)
+11. Install KDE standalone apps
+12. Install Firefox (with Spike-tuned prefs)
+13. Install Plymouth theme (based on variant)
+14. Apply desktop theme (animations, compositor, based on variant)
+15. Enable/disable services (based on hardware detection + variant)
+16. Set CPU governor (based on variant)
+17. Configure ufw firewall
+18. Configure automatic updates
+19. Strip telemetry components
+20. Generate initial state store (spike-config --detect + --generate-all)
+
+11. Authentication
+
+Model: Standard user/sudo (Ubuntu default)
+├── Root account: locked
+├── One user password for: login, sudo, polkit, screen unlock
+├── Password policy: min 6 chars, no complexity requirements, no expiration
+├── Auto-login: off by default (optional in settings)
+└── sudo lecture: first-use message explaining what sudo does
+
+No SSH server installed (client only — openssh-client, not openssh-server)
+No disk encryption (LUKS) — deliberate for beginner recovery simplicity
+No dual boot support
+No guest session
+
+12. Licensing & Contribution
+
+License:
+├── Code: GPLv2+ (compatible with KWin, KDE Frameworks, Flatpak, Ubuntu packages)
+├── Documentation: CC-BY-SA 4.0
+└── Artwork (logo, splash, GRUB theme): CC-BY-SA 4.0
+
+Contribution model (phased):
+├── Pre-alpha: public read-only repo, issues only
+├── Alpha: bug reports, hardware submissions, translations, case-by-case
+│           patches with DCO (Developer Certificate of Origin)
+├── Beta: full contributions, code review, branch protection
+└── DCO chosen over CLA (lighter barrier to entry)
+
+Governance:
+├── BDFL (Benevolent Dictator For Life) model initially
+├── Creator holds final decision authority
+├── Documented succession plan (in GOVERNANCE.md)
+└── Canonical trademark compliance documented (using Ubuntu base)
+
+Timeline:
+├── 8 months to alpha release
+├── 18 months to beta release
+└── Documentation-first: discuss → converge → write docs → then code
+
+13. Spike Shell (Desktop) — Summary
+
+Note: Full specification will be in DESKTOP.md (not yet drafted).
+This section is a summary of decided architecture.
+
+Spike Shell is a custom lightweight desktop shell built on:
+├── KWin (Wayland compositor — standalone, not plasma-session)
+├── Qt/KDE Frameworks (for standalone apps and KCM modules)
+├── SDDM (display manager, Spike-themed)
+└── Custom shell binary (spike-shell) providing:
+
+Panel:
+├── Position: bottom (default) or top
+├── Height: 32px default (adjustable 24-48px)
+├── Auto-hide: optional (instant slide on Standard, animated on Plus)
+├── 3 zones: left (launcher button + pinned apps), center (clock),
+│           right (system tray applets)
+├── 14 applets (always present) + 4 conditional (BT, modem, etc.)
+└── Applets: clock, network, battery, brightness, volume, bluetooth
+            (conditional), updates, notifications, removable devices,
+            keyboard layout, input method, night light, power profiles,
+            camera/mic indicator, spike-menu (launcher button)
+
+Launcher:
+├── Kickoff-style (3-pane: favorites, categories, search results)
+├── Categories: System, Internet, Office, Media, Games, Settings, Other
+├── Search: fuzzy match, launches on Enter
+├── Favorites: user-pinned apps (per-user)
+├── Recently used: cleared on each logout
+├── New app badge: apps installed since last launch
+└── Super key opens launcher
+
+Notification daemon:
+├── INVARIANT: disk before display (write to disk, THEN show on screen)
+├── Never loses notifications due to crash or power loss
+├── History: ~/.local/share/spike/notifications/history.json
+├── Retention: 3 days (configurable), max 500 (configurable)
+├── Per-session (not visible to other users)
+└── Do Not Disturb mode (suppresses non-critical notifications)
+
+Session manager:
+├── Login: SDDM → spike-session → spike-shell + KWin + services
+├── Logout: confirm dialog → stop services → return to SDDM
+├── Autostart: filtered (only approved autostart entries)
+├── Environment: QT_QPA_PLATFORM=wayland, LIBVA_DRIVER_NAME, MOZ_DISABLE_AV1
+└── First-run: welcome wizard (timezone confirm, Wi-Fi check, tour)
+
+Settings panel:
+├── Hybrid: custom Spike pages + KDE System Settings modules (KCMs)
+├── Custom pages: Overview, Network, Privacy, Power, Updates,
+│                 Diagnostics, About
+├── KCM modules: Display, Sound, Keyboard, Mouse, Fonts, Colors,
+│                Applications, Storage
+├── All settings changes go through spike-config (DBus)
+└── Never writes config files directly
+
+Theme engine:
+├── Accent color: purple (#6d4aff)
+├── Secondary: cyan/teal
+├── Font: Noto Sans 10pt
+├── Icon theme: Breeze
+├── Cursor: Breeze, 24px
+├── Wallpapers: /usr/share/spike/wallpapers/
+└── KWin decorations: minimal (Standard) or with effects (Plus)
+
+14. Cross-Reference Index
+
+Topic                                    → Document(s)
+──────────────────────────────────────────────────────────────
+Adaptive memory (ZRAM/swap)             → MEMORY.md, CONFIGURATION.md
+Animations (variant difference)          → VARIANT-DIFFERENCES.md
+AppArmor                                → SECURITY.md
+Application permissions (portals)      → PRIVACY.md
+Atomic config writes                     → CONFIGURATION.md
+Audio (PipeWire/WirePlumber)           → MULTIMEDIA.md
+Authentication (passwords, sudo)        → SECURITY.md, INSTALLER.md
+Automatic updates                       → SECURITY.md, CONFIGURATION.md
+Battery health                          → POWER-MANAGEMENT.md
+Bluetooth audio codecs                  → MULTIMEDIA.md, VARIANT-DIFFERENCES.md
+Bluetooth activation (conditional)      → NETWORKING.md
+Boot failure counter                    → DISASTER-RECOVERY.md, BOOT-PROCESS.md
+Boot parameters                         → BOOT-PROCESS.md, KERNEL.md
+Branding (logo, splash, GRUB)           → BRANDING.md
+Broadcom Wi-Fi (MOK enrollment)         → NETWORKING.md, SECURITY.md
+Camera/microphone indicators            → PRIVACY.md
+Camera/microphone kill switch           → PRIVACY.md
+Change log (config)                     → CONFIGURATION.md
+CPU classification                      → KERNEL.md, VARIANT-DIFFERENCES.md
+CPU governor                            → POWER-MANAGEMENT.md, VARIANT-DIFFERENCES.md
+Captive portal detection                → NETWORKING.md
+Clipboard (no persistence)              → PRIVACY.md
+Configuration system (spike-config)     → CONFIGURATION.md
+Data backup (installer)                 → INSTALLER.md, DISASTER-RECOVERY.md
+Data retention policies                 → PRIVACY.md
+Data sources                              → CONFIGURATION.md
+Desktop shell                           → DESKTOP.md (pending)
+Disk encryption (none — rationale)      → DESIGN-DECISIONS.md (pending)
+DNS privacy (DoT/DoH)                   → PRIVACY.md, NETWORKING.md
+eMMC (not supported — rationale)        → DESIGN-DECISIONS.md (pending)
+Earlyoom                                → MEMORY.md, CONFIGURATION.md
+ext4 everywhere (rationale)             → DESIGN-DECISIONS.md (pending)
+Filesystem (partitioning, mount flags)  → INSTALLER.md (pending)
+Firefox tuning (VA-API, AV1)           → MULTIMEDIA.md
+Firewall (ufw)                          → NETWORKING.md, SECURITY.md
+Flatpak runtimes (pre-seeded)           → VARIANT-DIFFERENCES.md, INSTALLER.md (pending)
+GRUB2 bootloader                        → BOOT-PROCESS.md (pending)
+Hardware detection                      → CONFIGURATION.md, INSTALLER.md (pending)
+Hybrid sleep                            → POWER-MANAGEMENT.md, VARIANT-DIFFERENCES.md
+Idle RAM targets                        → VARIANT-DIFFERENCES.md
+Installer flow (10 steps)               → INSTALLER.md (pending)
+Kernel module blacklisting              → KERNEL.md (pending)
+Location services                       → PRIVACY.md
+MAC randomization                       → PRIVACY.md
+Memory budget                           → VARIANT-DIFFERENCES.md
+Multi-user isolation                    → PRIVACY.md
+Network connections (complete list)     → PRIVACY.md
+Networking (general)                    → NETWORKING.md
+Night Light                             → POWER-MANAGEMENT.md, PRIVACY.md
+Notifications (disk-before-display)     → DESKTOP.md (pending)
+Panel and applets                       → DESKTOP.md (pending)
+Partitioning                            → INSTALLER.md (pending)
+Plymouth (boot splash)                  → BOOT-PROCESS.md (pending), VARIANT-DIFFERENCES.md
+Power profiles                          → POWER-MANAGEMENT.md
+Privacy (general)                       → PRIVACY.md
+Recovery (4-layer model)                → DISASTER-RECOVERY.md
+Root account (locked)                   → SECURITY.md
+Screen capture                          → MULTIMEDIA.md
+Screen locking                          → SECURITY.md
+Secure Boot                             → SECURITY.md
+Spike Rescue tool                       → DISASTER-RECOVERY.md
+Spike Shell                             → DESKTOP.md (pending)
+State store                             → CONFIGURATION.md
+Swappiness                              → MEMORY.md, CONFIGURATION.md
+sysctl tunables                         → KERNEL.md (pending), SECURITY.md
+Telemetry (zero — absolute)             → PRIVACY.md, SECURITY.md
+Ubuntu components removed               → PRIVACY.md, SECURITY.md
+Update timer                             → SECURITY.md, CONFIGURATION.md
+VA-API (video acceleration)             → MULTIMEDIA.md
+Variant differences (all 14)           → VARIANT-DIFFERENCES.md
+Variant selection algorithm            → VARIANT-DIFFERENCES.md
+Variant switching (post-install)        → VARIANT-DIFFERENCES.md
+VPN                                     → NETWORKING.md, PRIVACY.md
+Wayland/KWin                            → BOOT-PROCESS.md (pending), DESKTOP.md (pending)
+WebRTC                                  → MULTIMEDIA.md
+Wi-Fi firmware/drivers                  → NETWORKING.md
+
+15. Key Decisions Log
+
+Decision                              Choice           Rationale
+──────────────────────────────────────────────────────────────────────
+Base distribution                     Ubuntu Server LTS  Fresher kernel/Mesa, 10yr ESM, clean base
+Architecture                          x86_64 only       32-bit requires library forking
+Display server                        Wayland (KWin)    Modern, XWayland fallback validated
+Desktop shell                         Custom (not Plasma) Lightweight, cohesive UX
+Package manager (user apps)           Flatpak           Sandboxed, easy updates via Discover
+Filesystem                            ext4 everywhere    Simplicity, consistency, reliability
+Encryption                            None (deliberate)  Beginner recovery simplicity
+Bootloader                            GRUB2              Reliable, well-understood, Limine later
+Swap strategy                         ZRAM + swap file   Compressed RAM first, disk second
+Audio server                          PipeWire           Modern, low overhead, PulseAudio compat
+Video accel                           VA-API             Hardware decode for H.264/VP9 on N4020
+AV1 in Firefox                        Disabled            N4020 lacks AV1 decode, force VP9
+eMMC                                  Not supported      Wear-out risk (user experience)
+No dual boot                          Yes                Simplify for beginners
+No guest session                      Yes                Complexity + data leakage risk
+No telemetry                          Absolute            BDFL-level decision, non-negotiable
+No cloud integration                  Yes                Privacy by default
+License (code)                        GPLv2+             Compatible with KDE, Flatpak, Ubuntu
+License (docs/artwork)                CC-BY-SA 4.0       Free documentation
+DCO over CLA                          DCO                Lighter barrier to contributions
+Governance                            BDFL               Clear decision authority initially
+Documentation-first                   Yes                Discuss → converge → docs → code
+
+16. Development Phases
+
+Phase 1 — Architecture Design                    ✅ COMPLETE
+├── All major architectural decisions resolved
+├── All open questions closed
+└── Documentation structure designed (70 files)
+
+Phase 2 — Specification Documents                 🔄 IN PROGRESS (8/34 complete)
+├── ✅ POWER-MANAGEMENT.md
+├── ✅ MULTIMEDIA.md
+├── ✅ NETWORKING.md
+├── ✅ DISASTER-RECOVERY.md
+├── ✅ SECURITY.md
+├── ✅ PRIVACY.md
+├── ✅ CONFIGURATION.md
+├── ✅ VARIANT-DIFFERENCES.md
+├── 🔲 BOOT-PROCESS.md              ← NEXT PRIORITY
+├── 🔲 KERNEL.md
+├── 🔲 DESKTOP.md
+├── 🔲 MEMORY.md
+├── 🔲 ARCHITECTURE.md
+├── 🔲 DESIGN-DECISIONS.md
+├── 🔲 INSTALLER.md
+├── 🔲 PERFORMANCE-BASELINES.md (needs hardware testing)
+└── 🔲 Remaining meta/user/dev docs
+
+Phase 3 — Prototyping                              🔲 NOT STARTED
+├── Build SPIKE base ISO
+├── Implement spike-config
+├── Implement Spike Shell
+├── Implement installer
+├── Implement Spike Rescue
+└── Test on Celeron N4020, AMD A4, ThinkPad P50
+
+Phase 4 — Alpha Release (8 months from start)      🔲 NOT STARTED
+├── Functional system on target hardware
+├── Public read-only repo
+├── Bug reports and hardware submissions accepted
+└── PERFORMANCE-BASELINES.md populated with real numbers
+
+Phase 5 — Beta Release (18 months from start)      🔲 NOT STARTED
+├── Feature-complete
+├── Full contributions accepted (with code review)
+├── Branch protection enforced
+└── Translation contributions accepted
+
+Validation priorities (during alpha):
+├── VA-API performance on N4020
+├── PipeWire overhead on 4GB RAM
+├── Discover outside Plasma (KDE standalone context)
+├── KWin Wayland session without plasma-session
+├── ZRAM compression ratio and CPU impact on Celeron
+├── Boot time on HDD vs SSD
+├── Idle memory usage on Standard variant
+└── Firefox with AV1 disabled (VP9 fallback performance)
 
 🐕 BigRangaTech
