@@ -6,7 +6,7 @@ This document is the single source of truth for AI agents (and human contributor
 
 ## 1. Project Overview
 
-| **Property** | **Value** |
+| Property | Value |
 | :-: | :-: |
 | **Project** | Spike |
 | **Organization** | BigRangaTech |
@@ -26,7 +26,7 @@ Spike exists to save cheap, "disposable" laptops from landfill/recycling.
 Core values:
 
 ```
-`├── Repairable: Hardware should be servicable, software should be understandable`
+`├── Repairable: Hardware should be serviceable, software should be understandable`
 
 `├── Accessible: Beginners should feel competent, not overwhelmed`
 
@@ -39,15 +39,43 @@ Core values:
 `└── Honest: No dark patterns, no upsells, no hidden data collection`
 ```
 
-Golden Rules (from design discussions):
+Golden Rules (from `PHILOSOPHY.md` — authoritative source):
 
 ```
-`├── Rule 1: Users never edit config files (Settings GUI handles everything)`
+` 1. Users never edit config files`
 
-`├── Rule 2: CLI tools exist for developers, not users`
+` 2. CLI tools exist for developers only`
 
-`└── Rule 3: If it's not documented, it doesn't exist`
+` 3. If it's not documented, it doesn't exist`
+
+` 4. The user never has to touch the terminal`
+
+` 5. If a GUI doesn't exist either make one or it doesn't exist`
+
+` 6. Privacy is the default, not a toggle`
+
+` 7. Your personal files are always recoverable`
+
+` 8. The laptop belongs to the user. The data belongs to the user.`
+
+` 9. Build software that outlasts the creator`
+
+`10. Lightweight doesn't mean stripped down`
 ```
+
+> **Note:** These rules may expand as the project evolves. Any addition must be logged in `agent-ops/DECISIONS.md` and require explicit BDFL approval.
+
+### GUI Requirement (Golden Rules 4 & 5)
+
+- **GUI required for:** Every built-in Spike system tool and every system setting 
+
+- **GUI NOT required for:** Developer tools (spike-config CLI, debugging utilities, dev-guide tooling) 
+
+- **GUI NOT required for:** User-installed applications (Flatpak apps manage their own UI) 
+
+- **If a system tool/setting has no GUI:** Either build a GUI for it in Settings, or the feature doesn't ship 
+
+- **Goal:** Cohesive, complete desktop experience — no terminal required for any system task 
 
 ## 3. Target Hardware
 
@@ -100,7 +128,7 @@ CPU classification thresholds:
 ```
 `├── "low-end": bogomips \< 2000/core (e.g., AMD A4) → ZRAM skipped, swap only`
 
-`├── "capable": bogomips ≥ 2200/core, dual-core+ (e.g., Celeron N4020) → ZRAM enabled`
+`├── "capable": bogomips \>= 2200/core, dual-core+ (e.g., Celeron N4020) → ZRAM enabled`
 
 `├── "modern": Core i3/i5/i7/i9, Ryzen, Athlon (post-2018) → full capabilities`
 
@@ -111,7 +139,7 @@ CPU classification thresholds:
 
 ### Base System
 
-| **Property** | **Value** |
+| Property | Value |
 | :-: | :-: |
 | **Base** | Ubuntu Server LTS (not Desktop — clean starting point) |
 | **Kernel** | Ubuntu LTS kernel (fresher than Debian Stable, 10-year ESM) |
@@ -132,7 +160,7 @@ See: `VARIANT-DIFFERENCES.md` (authoritative — 14 differences documented)
 
 ### Complete Variant Comparison (14 Differences)
 
-| **\#** | **Feature** | **Spike Standard** | **Spike Plus** |
+| \# | Feature | Spike Standard | Spike Plus |
 | :-: | :-: | :-: | :-: |
 | 1 | ZRAM cap | 4GB max | Uncapped (up to RAM size) |
 | 2 | Animations | Off | On (150-200ms transitions) |
@@ -153,7 +181,7 @@ Everything NOT listed above is identical between variants.
 
 ## 5. Documentation Structure
 
-70 total documents across three tiers:
+70 total documents across three tiers, plus agent operations:
 
 ### TIER 1 — Top-Level Specifications (34 files)
 
@@ -327,6 +355,68 @@ Everything NOT listed above is identical between variants.
 `│   └── 19-architecture-deep-dive.md`
 ```
 
+### Agent Operations (23 files)
+
+Not counted in the 70 specification documents. These are operational reference files for AI agents and human contributors working on Spike.
+
+```
+`├── agent-ops/`
+
+`│   ├── README.md              → Folder index, reading order, orientation`
+
+`│   ├── RULES.md               → Workflow rules (documentation-first mandate)`
+
+`│   ├── CONSTRAINTS.md         → Hard technical constraints (never do X)`
+
+`│   ├── PREFERENCES.md         → Soft preferences (prefer X over Y)`
+
+`│   ├── CONVENTIONS.md         → Code style, naming, commit messages`
+
+`│   ├── PROTOCOLS.md           → Step-by-step procedures for common situations`
+
+`│   ├── PATTERNS.md            → Approved implementation patterns`
+
+`│   ├── TEMPLATES.md           → Fill-in structures for docs/specs/entries`
+
+`│   ├── GLOSSARY.md            → Project terminology`
+
+`│   ├── GOTCHAS.md             → Known traps, easy mistakes`
+
+`│   ├── SELF-CHECK.md          → Pre-completion checklist`
+
+`│   ├── QUICK-REF.md           → One-page cheat sheet of critical info`
+
+`│   ├── FAQ.md                 → Common agent questions with answers`
+
+`│   ├── TROUBLESHOOTING.md     → What to try when the agent gets stuck`
+
+`│   ├── SECURITY-CHECKLIST.md  → Agent-specific security review items`
+
+`│   ├── MISTAKES.md            → Catalog of mistakes (grows over time)`
+
+`│   ├── CHANGELOG.md           → Changelog for agent-ops folder itself`
+
+`│   │`
+
+`│   ├── STATE.md               → Dynamic: progress tracker`
+
+`│   ├── DECISIONS.md           → Dynamic: decision log`
+
+`│   ├── SESSION\_LOG.md         → Dynamic: session history`
+
+`│   │`
+
+`│   └── adapters/`
+
+`│       ├── .cursorrules       → Cursor IDE adapter`
+
+`│       ├── CLAUDE-CODE.md     → Future: Claude Code adapter`
+
+`│       └── AIDER.md           → Future: Aider adapter`
+```
+
+> **For agents:** Read `agent-ops/README.md` first. It defines reading order and how to use the agent-ops folder.
+
 ### Phase 2 Document Status
 
 **COMPLETED — Core technical specs (8 documents, drafted during Phase 2):**
@@ -354,59 +444,73 @@ Everything NOT listed above is identical between variants.
 ```
 `├── ✅ README.md                → Project introduction and quick start`
 
-`├── ✅ PHILOSOPHY.md             → Mission, values, golden rules`
+`├── ✅ PHILOSOPHY.md            → Mission, values, golden rules (10 rules)`
 
-`├── ✅ GOVERNANCE.md             → BDFL model, succession plan`
+`├── ✅ GOVERNANCE.md            → BDFL model, succession plan`
 
-`├── ✅ ARCHITECTURE.md           → System overview, component diagram`
+`├── ✅ ARCHITECTURE.md          → System overview, component diagram`
 
-`├── ✅ DESKTOP.md                → Spike Shell: panel, launcher, notifications`
+`├── ✅ DESKTOP.md               → Spike Shell: panel, launcher, notifications`
 
-`├── ✅ BOOT-PROCESS.md           → Boot sequence, Plymouth, SDDM, services`
+`├── ✅ BOOT-PROCESS.md          → Boot sequence, Plymouth, SDDM, services`
 
-`├── ✅ KERNEL.md                 → Modules, boot params, GPU drivers, sysctl`
+`├── ✅ KERNEL.md                → Modules, boot params, GPU drivers, sysctl`
 
-`├── ✅ PERFORMANCE-BASELINES.md  → Benchmarks (estimates until alpha)`
+`├── ✅ PERFORMANCE-BASELINES.md → Benchmarks (estimates until alpha)`
 
-`├── ✅ INSTALLER.md              → 10-step installer, detection, partitioning`
+`├── ✅ INSTALLER.md             → 10-step installer, detection, partitioning`
 
-`├── ✅ DISASTER-RECOVERY.md      → (also in Phase 2 — fully drafted)`
+`├── ✅ DISASTER-RECOVERY.md     → (also in Phase 2 — fully drafted)`
 
-`├── ✅ BRANDING.md               → Logo, splash, GRUB theme, colors, typography`
+`├── ✅ BRANDING.md              → Logo, splash, GRUB theme, colors, typography`
 
-`├── ✅ TROUBLESHOOTING.md        → Common problems and solutions`
+`├── ✅ TROUBLESHOOTING.md       → Common problems and solutions`
 
-`├── ✅ FAQ.md                    → Frequently asked questions`
+`├── ✅ FAQ.md                   → Frequently asked questions`
 
-`├── ✅ MIGRATION-GUIDE.md        → Coming from Windows/macOS/other Linux`
+`├── ✅ MIGRATION-GUIDE.md       → Coming from Windows/macOS/other Linux`
 
-`├── ✅ SUPPORT.md                → How to get help, report bugs, feedback`
+`├── ✅ SUPPORT.md               → How to get help, report bugs, feedback`
 
-`├── ✅ END-OF-LIFE-POLICY.md     → EOL schedule, LTS commitment`
+`├── ✅ END-OF-LIFE-POLICY.md    → EOL schedule, LTS commitment`
 
-`├── ✅ ROADMAP.md                → Development timeline, milestones`
+`├── ✅ ROADMAP.md               → Development timeline, milestones`
 
-`├── ✅ CHANGELOG.md              → Version history format and milestones`
+`├── ✅ CHANGELOG.md             → Version history format and milestones`
 
-`├── ✅ CODE\_OF\_CONDUCT.md        → Community standards and enforcement`
+`├── ✅ CODE\_OF\_CONDUCT.md       → Community standards and enforcement`
 
-`├── ✅ CONTRIBUTING.md           → How to contribute (phased model, DCO)`
+`├── ✅ CONTRIBUTING.md          → How to contribute (phased model, DCO)`
 
-`├── ✅ AGENTS.md                 → This file (master reference)`
+`├── ✅ AGENTS.md                → This file (master reference)`
 
-`└── ✅ MEMORY.md                 → ZRAM/swap spec, memory ladder, earlyoom`
+`├── ✅ MEMORY.md                → ZRAM/swap spec, memory ladder, earlyoom`
+
+`├── ✅ INDEX.md                 → Master document index`
+
+`├── ✅ DESIGN-DECISIONS.md      → Rationale for every major decision`
+
+`├── ✅ ACCESSIBILITY.md         → Screen reader, keyboard nav, contrast`
+
+`├── ✅ SECURITY.md              → (also in Phase 2 — fully drafted)`
+
+`├── ✅ PRIVACY.md               → (also in Phase 2 — fully drafted)`
+
+`├── ✅ NETWORKING.md            → (also in Phase 2 — fully drafted)`
+
+`├── ✅ POWER-MANAGEMENT.md     → (also in Phase 2 — fully drafted)`
+
+`├── ✅ MULTIMEDIA.md            → (also in Phase 2 — fully drafted)`
+
+`├── ✅ VARIANT-DIFFERENCES.md  → (also in Phase 2 — fully drafted)`
+
+`└── ✅ HARDWARE.md              → Hardware tiers, detection logic, support`
 ```
 
-**REMAINING (top-level, pending formatting or drafting):**
+**REMAINING (top-level, pending drafting):**
 
 ```
-`├── 🔲 INDEX.md                 → Master document index`
-
 `├── 🔲 LICENSE                   → GPLv2+ (code), CC-BY-SA 4.0 (docs/artwork)`
-
-`├── 🔲 DESIGN-DECISIONS.md      → Rationale for every major decision`
-
-`├── 🔲 ACCESSIBILITY.md         → Screen reader, keyboard nav, contrast`
 
 `├── 🔲 TRANSLATIONS.md          → i18n framework, translation contribution`
 
@@ -421,9 +525,59 @@ Everything NOT listed above is identical between variants.
 `└── 🔲 All 19 dev-guide/ sub-documents`
 ```
 
+**AGENT OPERATIONS (in progress):**
+
+```
+`├── ✅ README.md               → Folder index, reading order`
+
+`├── ✅ RULES.md                → Workflow rules, documentation-first mandate`
+
+`├── ✅ CONSTRAINTS.md         → Hard technical constraints`
+
+`├── ✅ GLOSSARY.md             → Project terminology`
+
+`├── 🔲 CONVENTIONS.md         → Code style, naming, commits (next)`
+
+`├── 🔲 PROTOCOLS.md           → Step-by-step procedures`
+
+`├── 🔲 PATTERNS.md            → Implementation patterns`
+
+`├── 🔲 TEMPLATES.md           → Fill-in structures`
+
+`├── 🔲 SELF-CHECK.md          → Pre-completion checklist`
+
+`├── 🔲 SECURITY-CHECKLIST.md → Agent-specific security review`
+
+`├── 🔲 GOTCHAS.md             → Known traps`
+
+`├── 🔲 PREFERENCES.md        → Soft preferences`
+
+`├── 🔲 QUICK-REF.md          → One-page cheat sheet`
+
+`├── 🔲 FAQ.md                → Common agent questions`
+
+`├── 🔲 TROUBLESHOOTING.md    → What to try when stuck`
+
+`├── 🔲 MISTAKES.md           → Common mistakes catalog`
+
+`├── 🔲 CHANGELOG.md          → agent-ops changelog`
+
+`├── 🔲 STATE.md              → Dynamic (initialize at Phase 3 start)`
+
+`├── 🔲 DECISIONS.md          → Dynamic (initialize with founding decisions)`
+
+`├── 🔲 SESSION\_LOG.md        → Dynamic (initialize at Phase 3 start)`
+
+`├── 🔲 adapters/.cursorrules → Cursor adapter`
+
+`├── 🔲 adapters/CLAUDE-CODE.md → Future`
+
+`└── 🔲 adapters/AIDER.md     → Future`
+```
+
 ## 6. Organization & Branding
 
-| **Property** | **Value** |
+| Property | Value |
 | :-: | :-: |
 | **Organization** | BigRangaTech (existing org with multiple projects) |
 | **Product** | Spike (dedicated project under BigRangaTech) |
@@ -487,7 +641,7 @@ Architecture: x86\_64 only
 
 ### Display & Desktop
 
-| **Property** | **Value** |
+| Property | Value |
 | :-: | :-: |
 | **Display server** | Wayland (KWin as compositor) |
 | **XWayland** | Available as fallback for X11-only applications |
@@ -547,7 +701,7 @@ Flatpak via Discover for user applications:
 
 ### Bootloader
 
-| **Property** | **Value** |
+| Property | Value |
 | :-: | :-: |
 | **Bootloader** | GRUB2 (current) |
 | **Future** | Documented migration path to Limine (not imminent) |
@@ -586,7 +740,7 @@ Boot parameters:
 
 ### Partitioning & Storage
 
-| **Property** | **Value** |
+| Property | Value |
 | :-: | :-: |
 | **Partitioning** | Fully automatic, no manual option (targeting beginners) |
 | **Filesystem** | ext4 everywhere (Btrfs considered and rejected for simplicity) |
@@ -652,7 +806,7 @@ ZRAM:
 
 `├── Priority: 100`
 
-`├── Only enabled on capable CPUs (dual-core+, bogomips ≥ ~2200/core)`
+`├── Only enabled on capable CPUs (dual-core+, bogomips \>= ~2200/core)`
 
 `├── Low-end CPUs (AMD A4): ZRAM skipped, swap only`
 
@@ -760,7 +914,7 @@ Sleep states:
 ```
 `├── Suspend: Default sleep action`
 
-`├── Hibernate: Available if swap ≥ RAM`
+`├── Hibernate: Available if swap \>= RAM`
 
 `├── Hybrid sleep: ON for Standard (safety net), OFF for Plus`
 
@@ -907,7 +1061,7 @@ Keyboard shortcuts:
 
 See: `NETWORKING.md` (complete)
 
-| **Property** | **Value** |
+| Property | Value |
 | :-: | :-: |
 | **Network manager** | NetworkManager (sole manager) |
 | **DHCP client** | dhclient |
@@ -1406,7 +1560,7 @@ Architecture:
 ```
 `┌─────────────┐     DBus      ┌──────────────────┐     generates     ┌──────────┐`
 
-`│ Settings GUI │ ──────────▶ │  spike-config    │ ────────────────▶ │ Config   │`
+`│ Settings GUI │ ──────────▶  │  spike-config    │ ────────────────▶ │ Config   │`
 
 `│ (thin client)│              │  (state store +  │                   │ Files    │`
 
@@ -1923,7 +2077,7 @@ Theme engine:
 
 ## 14. Cross-Reference Index
 
-| **Topic** | **Document(s)** |
+| Topic | Document(s) |
 | :-: | :-: |
 | Adaptive memory (ZRAM/swap) | `MEMORY.md`, `CONFIGURATION.md` |
 | Animations (variant difference) | `VARIANT-DIFFERENCES.md` |
@@ -2004,7 +2158,7 @@ Theme engine:
 
 ## 15. Key Decisions Log
 
-| **Decision** | **Choice** | **Rationale** |
+| Decision | Choice | Rationale |
 | :-: | :-: | :-: |
 | Base distribution | Ubuntu Server LTS | Fresher kernel/Mesa, 10yr ESM, clean base |
 | Architecture | x86\_64 only | 32-bit requires library forking |
@@ -2028,6 +2182,8 @@ Theme engine:
 | DCO over CLA | DCO | Lighter barrier to contributions |
 | Governance | BDFL | Clear decision authority initially |
 | Documentation-first | Yes | Discuss → converge → docs → code |
+| Golden Rules expanded | 10 rules (from 3) | Rules 4-10 added: no terminal, GUI completeness, privacy default, recovery guarantee, user sovereignty, outlast creator, lightweight not stripped |
+
 
 ## 16. Development Phases
 
@@ -2041,66 +2197,36 @@ Theme engine:
 `└── Documentation structure designed (70 files)`
 ```
 
-**Phase 2 — Specification Documents** 🔄 IN PROGRESS (8 core technical specs drafted; 14 additional top-level docs formatted for GitLab)
+**Phase 2 — Specification Documents** ✅ NEARLY COMPLETE
 
 ```
-`├── ✅ POWER-MANAGEMENT.md`
+`├── ✅ All 34 top-level specs drafted (31 formatted, 3 pending: LICENSE, TRANSLATIONS.md, USER-GUIDE.md)`
 
-`├── ✅ MULTIMEDIA.md`
+`├── ✅ INDEX.md formatted (master document index)`
 
-`├── ✅ NETWORKING.md`
+`├── ✅ AGENTS.md updated (master reference, 10 Golden Rules)`
 
-`├── ✅ DISASTER-RECOVERY.md`
+`├── ✅ PHILOSOPHY.md updated (10 Golden Rules with detailed explanations)`
 
-`├── ✅ SECURITY.md`
+`├── ✅ agent-ops/ folder created (4 of 23 files complete: README, RULES, CONSTRAINTS, GLOSSARY)`
 
-`├── ✅ PRIVACY.md`
+`├── 🔲 LICENSE (full license text — GPLv2+ + CC-BY-SA 4.0)`
 
-`├── ✅ CONFIGURATION.md`
+`├── 🔲 TRANSLATIONS.md (i18n framework)`
 
-`├── ✅ VARIANT-DIFFERENCES.md`
-
-`├── ✅ BOOT-PROCESS.md`
-
-`├── ✅ KERNEL.md`
-
-`├── ✅ DESKTOP.md`
-
-`├── ✅ MEMORY.md`
-
-`├── ✅ ARCHITECTURE.md`
-
-`├── ✅ INSTALLER.md`
-
-`├── ✅ PERFORMANCE-BASELINES.md (estimates until alpha)`
-
-`├── ✅ README.md, PHILOSOPHY.md, GOVERNANCE.md, ROADMAP.md, END-OF-LIFE-POLICY.md`
-
-`├── ✅ BRANDING.md, TROUBLESHOOTING.md, FAQ.md, MIGRATION-GUIDE.md, SUPPORT.md`
-
-`├── ✅ CHANGELOG.md, CODE\_OF\_CONDUCT.md, CONTRIBUTING.md, AGENTS.md`
-
-`├── 🔲 DESIGN-DECISIONS.md`
-
-`├── 🔲 ACCESSIBILITY.md`
-
-`├── 🔲 TRANSLATIONS.md`
-
-`├── 🔲 USER-GUIDE.md`
-
-`├── 🔲 INDEX.md`
-
-`├── 🔲 LICENSE`
+`├── 🔲 USER-GUIDE.md (top-level overview, not sub-docs)`
 
 `├── 🔲 All 17 user-guide/ sub-documents`
 
-`└── 🔲 All 19 dev-guide/ sub-documents`
+`├── 🔲 All 19 dev-guide/ sub-documents`
+
+`└── 🔲 Remaining agent-ops/ files (19 of 23)`
 ```
 
 **Phase 3 — Prototyping** 🔲 NOT STARTED
 
 ```
-`├── Build SPIKE base ISO`
+`├── Build Spike base ISO`
 
 `├── Implement spike-config`
 
@@ -2156,6 +2282,7 @@ Validation priorities (during alpha):
 
 `└── Firefox with AV1 disabled (VP9 fallback performance)`
 ```
+
 
 🐕 BigRangaTech
 
