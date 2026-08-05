@@ -1,11 +1,9 @@
 # live-build `config/`
 
-Placeholder tree for the Spike live-build configuration.
-
 | Path | Role |
 | :-: | :-: |
-| `package-lists/` | Package lists installed into the chroot/squashfs |
-| `hooks/` | Hooks to strip Snap/telemetry, seed Flatpak, install Spike packages |
-| `includes.chroot/` | Files copied into the chroot (themes, defaults, installer desktop entry) |
+| `package-lists/spike-live.list.chroot` | Stage 1 live + admin packages |
+| `hooks/0500-spike-strip-telemetry.chroot` | Strip snap/cloud/telemetry |
+| `includes.chroot/` | Overlay files (hostname for Stage 1) |
 
-Fill these when implementing the first real ISO. Keep **one** shared package set; do not fork lists into `standard` vs `plus` ISOs.
+Generated files from `lb config` (`config/bootstrap`, `config/chroot`, etc.) are gitignored.

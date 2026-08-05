@@ -1,10 +1,5 @@
-# Hooks (stubs)
+# Hooks
 
-Place live-build hooks here (e.g. `normal/` chroot hooks) for:
+- `0500-spike-strip-telemetry.chroot` — purge snap/cloud/telemetry packages if present.
 
-- Removing Snap / Ubuntu telemetry packages
-- Pre-seeding Flatpak runtimes
-- Installing Spike `.deb` packages built elsewhere in the repo
-- Live session tweaks
-
-Hooks must not produce a second ISO variant.
+Add further hooks as needed (Flatpak seed, Spike .deb install). Soft-fail on missing packages.

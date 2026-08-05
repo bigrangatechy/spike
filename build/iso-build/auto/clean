@@ -1,0 +1,7 @@
+#!/bin/sh
+# Prefer scripts/build-iso.sh --clean-only (full Spike clean).
+# This auto/clean is what plain `lb clean` invokes — purge + wipe stages.
+set -e
+lb clean noauto --all "${@}" || true
+lb clean noauto --cache || true
+lb clean noauto --stage || true

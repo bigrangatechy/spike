@@ -1,0 +1,23 @@
+# live-build outputs (do not commit)
+*.iso
+*.img
+*.tar
+*.contents
+*.packages
+*.files
+*.zsync
+*.log
+cache/
+chroot/
+binary/
+.build/
+.build/
+.tmp/
+.stage/
+config/bootstrap
+config/chroot
+config/common
+config/binary
+config/source
+config/bootstrap
+archives/

@@ -2,86 +2,122 @@
 
 ## Purpose
 
-How Spike’s **single** hybrid live ISO is meant to be built with **live-build**. This is the build cookbook entry; it does not replace `ARCHITECTURE.md`, `INSTALLER.md`, or `VARIANT-DIFFERENCES.md`.
+How Spike’s **single** hybrid live ISO is built with **live-build**. This is the build cookbook entry; it does not replace `ARCHITECTURE.md`, `INSTALLER.md`, or `VARIANT-DIFFERENCES.md`.
 
 ## Locked rules
 
-1. **Engine:** live-build (`build/iso-build/`).  
+1. **Engine:** live-build (`build/iso-build/`), `--mode ubuntu`, distribution **resolute** (26.04).  
 2. **One ISO:** Do not build separate Standard and Plus ISOs. There is no `./scripts/build-iso.sh --variant standard|plus`.  
 3. **Variant at install:** Standard vs Plus is applied by the custom installer + `spike-config` after copying the system (see `INSTALLER.md`, `VARIANT-DIFFERENCES.md`).  
-4. **Installer binary:** Custom Qt `spike-installer` ships *on* the ISO; live-build does not use Calamares.
+4. **Installer binary:** Custom Qt `spike-installer` ships *on* the ISO later; live-build does not use Calamares.  
+5. **Installed disk FS:** **ext4**. **squashfs** is only the compressed root on the ISO/live media.
 
 ## High-level flow
 
 ```
-Host (deps from 03-build-environment.md)
+Host (Ubuntu 26.04 recommended; deps from 03-build-environment.md)
         │
         ▼
-./scripts/build-iso.sh
+sudo ./scripts/build-iso.sh
         │
-        ├── lb clean / lb config / lb build  (inside build/iso-build/)
+        ├── lb clean
+        ├── auto/config  → lb config (resolute, iso-hybrid, casper)
+        ├── lb build
         │
         ▼
-Hybrid live ISO
+Hybrid live ISO (*.iso in build/iso-build/)
         │
-        ├── Boot → live Spike Shell (read-only)
-        ├── "Install Spike" → spike-installer
-        └── Spike Rescue → rescue tool
+        ├── Stage 1: boot → live shell / casper environment
+        ├── Later: Spike Shell + "Install Spike" + Rescue
+        └── Installer unpacks squashfs → ext4 on target disk
 ```
 
 ## Recipe layout
 
 ```
 build/iso-build/
+├── .recipe-ready                         → allows build-iso.sh to run lb build
 ├── README.md
-├── auto/                 → live-build auto config helpers
+├── auto/
+│   ├── config                            → lb config flags
+│   ├── clean
+│   └── build
 └── config/
-    ├── package-lists/    → what gets into the squashfs
-    ├── hooks/            → chroot/binary hooks (strip snap/telemetry, seed Flatpak, etc.)
-    └── includes.*/       → files overlaid into the image (branding, spike packages)
+    ├── package-lists/spike-live.list.chroot
+    ├── hooks/0500-spike-strip-telemetry.chroot
+    └── includes.chroot/etc/hostname
 ```
-
-Fill package lists and hooks as packages exist. Until then the tree is a **scaffold** — `build-iso.sh` may exit with a clear “recipe incomplete” message rather than producing a broken ISO.
 
 ## Wrapper script
 
 ```
-./scripts/build-iso.sh           # attempt full build when recipe is ready
-./scripts/build-iso.sh --check-deps
+sudo ./scripts/build-iso.sh --check-deps
+sudo ./scripts/build-iso.sh --config-only
+sudo ./scripts/build-iso.sh              # clean + config + build
+sudo ./scripts/build-iso.sh --clean-only
 ./scripts/build-iso.sh --help
 ```
 
-Expected behavior (stub today, real later):
-
-```
-├── Verify host tools (live-build, debootstrap, …)
-├── cd to build/iso-build/
-├── lb clean (as appropriate)
-├── lb config (from auto/ + config/)
-├── lb build
-└── Report path to the resulting ISO under build/iso-build/ (or a documented output dir)
-```
+Must run as **root** for chroot and loop devices (`sudo`).
 
 Do **not** add Standard/Plus ISO variants to this script.
 
-## What goes on the ISO (summary)
+## If the build looks stuck
 
-From `ARCHITECTURE.md` (sizes approximate):
+Debootstrap shows `I: Retrieving <package>` with no progress bar. A slow/stalled mirror (especially `archive.ubuntu.com` from AU) can sit on one `.deb` for a long time. Check whether `chroot/var/cache/apt/archives/partial/` is still growing.
+
+Default mirror is **`au.archive.ubuntu.com`**. Full clean and retry (plain `lb clean` is not enough — it keeps `cache/`):
 
 ```
-├── Ubuntu Server **26.04 LTS** base (Snap/telemetry stripped in hooks)
-├── KDE standalone apps + Spike Shell + spike-config + spike-installer
-├── Flatpak runtimes pre-seeded for offline-friendly first apps
-├── Firmware / VA-API / networking bits per HARDWARE.md / NETWORKING.md
-├── Branding, Plymouth, GRUB theme
-└── Live session config (autologin or live user as decided in BOOT-PROCESS.md)
+sudo ./scripts/build-iso.sh --clean-only
+sudo ./scripts/build-iso.sh
+tail -f build/iso-build/chroot/debootstrap/debootstrap.log
 ```
 
-Plus vs Standard differences that are **config** (governor, animations, ZRAM caps, etc.) are **not** separate package sets at build time unless a package is required on disk for both and merely enabled later. Prefer one squashfs; enable Plus behavior at install.
+## Stage 1 contents
+
+Current recipe aims for a **bootable stripped live image**:
+
+```
+├── Ubuntu 26.04 bootstrap (Server-oriented archive)
+├── casper live boot + linux-generic
+├── NetworkManager + basic admin tools
+├── Strip hook: snapd / cloud-init / telemetry packages if present
+└── Not yet: Spike Shell, installer, Flatpak seed, full branding
+```
+
+Full product ISO contents (shell, Flatpak, firmware set) land in later stages; see `ARCHITECTURE.md` for the long-term size sketch.
+
+## Smoke-test with QEMU
+
+After a successful `sudo ./scripts/build-iso.sh`, find the ISO in `build/iso-build/` (name varies by live-build; often `*.hybrid.iso` or `live-image-amd64.hybrid.iso`).
+
+```
+# Example — adjust ISO filename to match build output
+ISO=build/iso-build/live-image-amd64.hybrid.iso
+
+qemu-system-x86_64 \
+  -enable-kvm \
+  -m 2048 \
+  -smp 2 \
+  -cdrom "$ISO" \
+  -boot d \
+  -display gtk
+```
+
+Without KVM (slower):
+
+```
+qemu-system-x86_64 -m 2048 -smp 2 -cdrom "$ISO" -boot d -display gtk
+```
+
+**Stage 1 pass criteria:** ISO boots to a live environment (casper). A graphical Spike Shell is **not** required yet.
+
+Install QEMU on the host if needed: `sudo apt install qemu-system-x86`.
 
 ## Relation to install
 
-The installer should prefer **unpacking the live squashfs** (or equivalent image contents) onto the target disk over a full network debootstrap, for speed and offline installs (`INSTALLER.md`). live-build’s job is to produce that squashfs + bootable wrapper.
+The installer should prefer **unpacking the live squashfs** onto the target **ext4** filesystem over a full network debootstrap (`INSTALLER.md`). live-build’s job is to produce that squashfs + bootable wrapper.
 
 ## References
 

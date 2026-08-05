@@ -1,0 +1,43 @@
+#!/bin/sh
+# Spike live-build configuration — Ubuntu Server 26.04 (resolute), one hybrid ISO.
+# Invoked by: lb config (via auto/ mechanism) or scripts/build-iso.sh
+#
+# Mirrors: default to au.archive.ubuntu.com (much faster from AU than archive.ubuntu.com).
+# Override at build time, e.g.:
+#   SPIKE_UBUNTU_MIRROR=http://archive.ubuntu.com/ubuntu/ sudo ./scripts/build-iso.sh
+set -e
+
+MIRROR="${SPIKE_UBUNTU_MIRROR:-http://au.archive.ubuntu.com/ubuntu/}"
+SEC_MIRROR="${SPIKE_UBUNTU_SECURITY_MIRROR:-http://security.ubuntu.com/ubuntu/}"
+
+lb config noauto \
+	--mode ubuntu \
+	--distribution resolute \
+	--parent-distribution resolute \
+	--architectures amd64 \
+	--binary-images iso-hybrid \
+	--debian-installer false \
+	--archive-areas "main restricted universe multiverse" \
+	--mirror-bootstrap "${MIRROR}" \
+	--parent-mirror-bootstrap "${MIRROR}" \
+	--mirror-chroot "${MIRROR}" \
+	--parent-mirror-chroot "${MIRROR}" \
+	--mirror-chroot-security "${SEC_MIRROR}" \
+	--parent-mirror-chroot-security "${SEC_MIRROR}" \
+	--mirror-binary "${MIRROR}" \
+	--parent-mirror-binary "${MIRROR}" \
+	--mirror-binary-security "${SEC_MIRROR}" \
+	--parent-mirror-binary-security "${SEC_MIRROR}" \
+	--linux-flavours generic \
+	--linux-packages "linux-image linux-headers" \
+	--initramfs casper \
+	--initsystem systemd \
+	--apt-recommends false \
+	--firmware-chroot false \
+	--firmware-binary false \
+	--security true \
+	--iso-application "Spike Linux" \
+	--iso-publisher "BigRangaTech; https://spike.bigrangatech.com" \
+	--iso-volume "Spike 26.04" \
+	--bootappend-live "boot=casper hostname=spike-live quiet splash" \
+	"${@}"

@@ -1,0 +1,51 @@
+#!/bin/bash
+# Strip Ubuntu telemetry / cloud / snap components from the live chroot.
+# Soft-fail: packages may already be absent on a Server bootstrap.
+# Spec: ARCHITECTURE.md, PRIVACY.md, SECURITY.md
+set -euo pipefail
+
+export DEBIAN_FRONTEND=noninteractive
+
+PACKAGES=(
+	snapd
+	cloud-init
+	cloud-initramfs-growroot
+	cloud-guest-utils
+	landscape-common
+	landscape-client
+	ubuntu-advantage-tools
+	ubuntu-pro-client
+	ubuntu-report
+	apport
+	apport-symptoms
+	whoopsie
+	popularity-contest
+	motd-news-config
+)
+
+echo "I: Spike strip hook — removing telemetry/cloud/snap packages if present"
+
+to_purge=()
+for pkg in "${PACKAGES[@]}"; do
+	if dpkg-query -W -f='${Status}' "$pkg" 2>/dev/null | grep -q "install ok installed"; then
+		to_purge+=("$pkg")
+	fi
+done
+
+# Deduplicate
+if [[ ${#to_purge[@]} -gt 0 ]]; then
+	mapfile -t to_purge < <(printf '%s\n' "${to_purge[@]}" | sort -u)
+	echo "I: Purging: ${to_purge[*]}"
+	apt-get purge -y "${to_purge[@]}" || true
+	apt-get autoremove --purge -y || true
+else
+	echo "I: Nothing to purge (already clean or never installed)"
+fi
+
+# Ensure snapd does not linger as a masked unit path
+systemctl disable snapd.service 2>/dev/null || true
+systemctl disable snapd.socket 2>/dev/null || true
+systemctl mask snapd.service 2>/dev/null || true
+
+apt-get clean || true
+echo "I: Spike strip hook finished"

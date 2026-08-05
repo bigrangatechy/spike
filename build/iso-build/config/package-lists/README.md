@@ -1,5 +1,5 @@
-# Package lists (stubs)
+# Package lists
 
-Add live-build package list files here (e.g. `spike.list.chroot`) when the first ISO recipe is implemented.
+- `spike-live.list.chroot` — Stage 1 live + admin packages (casper, NetworkManager, tools).
 
-Do not create separate Standard/Plus ISO package lists. One squashfs; variant config at install time.
+Do not split Standard/Plus into separate list files for separate ISOs.

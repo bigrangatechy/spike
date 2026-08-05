@@ -1,0 +1,44 @@
+# Spike Stage-1 live image packages (chroot)
+# Base is Ubuntu 26.04 via live-build bootstrap; this list adds live + usable shell.
+# Only list packages that exist on resolute (verify with: apt-cache policy NAME).
+
+# Live boot (Ubuntu casper stack — no ubiquity/Calamares)
+casper
+discover
+laptop-detect
+os-prober
+
+# Kernel meta (lb also pulls linux-image via --linux-packages)
+linux-generic
+
+# Networking (live Wi-Fi / ethernet; full firmware set comes later)
+network-manager
+wpasupplicant
+iw
+net-tools
+iproute2
+iputils-ping
+
+# Minimal admin / recovery shell
+sudo
+vim-tiny
+nano
+less
+rsync
+parted
+gdisk
+e2fsprogs
+dosfstools
+squashfs-tools
+curl
+ca-certificates
+systemd
+systemd-sysv
+dbus
+
+# Hardware helpers used later by installer detection (lightweight)
+pciutils
+usbutils
+lshw
+dmidecode
+linux-firmware
