@@ -17,7 +17,7 @@
 | ISO / build tooling | ✅ live-build; **Stage 1 recipe ready** (`build/iso-build/.recipe-ready`) |
 | Installer stack | ✅ Custom Qt (not built yet) |
 | `scripts/build-iso.sh` | ✅ Implements lb clean/config/build |
-| Stage 1 live ISO artifact | ⏳ Recipe ready; run locally: `sudo apt install live-build …` then `sudo ./scripts/build-iso.sh` (sudo not available to agent) |
+| Stage 1 live ISO artifact | ✅ Tier 1 firmware ISO: devices detected + login on hardware |
 | Stage 2+ (spike-config, shell, installer) | 🔲 Not started |
 
 ## In Progress
@@ -41,7 +41,7 @@ _None._
 
 ## Next Suggested Work
 
-1. On build host: install deps, `sudo ./scripts/build-iso.sh`, QEMU smoke-boot (see `04-building-spike.md`).  
+1. Stage 1 closed on hardware — next: Stage 2 `spike-config` skeleton (or more firmware only if a chip class is still missing).
 2. Stage 2: `src/spike-config/` skeleton.  
 3. Stage 3: minimal Spike Shell.  
 4. Stage 4: installer unpack squashfs → ext4.

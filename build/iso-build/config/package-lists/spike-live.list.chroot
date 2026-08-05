@@ -41,4 +41,30 @@ pciutils
 usbutils
 lshw
 dmidecode
-linux-firmware
+
+# Prefer minimal firmware meta (linux-image-generic Depends: linux-firmware | linux-firmware-minimal).
+# Full linux-firmware meta also pulls datacenter blobs (Mellanox/Prestera/…) — keep those out.
+linux-firmware-minimal
+
+# Tier 1 laptop firmware (Celeron N4020-class and similar old notebooks).
+# Split packages from Ubuntu 26.04 — expand later if a device class is still missing.
+linux-firmware-intel-wireless
+linux-firmware-intel-graphics
+firmware-sof-signed
+linux-firmware-realtek
+linux-firmware-qualcomm-wireless
+linux-firmware-broadcom-wireless
+linux-firmware-mediatek
+linux-firmware-marvell-wireless
+linux-firmware-amd-graphics
+
+# ISO bootloader (Ubuntu dropped syslinux-themes-ubuntu-oneiric / gfxboot-theme-ubuntu).
+# Keep these in the chroot: live-build removes stage-temporary grub-pc before lb_binary_iso
+# runs grub-mkimage to build grub_eltorito.
+grub-pc-bin
+grub2-common
+genisoimage
+syslinux
+syslinux-common
+# Ubuntu: isohybrid is in syslinux-utils (live-build Check_package wrongly names "syslinux")
+syslinux-utils

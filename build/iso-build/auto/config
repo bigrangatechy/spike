@@ -2,9 +2,9 @@
 # Spike live-build configuration — Ubuntu Server 26.04 (resolute), one hybrid ISO.
 # Invoked by: lb config (via auto/ mechanism) or scripts/build-iso.sh
 #
-# Mirrors: default to au.archive.ubuntu.com (much faster from AU than archive.ubuntu.com).
-# Override at build time, e.g.:
-#   SPIKE_UBUNTU_MIRROR=http://archive.ubuntu.com/ubuntu/ sudo ./scripts/build-iso.sh
+# Mirrors: default to au.archive.ubuntu.com for bootstrap, chroot, updates (volatile),
+# and binary. security.ubuntu.com for -security.
+# Override: SPIKE_UBUNTU_MIRROR=http://archive.ubuntu.com/ubuntu/ sudo ./scripts/build-iso.sh
 set -e
 
 MIRROR="${SPIKE_UBUNTU_MIRROR:-http://au.archive.ubuntu.com/ubuntu/}"
@@ -24,10 +24,16 @@ lb config noauto \
 	--parent-mirror-chroot "${MIRROR}" \
 	--mirror-chroot-security "${SEC_MIRROR}" \
 	--parent-mirror-chroot-security "${SEC_MIRROR}" \
+	--mirror-chroot-volatile "${MIRROR}" \
+	--parent-mirror-chroot-volatile "${MIRROR}" \
 	--mirror-binary "${MIRROR}" \
 	--parent-mirror-binary "${MIRROR}" \
 	--mirror-binary-security "${SEC_MIRROR}" \
 	--parent-mirror-binary-security "${SEC_MIRROR}" \
+	--mirror-binary-volatile "${MIRROR}" \
+	--parent-mirror-binary-volatile "${MIRROR}" \
+	--mirror-debian-installer "${MIRROR}" \
+	--parent-mirror-debian-installer "${MIRROR}" \
 	--linux-flavours generic \
 	--linux-packages "linux-image linux-headers" \
 	--initramfs casper \
@@ -35,7 +41,11 @@ lb config noauto \
 	--apt-recommends false \
 	--firmware-chroot false \
 	--firmware-binary false \
+	--memtest none \
+	--bootloader grub2 \
+	--grub-splash none \
 	--security true \
+	--volatile true \
 	--iso-application "Spike Linux" \
 	--iso-publisher "BigRangaTech; https://spike.bigrangatech.com" \
 	--iso-volume "Spike 26.04" \

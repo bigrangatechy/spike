@@ -28,8 +28,8 @@ Install at least:
 
 ```
 sudo apt update
-sudo apt install live-build debootstrap squashfs-tools xorriso isolinux syslinux-common \
-  grub-pc-bin grub-efi-amd64-bin mtools dosfstools rsync ca-certificates
+sudo apt install live-build debootstrap squashfs-tools xorriso isolinux syslinux-common syslinux-utils \
+  grub-pc-bin grub-efi-amd64-bin grub-efi-amd64-signed shim-signed mtools dosfstools rsync ca-certificates
 ```
 
 Exact package names can vary slightly by Ubuntu series; if `live-build` pulls additional recommends, keep them. Document any host-specific extras in `SESSION_LOG.md` when discovered.

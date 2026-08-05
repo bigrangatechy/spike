@@ -88,32 +88,40 @@ Current recipe aims for a **bootable stripped live image**:
 
 Full product ISO contents (shell, Flatpak, firmware set) land in later stages; see `ARCHITECTURE.md` for the long-term size sketch.
 
-## Smoke-test with QEMU
+## Smoke-test (prefer real hardware)
 
-After a successful `sudo ./scripts/build-iso.sh`, find the ISO in `build/iso-build/` (name varies by live-build; often `*.hybrid.iso` or `live-image-amd64.hybrid.iso`).
+Only keep/use **`build/iso-build/spike-live.iso`**.
+
+### Research notes (why USB may not appear)
+
+Compared to **Kubuntu 26.04** (local reference ISO), Spike’s hybrid GPT layout is now the same shape (protective MBR + ISO9660 + trailing EFI System partition + El Torito BIOS/UEFI). Remaining differences that matter on real laptops:
+
+1. **Secure Boot chain** — Kubuntu ships **shim → grubx64** (Canonical-signed). Unsigned `BOOTX64.EFI` (raw GRUB) is often rejected; some firmwares hide the stick entirely. Spike now uses the host’s `shim-signed` + `grub-efi-amd64-signed` like Ubuntu.
+2. **Writer method** — Prefer **raw `dd`**, or the FAT32 extract method below. GUI writers sometimes rewrite partitions and drop the hybrid GPT/ESP.
+3. **Control test** — On the **same laptop + same USB**, write Kubuntu with the same method. If Kubuntu appears and Spike does not, it’s still an image issue. If **neither** appears, it’s firmware/USB-boot settings (or a dead stick/port).
+
+### Method A — KDE ISO Image Writer (same as Kubuntu)
+
+Use **`build/iso-build/spike-live.iso`** only. The remaster now matches Kubuntu’s hybrid flags (appended EFI partition + shim), so the same writer workflow should apply.
+
+### Method B — FAT32 extract (most compatible for picky UEFI)
+
+Single FAT32 partition with `\EFI\BOOT\BOOTX64.EFI` — what many firmwares look for on removable media:
 
 ```
-# Example — adjust ISO filename to match build output
-ISO=build/iso-build/live-image-amd64.hybrid.iso
-
-qemu-system-x86_64 \
-  -enable-kvm \
-  -m 2048 \
-  -smp 2 \
-  -cdrom "$ISO" \
-  -boot d \
-  -display gtk
+sudo ./scripts/spike-usb-fat32.sh /dev/sdX build/iso-build/spike-live.iso
 ```
 
-Without KVM (slower):
+Boot tips: firmware boot menu → **UEFI USB**; if Secure Boot blocks, enroll MOK or disable Secure Boot; try a USB 2.0 port.
+
+Remaster ISO only: `./scripts/spike-iso-hybridize.sh`
+
+### Optional — QEMU
 
 ```
-qemu-system-x86_64 -m 2048 -smp 2 -cdrom "$ISO" -boot d -display gtk
+ISO=build/iso-build/spike-live.iso
+qemu-system-x86_64 -enable-kvm -m 2048 -smp 2 -cdrom "$ISO" -boot d -display gtk
 ```
-
-**Stage 1 pass criteria:** ISO boots to a live environment (casper). A graphical Spike Shell is **not** required yet.
-
-Install QEMU on the host if needed: `sudo apt install qemu-system-x86`.
 
 ## Relation to install
 

@@ -7,6 +7,9 @@
 *.files
 *.zsync
 *.log
+chroot.headers
+chroot.packages.live
+chroot.packages.install
 cache/
 chroot/
 binary/

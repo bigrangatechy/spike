@@ -43,10 +43,27 @@ check_deps() {
       echo "ok: $cmd ($("$cmd" --version 2>/dev/null | head -n1 || echo present))"
     fi
   done
+  if ! command -v isohybrid >/dev/null 2>&1; then
+    echo "missing: isohybrid (package: syslinux-utils) — needed for iso-hybrid" >&2
+    missing=1
+  else
+    echo "ok: isohybrid"
+  fi
+  for pkgfile in \
+    /usr/lib/shim/shimx64.efi.signed.latest \
+    /usr/lib/grub/x86_64-efi-signed/grubx64.efi.signed
+  do
+    if [[ ! -f "$pkgfile" ]]; then
+      echo "missing: $pkgfile (packages: shim-signed grub-efi-amd64-signed)" >&2
+      missing=1
+    else
+      echo "ok: $pkgfile"
+    fi
+  done
   if [[ "$missing" -ne 0 ]]; then
     echo "Install host packages — see docs/dev-guide/03-build-environment.md" >&2
-    echo "  sudo apt install live-build debootstrap squashfs-tools xorriso isolinux syslinux-common \\" >&2
-    echo "    grub-pc-bin grub-efi-amd64-bin mtools dosfstools rsync ca-certificates" >&2
+    echo "  sudo apt install live-build debootstrap squashfs-tools xorriso isolinux syslinux-common syslinux-utils \\" >&2
+    echo "    grub-pc-bin grub-efi-amd64-bin grub-efi-amd64-signed shim-signed mtools dosfstools rsync ca-certificates" >&2
     return 1
   fi
   if [[ ! -x "${RECIPE}/auto/config" ]]; then
@@ -110,7 +127,7 @@ spike_clean() {
     chroot.packages.live chroot.packages.install chroot.headers \
     binary*.iso binary*.img binary*.tar.gz binary*.zsync* \
     binary.sh binary.contents binary.packages md5sum.txt \
-    live-image*.iso *.hybrid.iso
+    live-image*.iso *.hybrid.iso spike-live.iso
 
   # Keep versioned recipe: auto/, config/package-lists|hooks|includes*, READMEs, .recipe-ready
   echo "Clean finished. Remaining top-level:"
@@ -153,16 +170,31 @@ build_iso() {
   lb build
 
   echo "Build finished. Looking for ISO artifacts..."
-  local iso
-  mapfile -t isos < <(find "$RECIPE" -maxdepth 1 -type f \( -name '*.iso' -o -name '*.hybrid.iso' \) | sort)
-  if [[ ${#isos[@]} -eq 0 ]]; then
+  # live-build may leave the ISO under chroot/ if a post-genisoimage step fails
+  # (e.g. missing isohybrid). Promote those to the recipe root.
+  local stuck
+  for stuck in "${RECIPE}/chroot/"*.iso "${RECIPE}/chroot/"*.hybrid.iso; do
+    if [[ -f "$stuck" ]]; then
+      echo "Found ISO left in chroot/; moving to ${RECIPE}/"
+      mv -f "$stuck" "${RECIPE}/"
+    fi
+  done
+
+  local raw=""
+  if [[ -f "${RECIPE}/binary.hybrid.iso" ]]; then
+    raw="${RECIPE}/binary.hybrid.iso"
+  else
+    raw="$(find "$RECIPE" -maxdepth 1 -type f -name '*.iso' ! -name 'spike-live.iso' | head -n1 || true)"
+  fi
+  if [[ -z "$raw" || ! -f "$raw" ]]; then
     echo "warning: no .iso found in ${RECIPE}; check build.log / lb output" >&2
     exit 3
   fi
-  for iso in "${isos[@]}"; do
-    ls -lh "$iso"
-  done
-  echo "Smoke-test: see docs/dev-guide/04-building-spike.md (QEMU section)"
+
+  echo "Remastering USB-bootable BIOS+UEFI hybrid → spike-live.iso"
+  "${ROOT}/scripts/spike-iso-hybridize.sh" "$raw" "${RECIPE}/spike-live.iso"
+  ls -lh "${RECIPE}/spike-live.iso"
+  echo "Smoke-test: write spike-live.iso to USB (see docs/dev-guide/04-building-spike.md)"
 }
 
 main() {
