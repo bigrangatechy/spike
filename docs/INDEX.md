@@ -40,7 +40,7 @@ Status legend:
 | :-: | :-: | :-: |
 | Top-level | 34 | ✅ 33 complete + 🔲 1 pending (`TRANSLATIONS.md`); `LICENSE` at repo root |
 | User guide | 17 | 🔲 17 not started |
-| Dev guide | 19 | 🔲 19 not started |
+| Dev guide | 19 | 📝 3 drafted (03/04/07) + 🔲 16 not started |
 | **TOTAL** | **70** |  |
 
 > **NOTE:** `AGENTS.md` is the master reference document. It is not counted in the 70 but governs all of them.
@@ -152,29 +152,29 @@ All user-guide documents are 🔲 NOT STARTED. File names below are proposed —
 
 The dev guide provides technical implementation details for contributors building Spike. Target audience: developers with Linux and Qt6 experience. Reading level: technical, with code examples, API references, and internals.
 
-All dev-guide documents are 🔲 NOT STARTED. File names below are proposed — final names confirmed when documents are written.
+File names match the on-disk stubs under `docs/dev-guide/`.
 
 | **Status** | **Document** | **Description** |
 | :-: | :-: | :-: |
-| 🔲 | `dev-guide/build-system.md` | ISO build process, live-build config, build tools |
-| 🔲 | `dev-guide/iso-construction.md` | How the Spike ISO is assembled, contents, boot config |
-| 🔲 | `dev-guide/spike-shell-architecture.md` | Spike Shell internals — process model, IPC, rendering |
-| 🔲 | `dev-guide/qml-components.md` | QML component library — panels, applets, dialogs |
-| 🔲 | `dev-guide/spike-config-internals.md` | state.json schema, config modules, rebuild process |
-| 🔲 | `dev-guide/installer-development.md` | Installer internals — Calamares config or custom |
-| 🔲 | `dev-guide/theme-system.md` | Qt stylesheet (QSS), theme engine, variant theming |
-| 🔲 | `dev-guide/icon-theme-spec.md` | Icon theme structure, freedesktop.org spec, overrides |
-| 🔲 | `dev-guide/kwin-configuration.md` | KWin setup, window decorations, effects, rules |
-| 🔲 | `dev-guide/sddm-theme-dev.md` | SDDM QML theme development, authentication flow |
-| 🔲 | `dev-guide/plymouth-theme-dev.md` | Plymouth theme scripts, rendering modes, variants |
-| 🔲 | `dev-guide/grub-theme-dev.md` | GRUB theme files, font compilation, boot parameters |
-| 🔲 | `dev-guide/kernel-module-management.md` | Module loading, blacklisting, DKMS, firmware handling |
-| 🔲 | `dev-guide/zram-implementation.md` | ZRAM setup, zram-generator config, compression testing |
-| 🔲 | `dev-guide/flatpak-integration.md` | Flatpak permissions, portals, overrides, Discover |
-| 🔲 | `dev-guide/ci-cd-pipelines.md` | GitLab CI config, DCO enforcement, build automation |
-| 🔲 | `dev-guide/testing-framework.md` | Test types, test runners, coverage, hardware testing |
-| 🔲 | `dev-guide/release-process.md` | Release checklist, ISO signing, publication, mirroring |
-| 🔲 | `dev-guide/coding-standards.md` | Detailed per-language conventions, linting, formatting |
+| 🔲 | `dev-guide/01-getting-started.md` | Dev onboarding |
+| 🔲 | `dev-guide/02-repo-structure.md` | Repository layout |
+| 📝 | `dev-guide/03-build-environment.md` | Host deps for live-build / ISO work |
+| 📝 | `dev-guide/04-building-spike.md` | live-build recipe, `build-iso.sh`, one-ISO rule |
+| 🔲 | `dev-guide/05-building-components.md` | Building individual Spike packages |
+| 🔲 | `dev-guide/06-spike-shell-architecture.md` | Spike Shell internals — process model, IPC, rendering |
+| 📝 | `dev-guide/07-installer-internals.md` | Custom Qt spike-installer (not Calamares) |
+| 🔲 | `dev-guide/08-rescue-tool-internals.md` | Spike Rescue internals |
+| 🔲 | `dev-guide/09-spike-config-internals.md` | state.json schema, config modules |
+| 🔲 | `dev-guide/10-branding-and-theming.md` | Themes, QSS, GRUB/Plymouth/SDDM assets |
+| 🔲 | `dev-guide/11-testing.md` | Test types, runners, hardware testing |
+| 🔲 | `dev-guide/12-debugging.md` | Debugging guide |
+| 🔲 | `dev-guide/13-git-workflow.md` | Branches, MRs, DCO |
+| 🔲 | `dev-guide/14-contribution-phases.md` | What is accepted when |
+| 🔲 | `dev-guide/15-coding-conventions.md` | Per-language conventions (see also agent-ops/CONVENTIONS.md) |
+| 🔲 | `dev-guide/16-translation-workflow.md` | i18n contribution |
+| 🔲 | `dev-guide/17-release-process.md` | Release checklist, ISO signing, publication |
+| 🔲 | `dev-guide/18-accessibility-development.md` | A11y implementation notes |
+| 🔲 | `dev-guide/19-appendix-reference.md` | Appendix / reference |
 
 ## Topic Index
 
@@ -186,11 +186,11 @@ Find documents by topic. A document may appear under multiple topics.
 ├── Boot sequence (full):              BOOT-PROCESS.md
 ├── GRUB bootloader (theme):           BRANDING.md
 ├── GRUB bootloader (technical):       BOOT-PROCESS.md
-├── GRUB theme development:            dev-guide/grub-theme-dev.md 🔲
+├── GRUB theme development:            dev-guide/10-branding-and-theming.md 🔲
 ├── Plymouth (splash screen):         BOOT-PROCESS.md, BRANDING.md
-├── Plymouth theme development:        dev-guide/plymouth-theme-dev.md 🔲
+├── Plymouth theme development:        dev-guide/10-branding-and-theming.md 🔲
 ├── SDDM (login screen):               BOOT-PROCESS.md, BRANDING.md
-├── SDDM theme development:            dev-guide/sddm-theme-dev.md 🔲
+├── SDDM theme development:            dev-guide/10-branding-and-theming.md 🔲
 ├── Boot failure recovery:            BOOT-PROCESS.md, DISASTER-RECOVERY.md
 ├── Boot counter mechanism:           BOOT-PROCESS.md
 └── Boot performance targets:          PERFORMANCE-BASELINES.md
@@ -224,7 +224,7 @@ Find documents by topic. A document may appear under multiple topics.
 ├── Qt stylesheet (QSS):               BRANDING.md
 ├── KWin window decorations:           BRANDING.md, DESKTOP.md
 ├── Cursor theme:                      BRANDING.md
-└── Theme system development:          dev-guide/theme-system.md 🔲
+└── Theme system development:          dev-guide/10-branding-and-theming.md 🔲
 ```
 
 ### File Management
@@ -279,7 +279,8 @@ Find documents by topic. A document may appear under multiple topics.
 ├── Post-install wizard:              INSTALLER.md
 ├── Creating installer USB:           MIGRATION-GUIDE.md
 ├── Booting from USB:                 MIGRATION-GUIDE.md
-└── Installer development:            dev-guide/installer-development.md 🔲
+├── ISO build (live-build):           dev-guide/03-build-environment.md 📝, dev-guide/04-building-spike.md 📝
+└── Installer development:            dev-guide/07-installer-internals.md 📝
 ```
 
 ### Memory
@@ -290,7 +291,7 @@ Find documents by topic. A document may appear under multiple topics.
 ├── Earlyoom (OOM killer):            MEMORY.md
 ├── Swappiness:                      HARDWARE.md, MEMORY.md
 ├── Memory budget (components):      MEMORY.md
-├── ZRAM implementation:              dev-guide/zram-implementation.md 🔲
+├── ZRAM implementation:              MEMORY.md, dev-guide/09-spike-config-internals.md 🔲
 └── RAM detection and classification: HARDWARE.md
 ```
 

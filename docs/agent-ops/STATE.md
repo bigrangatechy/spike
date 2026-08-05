@@ -12,12 +12,12 @@
 | Root `LICENSE` + `LICENSE-CC-BY-SA-4.0` | ✅ Present (also under `licences/`) |
 | `TRANSLATIONS.md` | 🔲 Not started (not a build blocker) |
 | `USER-GUIDE.md` + `user-guide/` | 🔲 Stubs — fill as the desktop ships |
-| `dev-guide/` | 🔲 Stubs — fill as implementation proceeds |
+| `dev-guide/` | 📝 03/04/07 drafted (build + installer); rest stubs |
 | agent-ops core (RULES, CONSTRAINTS, GLOSSARY, CONVENTIONS, PROTOCOLS) | ✅ Written |
 | agent-ops remaining static helpers | 🔲 Empty stubs |
-| ISO / build tooling choice | ⏳ Open — BDFL undecided (live-build vs custom, etc.) |
-| Installer stack choice | ⏳ Open — Calamares vs custom (product flow is specified) |
-| Source / ISO / CI scaffolding | 🔲 Empty stubs only |
+| ISO / build tooling | ✅ **live-build** (one hybrid ISO) on **Ubuntu Server 26.04 LTS** base |
+| Installer stack | ✅ **Custom Qt Widgets** (`spike-installer`) — not Calamares |
+| `build/iso-build/` + `scripts/build-iso.sh` | ✅ Scaffold/stub present (no working ISO yet) |
 | Prototyping (base ISO, spike-config, shell, installer, rescue) | 🔲 Not started |
 
 ## In Progress
@@ -26,15 +26,14 @@ _None._
 
 ## Blocked / Waiting On Decision
 
-| Item | Waiting on | Notes |
-| :-: | :-: | :-: |
-| First ISO build path | BDFL | Build system not chosen yet; product specs do not depend on it |
-| Installer implementation tech | BDFL | `INSTALLER.md` defines UX/flow; packaging tool TBD |
+_None for ISO/installer stack._
 
 ## Recently Completed
 
 | Date | Item |
 | :-: | :-: |
+| 2026-08-05 | Confirmed base pin: Ubuntu Server **26.04 LTS** (stripped) for development window |
+| 2026-08-05 | Locked live-build + one ISO + custom Qt installer; thin dev-guide + build scaffold |
 | 2026-08-05 | GitLab Markdown cleanup (fences, escapes, headings, `.org`→`.com`) |
 | 2026-08-05 | Root CoC → pointer to `docs/CODE_OF_CONDUCT.md` |
 | 2026-08-05 | Root `LICENSE` and `LICENSE-CC-BY-SA-4.0` added (copies of `licences/`) |
@@ -42,10 +41,10 @@ _None._
 
 ## Next Suggested Work
 
-1. Choose ISO build approach when ready (no rush — document the decision in `DECISIONS.md` + thin `dev-guide` pages).  
-2. Keep this file, `DECISIONS.md`, and `SESSION_LOG.md` current every session.  
-3. Refresh stale status lists in `AGENTS.md` / `INDEX.md` when docs change (done this session for known drift).  
-4. Begin prototyping against existing specs when BDFL starts Phase 3 work.
+1. Keep this file, `DECISIONS.md`, and `SESSION_LOG.md` current every session.  
+2. When prototyping starts: flesh out live-build recipe under `build/iso-build/` until `build-iso.sh` produces a bootable image.  
+3. Implement `spike-installer` / `spike-config` / Spike Shell against existing specs.  
+4. Fill remaining `dev-guide/` stubs as subsystems are built.
 
 ## How To Update This File
 

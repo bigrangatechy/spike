@@ -39,9 +39,9 @@ Spike ships as a single ISO that supports two variants: Spike Standard (optimize
 
 ## Base System
 
-### Ubuntu Server LTS
+### Ubuntu Server 26.04 LTS
 
-Spike is built on Ubuntu Server LTS, not Ubuntu Desktop. This provides:
+Spike is built on **Ubuntu Server 26.04 LTS** (Resolute Raccoon), not Ubuntu Desktop. This provides:
 
 - A clean minimal starting point with no desktop bloat 
 
@@ -715,23 +715,32 @@ User can override recommendation.
 
 ## Build System
 
-### Single ISO, Two Configurations
+### Engine: live-build (one ISO)
+
+Spike ISOs are built with **live-build**, wrapped by `scripts/build-iso.sh`. The recipe lives under `build/iso-build/`.
 
 ```
 build/iso-build/
-├── spike-standard.conf   → Active, primary target
-├── spike-plus.conf        → Placeholder, future use
-└── shared-packages.conf  → Common packages for both
+├── auto/                 → live-build auto/* helpers
+├── config/               → package lists, hooks, includes
+└── README.md             → Recipe overview
 ```
 
-**Build:**
+**Build (single artifact):**
 
 ```
-./scripts/build-iso.sh --variant standard
-./scripts/build-iso.sh --variant plus
+./scripts/build-iso.sh
 ```
 
-### Configuration Differences
+There is **no** `--variant standard|plus` build flag. One hybrid live ISO ships both variants’ *capability*; the installer applies Standard or Plus at install time via `spike-config` (see `VARIANT-DIFFERENCES.md`, `INSTALLER.md`).
+
+**Live session:** Boot ISO → Spike Shell (read-only live) → “Install Spike” or Spike Rescue.
+
+**Installer:** Custom Qt Widgets (`spike-installer`) — not Calamares. Live-build only produces the live environment and squashfs; install UX is Spike-owned.
+
+See: `docs/dev-guide/03-build-environment.md`, `docs/dev-guide/04-building-spike.md`, `docs/dev-guide/07-installer-internals.md`.
+
+### Configuration Differences (install-time, not build-time)
 
 | **Setting** | **Spike Standard** | **Spike Plus** |
 | :-: | :-: | :-: |
@@ -749,6 +758,7 @@ build/iso-build/
 | NVIDIA default mode | Integrated Only | Hybrid Mode |
 | CPU governor | `powersave` | `schedutil` |
 
+Authoritative list: `VARIANT-DIFFERENCES.md` (14 differences). Flatpak pre-seed on the **ISO** includes what both variants need; Plus may enable additional runtimes/config at install without a second ISO.
 ### ISO Contents
 
 Approximate ISO size: ~3.1GB

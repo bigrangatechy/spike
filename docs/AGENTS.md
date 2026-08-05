@@ -108,7 +108,7 @@ CPU classification thresholds:
 
 | Property | Value |
 | :-: | :-: |
-| **Base** | Ubuntu Server LTS (not Desktop — clean starting point) |
+| **Base** | Ubuntu Server 26.04 LTS (Resolute) — not Desktop; stripped per architecture/privacy specs |
 | **Kernel** | Ubuntu LTS kernel (fresher than Debian Stable, 10-year ESM) |
 | **Architecture** | x86_64 only (no 32-bit — Y2038 acknowledged for future i386 fork) |
 | **Display** | Wayland (KWin) + XWayland fallback |
@@ -351,7 +351,7 @@ Not counted in the 70 specification documents. These are operational reference f
 
 ```
 ├── 🔲 All 17 user-guide/ sub-documents (stubs — fill as desktop ships)
-└── 🔲 All 19 dev-guide/ sub-documents (stubs — fill as implementation proceeds)
+└── 🔲 Remaining 16 of 19 `dev-guide/` stubs (03/04/07 drafted — build + installer)
 ```
 
 **AGENT OPERATIONS:**
@@ -402,7 +402,7 @@ Each BigRangaTech project gets its own dedicated docs and eventually its own web
 
 ### Base Distribution
 
-Ubuntu Server LTS was chosen over alternatives:
+Ubuntu Server **26.04 LTS** was chosen over alternatives:
 
 Considered and rejected:
 
@@ -1617,14 +1617,14 @@ Theme engine:
 ├── ✅ agent-ops dynamic files initialized: STATE, DECISIONS, SESSION_LOG
 ├── 🔲 TRANSLATIONS.md (i18n framework)
 ├── 🔲 USER-GUIDE.md (top-level overview; sub-docs as desktop ships)
-├── 🔲 user-guide/ and dev-guide/ stubs (fill during implementation)
+├── 🔲 user-guide/ stubs; remaining 16 of 19 `dev-guide/` stubs (03/04/07 drafted)
 └── 🔲 Remaining agent-ops static helpers (PATTERNS, GOTCHAS, etc.)
 ```
 
 **Phase 3 — Prototyping** 🔲 NOT STARTED
 
 ```
-├── Build Spike base ISO (tooling choice still open — see agent-ops/DECISIONS.md)
+├── Build Spike base ISO (live-build; one hybrid ISO — see agent-ops/DECISIONS.md, dev-guide/04-building-spike.md)
 ├── Implement spike-config
 ├── Implement Spike Shell
 ├── Implement installer

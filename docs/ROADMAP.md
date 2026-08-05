@@ -750,7 +750,7 @@ None of these are promised. They are possibilities. The post-1.0 roadmap will be
 | :-: | :-: | :-: | :-: |
 | Solo developer burnout | Medium | High | Realistic pace, community support, BDFL succession plan |
 | Hardware diversity issues | Medium | Medium | Broad testing during alpha/beta, hardware registry |
-| Ubuntu 26.04 LTS delayed | Low | High | Fall back to 24.04 LTS, adjust kernel expectations |
+| Ubuntu 26.04 LTS delayed | Low | High | Base is locked to 26.04; revisit only if archives/support break |
 | Wayland regressions on old hardware | Medium | Medium | XWayland fallback, nouveau fallback, kernel pinning |
 | NVIDIA driver compatibility issues | Medium | Low | nouveau default, proprietary optional, documented limitations |
 | Flatpak runtime bloat | Low | Medium | Selective pre-seeding, runtime cleanup |
@@ -792,7 +792,7 @@ Scope creep is the biggest risk to Spike. The BDFL is responsible for guarding a
 
 | **Dependency** | **Status** | **Impact if delayed** |
 | :-: | :-: | :-: |
-| Ubuntu 26.04 LTS release | Scheduled Apr 2026 | Spike targets this kernel; fallback: 24.04 LTS |
+| Ubuntu 26.04 LTS release | Apr 2026 LTS | Spike base (Server, stripped); see DESIGN-DECISIONS.md |
 | KDE Frameworks 6 (Qt6) | Released | Stable, no risk |
 | PipeWire | Stable | No risk |
 | WirePlumber | Stable | No risk |

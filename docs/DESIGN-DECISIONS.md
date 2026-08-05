@@ -516,6 +516,8 @@ Each decision includes the context that led to it, the alternatives considered, 
 
 **User override:** The recommendation can be overridden, but the installer clearly indicates which variant suits the detected hardware.
 
+**Build tooling:** The ISO is produced with **live-build** (`build/iso-build/`, `scripts/build-iso.sh`). The installer is **custom Qt Widgets** (`spike-installer`), not Calamares. See `docs/dev-guide/04-building-spike.md` and `docs/dev-guide/07-installer-internals.md`; operational log in `docs/agent-ops/DECISIONS.md`.
+
 ## Project
 
 ### Docs-First Methodology

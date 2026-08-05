@@ -171,7 +171,7 @@ Spike is based on Ubuntu Server LTS. The support timeline is tied to Ubuntu's LT
 
 ```
 ├── 24.04 LTS (April 2024) — supported until April 2029
-├── 26.04 LTS (April 2026) — supported until April 2031 (target)
+├── 26.04 LTS (April 2026) — supported until April 2031 (Spike base)
 ├── 28.04 LTS (April 2028) — supported until April 2033 (future)
 └── 2-year cycle between LTS releases
 ```
@@ -179,9 +179,8 @@ Spike is based on Ubuntu Server LTS. The support timeline is tied to Ubuntu's LT
 **Spike Release Alignment:**
 
 ```
-├── Spike 1.0.0 targets Ubuntu 26.04 LTS (if available by alpha start)
-│   ├── Fallback: Ubuntu 24.04 LTS (if 26.04 is delayed)
-│   └── See ROADMAP.md for version targeting
+├── Spike development and 1.x target Ubuntu Server 26.04 LTS (locked)
+│   └── See DESIGN-DECISIONS.md, agent-ops/DECISIONS.md
 ├── Spike major version bumps may align with Ubuntu LTS bumps
 ├── Between LTS releases: point releases ride the same LTS base
 └── Spike's support window is a subset of Ubuntu's LTS window

@@ -6,6 +6,37 @@ Operational decisions that affect how work proceeds. Product/architecture ration
 
 ---
 
+## 2026-08-05 — Base: Ubuntu Server 26.04 LTS (Resolute), stripped
+
+**Decision:** Spike’s base is **Ubuntu Server 26.04 LTS** (“Resolute Raccoon”), not Desktop. Strip Snap, telemetry, cloud-init, and related components per `ARCHITECTURE.md` / `PRIVACY.md` / `SECURITY.md`. live-build recipes and build hosts should target **26.04** archives.
+
+**Why (BDFL):**
+- Locks the base for the current development window; next Ubuntu LTS (28.04) is far enough out to develop without rushing a rebase.
+- Server is a light, supportable substrate (security updates, archive, kernel) so Spike effort stays on **Spike Shell** and the **custom installer** — not reinventing a distro core.
+- Unused kernel modules are disabled carefully at **install time** from detected hardware (see `KERNEL.md`) without breaking usability; that policy is installer/spike-config work, not a custom kernel.
+
+**Product authority:** `DESIGN-DECISIONS.md` (Server 26.04, no custom kernel), `KERNEL.md` (blacklist generation), `INSTALLER.md` (install-time detection + blacklist step).
+
+**Refs:** `DESIGN-DECISIONS.md`, `KERNEL.md`, `ARCHITECTURE.md`, `INSTALLER.md`, `docs/dev-guide/03-build-environment.md`, `docs/dev-guide/04-building-spike.md`, `docs/dev-guide/07-installer-internals.md`
+
+---
+
+## 2026-08-05 — ISO engine: live-build; installer: custom Qt; one ISO
+
+**Decision:**
+- **ISO builder:** [live-build](https://live-team.pages.debian.net/live-manual/), wrapped by `scripts/build-iso.sh`, recipe under `build/iso-build/`.
+- **Artifact:** **One** hybrid live ISO (not separate Standard/Plus downloads).
+- **Variant:** Applied at **install time** via the custom installer + `spike-config` (Plus enables features; same squashfs/codebase).
+- **Installer:** **Custom Qt Widgets** (`spike-installer/` per `INSTALLER.md`) — **not Calamares**.
+
+**Why:** Matches Ubuntu/Debian live-ISO practice (casper-style live session + squashfs unpack). Product already specified one ISO in `VARIANT-DIFFERENCES.md` / `DESIGN-DECISIONS.md`. Installer UX is Spike-specific (10-step beginner flow + Rescue); Calamares would fight that.
+
+**Supersedes:** “ISO build tooling still open” entry below (struck as resolved).
+
+**Refs:** `docs/dev-guide/03-build-environment.md`, `docs/dev-guide/04-building-spike.md`, `docs/dev-guide/07-installer-internals.md`, `build/iso-build/`, `INSTALLER.md`, `VARIANT-DIFFERENCES.md`
+
+---
+
 ## 2026-08-05 — Root Code of Conduct is a pointer
 
 **Decision:** Root `CODE_OF_CONDUCT.md` is a short pointer to canonical `docs/CODE_OF_CONDUCT.md`.
@@ -64,15 +95,11 @@ Operational decisions that affect how work proceeds. Product/architecture ration
 
 ---
 
-## 2026-08-05 — ISO build tooling still open
+## 2026-08-05 — ISO build tooling still open — RESOLVED
 
-**Decision:** *No decision yet.* live-build vs custom (and Calamares vs custom installer implementation) remain TBD.
+**Status:** Superseded 2026-08-05 by “ISO engine: live-build; installer: custom Qt; one ISO”.
 
-**Why:** BDFL not sure what is best yet. Product behavior is specified; packaging choice deferred.
-
-**Do not assume** a build stack in code or docs until this entry is replaced with a concrete choice.
-
-**Refs:** `docs/CONTRIBUTING.md`, `docs/INDEX.md` (dev-guide stubs), `STATE.md`
+**Historical note:** Previously deferred live-build vs custom and Calamares vs custom. Now locked: live-build + custom Qt installer + one ISO.
 
 ---
 

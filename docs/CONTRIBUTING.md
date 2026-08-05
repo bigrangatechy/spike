@@ -83,16 +83,16 @@ Code contributions will become central once the documentation phase completes an
 When the alpha phase begins, code contributions will include:
 
 ```
-├── Spike Shell (Qt6/QML desktop components)
+├── Spike Shell (Qt6 desktop components)
 ├── spike-config (configuration system)
-├── Installer (Calamares configuration or custom)
+├── Installer (custom Qt Widgets — spike-installer; not Calamares)
 ├── KWin configuration and window decoration
 ├── SDDM theme
 ├── GRUB theme and configuration
 ├── Plymouth themes
 ├── Qt stylesheet (spike.qss)
 ├── Icon theme modifications
-├── Build system (live-build or custom ISO builder)
+├── Build system (live-build ISO recipe under build/iso-build/)
 ├── CI/CD pipelines
 ├── Automated tests
 └── Packaging scripts
