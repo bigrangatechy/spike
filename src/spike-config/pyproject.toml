@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "spike-config"
+version = "0.0.1"
+description = "Spike Linux configuration engine (state store + templates)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "GPL-2.0-or-later" }
+authors = [{ name = "BigRangaTech" }]
+
+[project.scripts]
+spike-config = "spike_config.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["spike_config*"]
+
+[tool.setuptools.package-data]
+spike_config = ["py.typed"]

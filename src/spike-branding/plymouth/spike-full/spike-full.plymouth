@@ -1,0 +1,8 @@
+[Plymouth Theme]
+Name=Spike Full
+Description=Spike Plus boot splash — emblem, tagline, progress bar
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/spike-full
+ScriptFile=/usr/share/plymouth/themes/spike-full/spike-full.script

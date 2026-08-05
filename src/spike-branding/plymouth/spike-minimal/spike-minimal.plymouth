@@ -1,0 +1,8 @@
+[Plymouth Theme]
+Name=Spike Minimal
+Description=Spike Standard boot splash — emblem, tagline, progress dots
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/spike-minimal
+ScriptFile=/usr/share/plymouth/themes/spike-minimal/spike-minimal.script

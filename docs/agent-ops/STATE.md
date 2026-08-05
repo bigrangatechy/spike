@@ -1,8 +1,8 @@
 # Spike Agent Ops — Current State
 
-**Last updated:** 2026-08-05  
-**Phase label:** Pre-alpha (Stage 1 prototyping: live ISO)  
-**Note:** “Pre-alpha” remains the project label until Spike is ready for a beta release.
+**Last updated:** 2026-08-06  
+**Phase label:** Pre-alpha (Stage 1 done; Stage 2 skeleton in progress)  
+**Note:** “Pre-alpha” remains the project label until Spike is ready for a beta release. Early implementation stages (1–2+) stay under that label for now — **Phase 2 (Alpha)** in `ROADMAP.md` is not declared open yet.
 
 ## Summary
 
@@ -18,13 +18,14 @@
 | Installer stack | ✅ Custom Qt (not built yet) |
 | `scripts/build-iso.sh` | ✅ Implements lb clean/config/build |
 | Stage 1 live ISO artifact | ✅ Tier 1 firmware ISO: devices detected + login on hardware |
-| Stage 2+ (spike-config, shell, installer) | 🔲 Not started |
+| Stage 2 (`spike-config`) — still pre-alpha | 📝 Skeleton: CLI + templates + modules (not packaged into ISO yet) |
+| Stage 3+ (shell, installer) | 🔲 Not started |
 
 ## In Progress
 
 | Item | Notes |
 | :-: | :-: |
-| Stage 1 — first `lb build` | Recipe + wrapper landed; run `sudo ./scripts/build-iso.sh` on a 26.04 host |
+| Stage 2 — `src/spike-config/` | Working Python engine: state, templates, generate (memory/boot/network/multimedia/security), CLI, tests |
 
 ## Blocked / Waiting On Decision
 
@@ -34,6 +35,9 @@ _None._
 
 | Date | Item |
 | :-: | :-: |
+| 2026-08-06 | Stage 2 skeleton: `src/spike-config/` (CLI, templates, modules, tests) |
+| 2026-08-06 | Stage 2 kept under **pre-alpha** for now (Alpha phase not opened yet) |
+| 2026-08-06 | Boot tagline: "Let's make tech repairable again" |
 | 2026-08-05 | Stage 1 recipe: auto/config (resolute), package list, strip hook, `.recipe-ready` |
 | 2026-08-05 | `build-iso.sh` real lb clean/config/build path |
 | 2026-08-05 | Confirmed base pin: Ubuntu Server **26.04 LTS** (stripped) |
@@ -41,10 +45,10 @@ _None._
 
 ## Next Suggested Work
 
-1. Stage 1 closed on hardware — next: Stage 2 `spike-config` skeleton (or more firmware only if a chip class is still missing).
-2. Stage 2: `src/spike-config/` skeleton.  
-3. Stage 3: minimal Spike Shell.  
-4. Stage 4: installer unpack squashfs → ext4.
+1. Stage 2 deepen: UFW/sudo templates, real detect hooks, Debian package + ISO install.  
+2. Stage 3: minimal Spike Shell.  
+3. Stage 4: installer unpack squashfs → ext4.  
+4. Declare **Phase 2 (Alpha)** later when core stack is far enough — not gated on Stage 2 alone.
 
 ## How To Update This File
 

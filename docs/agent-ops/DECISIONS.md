@@ -2,7 +2,17 @@
 
 Operational decisions that affect how work proceeds. Product/architecture rationale remains in `docs/DESIGN-DECISIONS.md`. Log new entries at the **top** (newest first).
 
-**Last updated:** 2026-08-05
+**Last updated:** 2026-08-06
+
+---
+
+## 2026-08-06 — Stage 2 stays under pre-alpha
+
+**Decision:** **Stage 2** (`spike-config` skeleton and related early work) remains part of **pre-alpha**. Do **not** open **Phase 2 (Alpha)** in `ROADMAP.md` just because Stage 1 closed or Stage 2 starts.
+
+**Why:** Alpha is a longer core-build phase (shell, installer, Tier 1 desktop). Pre-alpha already allows implementation once specs are enough; keeping Stage 2 under that label avoids implying a public alpha calendar or milestone shift.
+
+**Refs:** `STATE.md`, `ROADMAP.md` (Phase 1 / Phase 2), earlier “Pre-alpha label meaning” entry.
 
 ---
 

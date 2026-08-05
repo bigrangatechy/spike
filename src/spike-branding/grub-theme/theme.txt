@@ -1,0 +1,56 @@
+# Spike GRUB theme
+# Spec: docs/BRANDING.md — Dark Base + emblem + tagline
+
+desktop-color: "#1a1a2e"
+title-color: "#a0a0b8"
+title-text: ""
+message-color: "#a0a0b8"
+terminal-box: "terminal_*.png"
+terminal-font: "Unifont Regular 16"
+terminal-left: "0"
+terminal-top: "0"
+terminal-width: "100%"
+terminal-height: "100%"
+terminal-border: "0"
+
+# Emblem — top center (~10% from top)
++ image {
+  top = 8%
+  left = 50%-48
+  width = 96
+  height = 96
+  file = "spike-emblem.png"
+}
+
+# Tagline under emblem
++ image {
+  top = 8%+108
+  left = 50%-96
+  file = "tagline.png"
+}
+
++ boot_menu {
+  left = 20%
+  width = 60%
+  top = 32%
+  height = 50%
+  item_font = "Unifont Regular 16"
+  item_color = "#e0e0e0"
+  selected_item_font = "Unifont Regular 16"
+  selected_item_color = "#ffffff"
+  selected_item_pixmap_style = "selected_*.png"
+  item_height = 28
+  item_padding = 4
+  item_spacing = 4
+  scrollbar = false
+}
+
++ label {
+  top = 92%
+  left = 0
+  width = 100%
+  align = "center"
+  color = "#a0a0b8"
+  font = "Unifont Regular 14"
+  text = "Use ↑↓ to select, Enter to boot. Press 'e' to edit."
+}

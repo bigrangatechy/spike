@@ -1,0 +1,75 @@
+# Spike Full — Plus variant boot splash
+# Background: Dark Base #1a1a2e | Emblem + tagline + progress bar
+
+Window.SetBackgroundTopColor(0.102, 0.102, 0.180);
+Window.SetBackgroundBottomColor(0.102, 0.102, 0.180);
+
+logo.image = Image("logo.png");
+logo.sprite = Sprite(logo.image);
+logo.sprite.SetZ(10);
+
+tagline.image = Image("tagline.png");
+tagline.sprite = Sprite(tagline.image);
+tagline.sprite.SetZ(10);
+
+track.image = Image("progress-track.png");
+track.sprite = Sprite(track.image);
+track.sprite.SetZ(10);
+
+fill.image = Image("progress-fill.png");
+fill.sprite = Sprite();
+fill.sprite.SetZ(11);
+
+progress = 0;
+
+fun center_x(img) {
+    return Window.GetX() + Window.GetWidth() / 2 - img.GetWidth() / 2;
+}
+
+fun layout() {
+    gap_logo_tag = 16;
+    gap_tag_bar = 24;
+    group_h = logo.image.GetHeight() + gap_logo_tag + tagline.image.GetHeight()
+              + gap_tag_bar + track.image.GetHeight();
+    y0 = Window.GetY() + Window.GetHeight() / 2 - group_h / 2;
+
+    logo.sprite.SetX(center_x(logo.image));
+    logo.sprite.SetY(y0);
+
+    tag_y = y0 + logo.image.GetHeight() + gap_logo_tag;
+    tagline.sprite.SetX(center_x(tagline.image));
+    tagline.sprite.SetY(tag_y);
+
+    bar_y = tag_y + tagline.image.GetHeight() + gap_tag_bar;
+    bar_x = center_x(track.image);
+    track.sprite.SetX(bar_x);
+    track.sprite.SetY(bar_y);
+
+    # Crop fill width to progress (min 1px when progress > 0 so sprite exists)
+    w = track.image.GetWidth() * progress;
+    if (progress > 0 && w < 1) {
+        w = 1;
+    }
+    if (w > 0) {
+        fill.sprite.SetImage(fill.image.Scale(w, track.image.GetHeight()));
+        fill.sprite.SetX(bar_x);
+        fill.sprite.SetY(bar_y);
+        fill.sprite.SetOpacity(1);
+    } else {
+        fill.sprite.SetOpacity(0);
+    }
+}
+
+fun progress_callback(p) {
+    progress = p;
+    layout();
+}
+
+fun refresh_callback() {
+    layout();
+}
+
+Plymouth.SetRefreshFunction(refresh_callback);
+Plymouth.SetBootProgressFunction(progress_callback);
+
+layout();

@@ -19,7 +19,8 @@ Spike is:
 ├── Named after a dog — loyal, dependable, approachable
 ├── Built for people, not enthusiasts
 ├── Free and open source (GPLv2+)
-└── Made by BigRangaTech
+├── Made by BigRangaTech
+└── Tagline (boot): "Let's make tech repairable again"
 ```
 
 Spike is NOT:
@@ -715,6 +716,7 @@ GRUB theme: /usr/share/spike/grub/
 ├── theme.txt                    → Theme definition
 ├── background.png               → Dark Base + circuit trace pattern
 ├── spike-emblem.png             → Dog emblem, centered top (96px)
+├── tagline.png                  → "Let's make tech repairable again" under emblem
 └── font.pf2                     → Noto Sans compiled for GRUB
 ```
 
@@ -725,8 +727,10 @@ GRUB theme: /usr/share/spike/grub/
 ```
 ├── Background: #1a1a2e with circuit trace pattern (baked into PNG)
 ├── Title area:
-│   ├── Spike emblem centered, 96px, top 10% of screen
-│   └── No text title (emblem only)
+│   ├── Spike emblem centered, 96px, top ~8% of screen
+│   └── Tagline under emblem: "Let's make tech repairable again"
+│       ├── Color: #a0a0b8
+│       └── Asset: tagline.png (baked text; no GRUB font required)
 ├── Menu area:
 │   ├── Position: centered, 60% width, below emblem
 │   ├── Background: semi-transparent Panel Surface (#222236 at 80%)
@@ -756,14 +760,16 @@ Two Plymouth themes, variant-dependent:
 ├── Theme name: spike-minimal
 ├── Background: Dark Base (#1a1a2e) solid color
 │   └── No circuit trace pattern (Plymouth rendering limitations)
-├── Spike emblem: centered, static, 128px
-├── Progress indicator: row of 5 dots beneath emblem
+├── Spike emblem: centered, static, 256px (logo.png)
+├── Tagline under emblem: "Let's make tech repairable again"
+│   ├── Color: #a0a0b8
+│   └── Asset: tagline.png
+├── Progress indicator: row of 5 dots beneath tagline
 │   ├── Dot size: 8px circle
 │   ├── Dot spacing: 12px between centers
 │   ├── Inactive dot: Elevated Surface (#33335a)
 │   ├── Active dot: Spike Purple (#6d4aff)
 │   └── Animation: dots fill sequentially left to right, loop
-├── No text
 ├── No glow effects
 ├── Renderer: software (framebuffer) or DRM (simple)
 └── Designed to look identical on any GPU
@@ -774,17 +780,18 @@ Two Plymouth themes, variant-dependent:
 ```
 ├── Theme name: spike-full
 ├── Background: Dark Base (#1a1a2e) solid color
-├── Spike emblem: centered, 128px
-│   └── Glow effect: soft purple halo around emblem (pulsing gently)
-├── Progress indicator: horizontal progress bar beneath emblem
-│   ├── Bar: 200px wide, 4px tall, border radius 2px
+├── Spike emblem: centered, 256px (logo.png)
+│   └── Glow effect: soft purple halo around emblem (pulsing gently) — optional / future
+├── Tagline under emblem: "Let's make tech repairable again"
+│   ├── Color: #a0a0b8
+│   └── Asset: tagline.png
+├── Progress indicator: horizontal progress bar beneath tagline
+│   ├── Bar: 200px wide, 4px tall
 │   ├── Track: Elevated Surface (#33335a)
-│   ├── Fill: gradient Spike Purple → Spike Cyan (left to right)
+│   ├── Fill: Spike Purple (#6d4aff) (gradient Spike Purple → Spike Cyan when feasible)
 │   └── Animation: smooth fill, tied to boot progress
-├── Glow pulse: emblem halo breathes (opacity 20% → 40% → 20%, 2s cycle)
-├── No text
-├── Renderer: OpenGL (DRM, GPU-accelerated)
-├── Falls back to spike-minimal rendering if OpenGL unavailable
+├── Renderer: script plugin (DRM / framebuffer)
+├── Falls back to spike-minimal rendering if needed
 └── Designed for GPUs with working DRM/KMS
 ```
 
@@ -1306,6 +1313,7 @@ Spike uses a 4px base grid for all spacing:
 │   ├── theme.txt
 │   ├── background.png
 │   ├── spike-emblem.png
+│   ├── tagline.png
 │   └── font.pf2
 ├── plymouth/
 │   └── themes/
@@ -1313,12 +1321,16 @@ Spike uses a 4px base grid for all spacing:
 │       │   ├── spike-minimal.plymouth
 │       │   ├── spike-minimal.script
 │       │   ├── logo.png
-│       │   └── background.png
+│       │   ├── tagline.png
+│       │   ├── dot-off.png
+│       │   └── dot-on.png
 │       └── spike-full/
 │           ├── spike-full.plymouth
 │           ├── spike-full.script
 │           ├── logo.png
-│           └── background.png
+│           ├── tagline.png
+│           ├── progress-track.png
+│           └── progress-fill.png
 ├── sddm/
 │   └── themes/spike/
 │       ├── theme.conf

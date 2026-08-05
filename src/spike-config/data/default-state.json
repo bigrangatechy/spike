@@ -1,0 +1,176 @@
+{
+  "version": 1,
+  "last_modified": "1970-01-01T00:00:00Z",
+  "variant": "standard",
+  "install_date": "",
+  "hardware": {
+    "cpu": {
+      "model": "unknown",
+      "cores": 1,
+      "bogomips_per_core": 0,
+      "classification": "unknown"
+    },
+    "ram": {
+      "total_kb": 0,
+      "classification": "unknown"
+    },
+    "gpu": {
+      "vendor": "unknown",
+      "model": "unknown",
+      "driver": "i915",
+      "va_api_driver": "iHD"
+    },
+    "storage": {
+      "device": "",
+      "type": "ssd",
+      "size_gb": 0,
+      "rotational": false
+    },
+    "network": {
+      "has_wifi": false,
+      "wifi_driver": "",
+      "has_ethernet": false,
+      "has_bluetooth": false,
+      "has_modem": false
+    }
+  },
+  "memory": {
+    "zram_enabled": true,
+    "zram_size_mb": 4096,
+    "zram_compression": "zstd",
+    "zram_priority": 100,
+    "swap_file_path": "/swapfile",
+    "swap_file_size_mb": 8192,
+    "swap_priority": 10,
+    "swappiness": 15,
+    "swappiness_slider_enabled": true,
+    "vfs_cache_pressure": 100,
+    "earlyoom_enabled": true,
+    "earlyoom_threshold": 10,
+    "earlyoom_protected": [
+      "spike-shell",
+      "kwin_wayland",
+      "systemd",
+      "pipewire",
+      "wireplumber"
+    ],
+    "earlyoom_prefer": [
+      "firefox",
+      "chromium",
+      "libreoffice",
+      "gimp",
+      "blender"
+    ]
+  },
+  "boot": {
+    "grub_timeout": 0,
+    "grub_timeout_style": "hidden",
+    "esc_window_seconds": 3,
+    "show_menu_on_failure": true,
+    "failure_threshold": 3,
+    "boot_failure_count": 0,
+    "previous_kernel_available": false,
+    "plymouth_theme": "spike-minimal",
+    "boot_parameters": [
+      "quiet",
+      "splash",
+      "zswap.enabled=0",
+      "transparent_hugepage=madvise"
+    ]
+  },
+  "security": {
+    "firewall_enabled": true,
+    "firewall_default_incoming": "deny",
+    "firewall_default_outgoing": "allow",
+    "firewall_rules": [
+      {
+        "port": 5353,
+        "proto": "udp",
+        "rule": "allow",
+        "comment": "mDNS"
+      }
+    ],
+    "apparmor_enabled": true,
+    "secure_boot": "unknown",
+    "root_login_disabled": true,
+    "password_min_length": 6,
+    "module_blacklist": []
+  },
+  "updates": {
+    "security_auto_install": true,
+    "non_security_notify_only": true,
+    "flatpak_notify_only": true,
+    "check_interval_hours": 6,
+    "idle_required_minutes": 10,
+    "never_force_reboot": true
+  },
+  "multimedia": {
+    "audio_server": "pipewire",
+    "sample_rate": 44100,
+    "channels": 2,
+    "resample_quality": 1,
+    "bluetooth_codecs_standard": ["SBC"],
+    "bluetooth_codecs_plus": ["SBC", "AAC", "LDAC", "aptX"],
+    "va_api_enabled": true,
+    "av1_disabled": true,
+    "firefox_vaapi_enabled": true
+  },
+  "power": {
+    "profile": "adaptive",
+    "cpu_governor": "powersave",
+    "screen_blank_minutes": 15,
+    "dim_before_blank": true,
+    "dim_start_minutes": 5,
+    "dim_target_percent": 50,
+    "allow_suspend": true,
+    "allow_hibernate": false,
+    "hybrid_sleep": true,
+    "lid_close_action": "suspend",
+    "power_button_action": "suspend",
+    "wifi_power_saving": "adaptive",
+    "bluetooth_power_saving": "adaptive",
+    "usb_autosuspend": "adaptive",
+    "hdd_spindown_minutes": 10
+  },
+  "network": {
+    "network_manager": "NetworkManager",
+    "dhcp_client": "dhclient",
+    "dns_resolver": "systemd-resolved",
+    "wifi_powersave": "adaptive",
+    "captive_portal_detection": true,
+    "captive_portal_check_url": "http://connectivity-check.ubuntu.com/"
+  },
+  "privacy": {
+    "telemetry": false,
+    "crash_reporting": false,
+    "usage_statistics": false,
+    "location_services": true,
+    "mac_randomization": "off",
+    "dns_over_tls": "off",
+    "connection_log_retention_days": 7,
+    "notification_retention_days": 3,
+    "notification_max_count": 500,
+    "system_log_retention_days": 7
+  },
+  "installer": {
+    "language": "en_US.UTF-8",
+    "timezone": "UTC",
+    "keyboard_layout": "us",
+    "hostname": "spike-laptop",
+    "auto_login": false
+  },
+  "desktop": {
+    "panel_position": "bottom",
+    "panel_height": 32,
+    "panel_auto_hide": false,
+    "animations_enabled": false,
+    "accent_color": "#6d4aff",
+    "font": "Noto Sans",
+    "font_size_pt": 10,
+    "icon_theme": "Breeze",
+    "icon_size_px": 24,
+    "wallpaper": "/usr/share/spike/wallpapers/spike-default.png",
+    "cursor_theme": "Breeze",
+    "cursor_size_px": 24
+  }
+}

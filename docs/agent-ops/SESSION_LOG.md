@@ -4,6 +4,32 @@ Append-only. Newest sessions at the **top**.
 
 ---
 
+## 2026-08-06 — Stage 2 spike-config skeleton
+
+**Done:** Created `src/spike-config/` — Python engine with state store, `{{var}}` templates, modules (memory, boot, network, multimedia, security/blacklist), developer CLI, and unit tests (`SPIKE_ROOT` sandbox). Spec: `CONFIGURATION.md`. Still pre-alpha; not packaged into the live ISO yet.
+
+**Try:** `cd src/spike-config && python3 -m unittest tests.test_spike_config -v`
+
+**Next:** deepen templates (UFW/sudo), real detect, Debian package + live-build install.
+
+---
+
+## 2026-08-06 — Stage 2 under pre-alpha (Alpha not opened)
+
+**Decision:** Stage 2 (`spike-config`) proceeds under the **pre-alpha** label. Phase 2 (Alpha) in `ROADMAP.md` stays future until BDFL opens it.
+
+**Why:** Avoid treating the first post-ISO slice as an alpha phase start; pre-alpha already covers early implementation.
+
+---
+
+## 2026-08-06 — Boot tagline under emblem
+
+**Decision:** Boot splash (Plymouth Standard/Plus) and GRUB show tagline **"Let's make tech repairable again"** centered under the emblem (`tagline.png`, color `#a0a0b8`). Spec updated in `docs/BRANDING.md`; assets under `src/spike-branding/{plymouth,grub-theme}/`.
+
+**Why:** Brand motto on every boot; baked PNG so GRUB does not need a custom `.pf2` font for the line.
+
+---
+
 ## 2026-08-06 — Tier 1 firmware boot: hardware detect + login OK
 
 **Finding:** Rebuilt ISO with Tier 1 firmware (~853 MB `spike-live.iso`). On test laptop: devices detected, login succeeded. Stage 1 live path validated end-to-end.

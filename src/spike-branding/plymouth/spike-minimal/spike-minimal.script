@@ -1,0 +1,98 @@
+# Spike Minimal — Standard variant boot splash
+# Background: Dark Base #1a1a2e | Emblem + tagline + 5 progress dots
+
+Window.SetBackgroundTopColor(0.102, 0.102, 0.180);
+Window.SetBackgroundBottomColor(0.102, 0.102, 0.180);
+
+logo.image = Image("logo.png");
+logo.sprite = Sprite(logo.image);
+logo.sprite.SetZ(10);
+
+tagline.image = Image("tagline.png");
+tagline.sprite = Sprite(tagline.image);
+tagline.sprite.SetZ(10);
+
+dot_off = Image("dot-off.png");
+dot_on = Image("dot-on.png");
+dot_count = 5;
+dot_spacing = 12;
+dots = [];
+
+for (i = 0; i < dot_count; i++) {
+    dots[i].sprite = Sprite(dot_off);
+    dots[i].sprite.SetZ(10);
+}
+
+progress = 0;
+anim = 0;
+
+fun center_x(img) {
+    return Window.GetX() + Window.GetWidth() / 2 - img.GetWidth() / 2;
+}
+
+fun layout() {
+    gap_logo_tag = 16;
+    gap_tag_dots = 20;
+    group_h = logo.image.GetHeight() + gap_logo_tag + tagline.image.GetHeight()
+              + gap_tag_dots + dot_off.GetHeight();
+    y0 = Window.GetY() + Window.GetHeight() / 2 - group_h / 2;
+
+    logo.sprite.SetX(center_x(logo.image));
+    logo.sprite.SetY(y0);
+
+    tag_y = y0 + logo.image.GetHeight() + gap_logo_tag;
+    tagline.sprite.SetX(center_x(tagline.image));
+    tagline.sprite.SetY(tag_y);
+
+    dots_y = tag_y + tagline.image.GetHeight() + gap_tag_dots;
+    dots_w = (dot_count - 1) * dot_spacing + dot_off.GetWidth();
+    dots_x0 = Window.GetX() + Window.GetWidth() / 2 - dots_w / 2;
+    for (i = 0; i < dot_count; i++) {
+        dots[i].sprite.SetX(dots_x0 + i * dot_spacing);
+        dots[i].sprite.SetY(dots_y);
+    }
+}
+
+fun set_dots_filled(filled) {
+    if (filled < 0) {
+        filled = 0;
+    }
+    if (filled > dot_count) {
+        filled = dot_count;
+    }
+    for (i = 0; i < dot_count; i++) {
+        if (i < filled) {
+            dots[i].sprite.SetImage(dot_on);
+        } else {
+            dots[i].sprite.SetImage(dot_off);
+        }
+    }
+}
+
+fun refresh_callback() {
+    layout();
+    if (progress > 0 && progress < 1) {
+        set_dots_filled(progress * dot_count + 0.999);
+        return;
+    }
+    # Idle chase when boot progress is unknown / idle
+    anim++;
+    active = (anim / 8) % dot_count;
+    for (i = 0; i < dot_count; i++) {
+        if (i == active) {
+            dots[i].sprite.SetImage(dot_on);
+        } else {
+            dots[i].sprite.SetImage(dot_off);
+        }
+    }
+}
+
+fun progress_callback(p) {
+    progress = p;
+}
+
+Plymouth.SetRefreshFunction(refresh_callback);
+Plymouth.SetBootProgressFunction(progress_callback);
+
+layout();
+set_dots_filled(0);

@@ -810,7 +810,7 @@ Scope creep is the biggest risk to Spike. The BDFL is responsible for guarding a
 | Spike Shell | KWin, Qt6, systemd | Not started |
 | Spike Installer | spike-config, hardware detect | Not started |
 | Spike Rescue | Live ISO, Qt6 | Not started |
-| spike-config | Templates, sysctl, modprobe | Not started |
+| spike-config | Templates, sysctl, modprobe | Skeleton (`src/spike-config/`) |
 | spike-branding | Artist assets, GRUB, Plymouth | Not started |
 | ISO build system | All above | Not started |
 | CI/CD | GitLab CE, Docker | Scaffolded |
