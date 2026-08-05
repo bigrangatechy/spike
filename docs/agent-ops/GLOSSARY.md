@@ -41,9 +41,9 @@ This file defines every Spike-specific term an AI agent (or human contributor) n
 | :-: | :-: | :-: |
 | **spike-config** | The configuration engine for Spike. NOT a daemon — runs on-demand. Combines a state store (JSON) with a template engine to generate config files. Invoked by Settings GUI or systemd triggers. | `CONFIGURATION.md` |
 | **State store** | `/var/lib/spike/config/state.json`. Single source of truth for all configuration. Contains hardware detection, memory settings, boot settings, security settings, updates, multimedia, power, network, privacy, installer, desktop settings. | `CONFIGURATION.md` |
-| **Template engine** | Part of spike-config that generates config files. Takes templates (`/usr/lib/spike/config/templates/\\\*.tpl`) with `\\\{\\\{variable\\\}\\\}` syntax, substitutes values from state store, validates output, writes atomically. | `CONFIGURATION.md` |
+| **Template engine** | Part of spike-config that generates config files. Takes templates (`/usr/lib/spike/config/templates/*.tpl`) with `\\{\\{variable\\}\\}` syntax, substitutes values from state store, validates output, writes atomically. | `CONFIGURATION.md` |
 | **Atomic write** | Config file write pattern: write to `.tmp` → `fsync` → `rename` → `fsync(dir)`. Guarantees file is always OLD or NEW version, never corrupted. | `CONFIGURATION.md` |
-| **Changelog** | `/var/lib/spike/config/changelog.json`. Append-only JSON array tracking every config change: timestamp, module, setting, old\_value, new\_value, source, files\_regenerated, services\_reloaded. Max 5000 entries (oldest pruned). | `CONFIGURATION.md` |
+| **Changelog** | `/var/lib/spike/config/changelog.json`. Append-only JSON array tracking every config change: timestamp, module, setting, old_value, new_value, source, files_regenerated, services_reloaded. Max 5000 entries (oldest pruned). | `CONFIGURATION.md` |
 | **Idempotent** | Running `spike-config --generate-all` produces identical output every time given the same state store. No duplicates, no stale settings. | `CONFIGURATION.md` |
 | **Config modules** | Nine config file generators: memory, boot, security, network, multimedia, power, privacy, desktop, updates. Each generates specific config files in `/etc/`. | `CONFIGURATION.md` |
 | **DBus interface** | `org.spike.Config`. Methods: GetState, SetSetting, GenerateAll, DetectHardware, Rollback, etc. Settings GUI never writes config files directly — always via spike-config. | `CONFIGURATION.md` |
@@ -54,9 +54,9 @@ This file defines every Spike-specific term an AI agent (or human contributor) n
 
 | **Term** | **Definition** | **Spec Reference** |
 | :-: | :-: | :-: |
-| **Standard** | The lightweight variant. ZRAM capped at 4GB, animations off, minimal compositor effects, powersave governor, SBC Bluetooth codecs only, KDE+GNOME Flatpak runtimes pre-seeded, hybrid sleep ON, idle RAM target \<400MB. ~280–370MB idle memory. | `VARIANT-DIFFERENCES.md` |
-| **Plus** | The full-feature variant. ZRAM uncapped (up to RAM), animations on, full compositor effects (blur/transparency/shadows), schedutil governor, all Bluetooth codecs (AAC/LDAC/aptX), all common Flatpak runtimes pre-seeded, hybrid sleep OFF, idle RAM target \<800MB. ~420–650MB idle memory. | `VARIANT-DIFFERENCES.md` |
-| **Variant selection** | Determined at install based on hardware detection. User can override (warning shown if mismatched). Post-install switching available (no reinstall needed) via \`spike-config --state-set system variant \<plus | standard\>\`. |
+| **Standard** | The lightweight variant. ZRAM capped at 4GB, animations off, minimal compositor effects, powersave governor, SBC Bluetooth codecs only, KDE+GNOME Flatpak runtimes pre-seeded, hybrid sleep ON, idle RAM target <400MB. ~280–370MB idle memory. | `VARIANT-DIFFERENCES.md` |
+| **Plus** | The full-feature variant. ZRAM uncapped (up to RAM), animations on, full compositor effects (blur/transparency/shadows), schedutil governor, all Bluetooth codecs (AAC/LDAC/aptX), all common Flatpak runtimes pre-seeded, hybrid sleep OFF, idle RAM target <800MB. ~420–650MB idle memory. | `VARIANT-DIFFERENCES.md` |
+| **Variant selection** | Determined at install based on hardware detection. User can override (warning shown if mismatched). Post-install switching available (no reinstall needed) via \`spike-config --state-set system variant <plus | standard>\`. |
 | **The 14 differences** | Exactly 14 differences between Standard and Plus. Everything else is identical between variants. See `CONSTRAINTS.md` for complete list. | `VARIANT-DIFFERENCES.md` |
 
 
@@ -65,16 +65,16 @@ This file defines every Spike-specific term an AI agent (or human contributor) n
 | **Term** | **Definition** | **Spec Reference** |
 | :-: | :-: | :-: |
 | **Capable CPU** | Classification: bogomips ≥ 2200/core AND dual-core+. Example: Celeron N4020. Receives ZRAM enabled. | `HARDWARE.md`, `MEMORY.md` |
-| **Low-end CPU** | Classification: bogomips \< 2000/core. Example: AMD A4. ZRAM skipped (swap only). | `HARDWARE.md`, `MEMORY.md` |
+| **Low-end CPU** | Classification: bogomips < 2000/core. Example: AMD A4. ZRAM skipped (swap only). | `HARDWARE.md`, `MEMORY.md` |
 | **Modern CPU** | Classification: Core i3/i5/i7/i9, Ryzen, Athlon (post-2018). Full capabilities enabled. | `HARDWARE.md` |
-| **eMMC** | Embedded MultiMediaCard storage. **NOT SUPPORTED** in Spike due to wear-out risk. Detected via `/dev/mmcblk\\\*` device names. | `HARDWARE.md`, `INSTALLER.md` |
+| **eMMC** | Embedded MultiMediaCard storage. **NOT SUPPORTED** in Spike due to wear-out risk. Detected via `/dev/mmcblk*` device names. | `HARDWARE.md`, `INSTALLER.md` |
 | **Rotational flag** | From `lsblk -d -o NAME,ROTA`. SSD/NVMe report ROTA=0, HDD reports ROTA=1. Used for mount flags and swappiness. eMMC may falsely report as non-rotational. | `INSTALLER.md` |
 | **ZRAM** | Compressed RAM block device. Uses zstd compression, priority 100. Effectively expands 4GB RAM to ~8–10GB. Only enabled on capable CPUs. | `MEMORY.md` |
 | **zswap** | Kernel-level compressed swap cache. **DISABLED** in Spike (kernel command line: `zswap.enabled=0`). Conflicts with ZRAM. | `KERNEL.md` |
-| **THP** | Transparent Huge Pages. Set to `madvise` (kernel command line: `transparent\\\_hugepage=madvise`) to prevent khugepaged overhead. | `KERNEL.md` |
-| **Earlyoom** | OOM killer alternative. Triggers at 10% memory+swap remaining. Protected: spike-shell, kwin\_wayland, systemd, pipewire, wireplumber. Preferred kills: firefox, chromium, libreoffice. | `MEMORY.md` |
+| **THP** | Transparent Huge Pages. Set to `madvise` (kernel command line: `transparent_hugepage=madvise`) to prevent khugepaged overhead. | `KERNEL.md` |
+| **Earlyoom** | OOM killer alternative. Triggers at 10% memory+swap remaining. Protected: spike-shell, kwin_wayland, systemd, pipewire, wireplumber. Preferred kills: firefox, chromium, libreoffice. | `MEMORY.md` |
 | **swappiness** | Kernel parameter controlling swap preference. 15 (SSD), 5 (HDD), 10 (SD/USB). User-adjustable slider for SSD only (15–60 range). | `MEMORY.md` |
-| **VA-API** | Video Acceleration API. Hardware video decode driver interface. Intel N4020 uses `intel-media-va-driver-non-free` (LIBVA\_DRIVER\_NAME=iHD). Decodes H.264, H.265 (8-bit), VP8, VP9. NOT AV1. | `MULTIMEDIA.md`, `HARDWARE.md` |
+| **VA-API** | Video Acceleration API. Hardware video decode driver interface. Intel N4020 uses `intel-media-va-driver-non-free` (LIBVA_DRIVER_NAME=iHD). Decodes H.264, H.265 (8-bit), VP8, VP9. NOT AV1. | `MULTIMEDIA.md`, `HARDWARE.md` |
 | **AV1** | Next-gen video codec. N4020 lacks AV1 hardware decode. **Disabled** in Firefox (pref: `media.av1.enabled=false`) to force VP9 fallback. | `MULTIMEDIA.md` |
 | **Wayland** | Display server protocol. Spike uses Wayland exclusively (KWin as compositor). XWayland available as fallback for X11-only apps. | `ARCHITECTURE.md` |
 
@@ -147,7 +147,7 @@ This file defines every Spike-specific term an AI agent (or human contributor) n
 | **Term** | **Definition** | **Spec Reference** |
 | :-: | :-: | :-: |
 | **CPU governor** | Power policy. Standard: `powersave`. Plus: `schedutil`. Intel pstate preferred for Intel CPUs. Performance mode available as temporary override (AC only). | `POWER-MANAGEMENT.md` |
-| **Power profiles** | Three modes: Performance (AC, schedutil/performance, autosuspend OFF), Battery Saver (\<50%, powersave, autosuspend ON), Critical (\<20%, powersave, dim to 30%, auto-shutdown at 5%). | `POWER-MANAGEMENT.md` |
+| **Power profiles** | Three modes: Performance (AC, schedutil/performance, autosuspend OFF), Battery Saver (<50%, powersave, autosuspend ON), Critical (<20%, powersave, dim to 30%, auto-shutdown at 5%). | `POWER-MANAGEMENT.md` |
 | **Hybrid sleep** | Suspend-to-RAM AND disk simultaneously. Standard: ON (safety net for 4GB RAM). Plus: OFF (sufficient RAM). | `POWER-MANAGEMENT.md`, `VARIANT-DIFFERENCES.md` |
 | **Night Light** | Blue light filter. Manual schedule or sunset-to-sunrise (requires location service). | `POWER-MANAGEMENT.md` |
 
@@ -179,14 +179,14 @@ This file defines every Spike-specific term an AI agent (or human contributor) n
 | **Phase 3** | Prototyping (not started). Build SPIKE base ISO, implement spike-config, Spike Shell, installer, Spike Rescue, test on target hardware. | `AGENTS.md` |
 | **Alpha release** | Target: 8 months from start. Functional system on target hardware. Public read-only repo. Bug reports/hardware submissions accepted. | `ROADMAP.md` |
 | **Beta release** | Target: 18 months from start. Feature-complete. Full contributions accepted. Translation contributions accepted. | `ROADMAP.md` |
-| **Living docs** | Specifications evolve with implementation. Discoveries made during coding are added to specs as \[IMPLEMENTATION NOTE\]. | `AGENTS.md` |
+| **Living docs** | Specifications evolve with implementation. Discoveries made during coding are added to specs as [IMPLEMENTATION NOTE]. | `AGENTS.md` |
 
 
 ## Color & Visual Identity
 
 | **Term** | **Definition** | **Spec Reference** |
 | :-: | :-: | :-: |
-| **Purple (\#6d4aff)** | Primary accent color. Used for UI elements, logos, themes, branding. | `BRANDING.md` |
+| **Purple (#6d4aff)** | Primary accent color. Used for UI elements, logos, themes, branding. | `BRANDING.md` |
 | **Cyan/teal** | Secondary accent color. Used as system accent complement. | `BRANDING.md` |
 | **Noto Sans** | Default font, 10pt. Unicode-compatible. | `BRANDING.md` |
 | **Noto Sans Mono** | Monospace font. Code, terminals. | `BRANDING.md` |
@@ -230,7 +230,7 @@ This file defines every Spike-specific term an AI agent (or human contributor) n
 | :-: | :-: | :-: |
 | ZRAM cap | 4GB max | Uncapped |
 | Animations | Off | On |
-| Idle RAM target | \<400MB | \<800MB |
+| Idle RAM target | <400MB | <800MB |
 | Memory budget | ~280–370MB | ~420–650MB |
 | See `VARIANT-DIFFERENCES.md` for all 14 differences |  |  |
 
@@ -239,9 +239,9 @@ This file defines every Spike-specific term an AI agent (or human contributor) n
 
 ```
 \`1. Users never edit config files\`  
-  
+
 \`2. CLI tools exist for developers only\`  
-  
+
 \`3. If it's not documented, it doesn't exist\`
 
  4. The user never has to touch the terminal
@@ -253,15 +253,15 @@ This file defines every Spike-specific term an AI agent (or human contributor) n
 
 ```
 \`1. apt update → archive.ubuntu.com (every 6 hours)\`  
-  
+
 \`2. Flatpak remote check → flathub.org (every 6 hours)\`  
-  
+
 \`3. NTP sync → pool.ntp.org (boot + periodic)\`  
-  
+
 \`4. Connectivity check → connectivity-check.ubuntu.com (boot + periodic)\`  
-  
+
 \`5. Captive portal detection → redirect target (new network)\`  
-  
+
 \`Nothing else.\`
 ```
 

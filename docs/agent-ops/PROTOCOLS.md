@@ -16,7 +16,7 @@ This document defines step-by-step protocols for common development, maintenance
 1. **Check existing documentation**
 
 ```
-`Search: DESIGN-DECISIONS.md, ARCHITECTURE.md, relevant spec file`
+Search: DESIGN-DECISIONS.md, ARCHITECTURE.md, relevant spec file
 ```
 
 2. **Determine if the decision already exists**
@@ -38,7 +38,7 @@ This document defines step-by-step protocols for common development, maintenance
 
    - Open issue in GitHub/GitLab 
 
-   - Title format: `proposal: \<brief description\>` 
+   - Title format: `proposal: <brief description>` 
 
    - Include: rationale, alternatives considered, impact assessment 
 
@@ -71,53 +71,30 @@ This document defines step-by-step protocols for common development, maintenance
 ### 1.2 Handling Ambiguous Situations
 
 ```
-`┌─────────────────────────────────────────┐`
-
-`│  Situation unclear? No spec covers it? │`
-
-`└──────────────────┬──────────────────────┘`
-
-`                   ▼`
-
-`         ┌──────────────────┐`
-
-`         │ Check DESIGN-    │`
-
-`         │ DECISIONS.md for │`
-
-`         │ related rationale│`
-
-`         └────────┬─────────┘`
-
-`                  ▼`
-
-`    ┌───────────────────────────┐`
-
-`    │ Still unclear?            │`
-
-`    │ Check AGENTS.md cross-ref │`
-
-`    └───────────┬───────────────┘`
-
-`                ▼`
-
-`      ┌─────────────────────┐`
-
-`      │ Create clarification│`
-
-`      │ issue or PR comment │`
-
-`      └───────────┬─────────┘`
-
-`                  ▼`
-
-`    ┌───────────────────────────┐`
-
-`    │ Wait for BDFL/contributor │`
-
-`    │ guidance before proceeding│`
-
-`    └───────────────────────────┘`
+┌─────────────────────────────────────────┐
+│  Situation unclear? No spec covers it? │
+└──────────────────┬──────────────────────┘
+                   ▼
+         ┌──────────────────┐
+         │ Check DESIGN-    │
+         │ DECISIONS.md for │
+         │ related rationale│
+         └────────┬─────────┘
+                  ▼
+    ┌───────────────────────────┐
+    │ Still unclear?            │
+    │ Check AGENTS.md cross-ref │
+    └───────────┬───────────────┘
+                ▼
+      ┌─────────────────────┐
+      │ Create clarification│
+      │ issue or PR comment │
+      └───────────┬─────────┘
+                  ▼
+    ┌───────────────────────────┐
+    │ Wait for BDFL/contributor │
+    │ guidance before proceeding│
+    └───────────────────────────┘
 ```
 
 ### 1.3 Emergency Deviation (Rare)
@@ -135,13 +112,10 @@ This document defines step-by-step protocols for common development, maintenance
 4. If rejected: revert changes, implement as specified 
 
 ```
-`Commit message footer:`
-
-`EMERGENCY DEVIATION: Hotfix applied without prior spec due to \[reason\]`
-
-`Retroactive proposal filed in issue \#\[NN\]`
-
-`Revert deadline: 2026-XX-XX (if proposal rejected)`
+Commit message footer:
+EMERGENCY DEVIATION: Hotfix applied without prior spec due to [reason]
+Retroactive proposal filed in issue #[NN]
+Revert deadline: 2026-XX-XX (if proposal rejected)
 ```
 
 
@@ -152,318 +126,165 @@ This document defines step-by-step protocols for common development, maintenance
 ### 2.1 CPU Detection Steps
 
 ```
-*`\# Step 1: Read lscpu output`*
-
-`cpu\_info=$(lscpu 2\>/dev/null) || return 1`
-
-
-*`\# Step 2: Extract key fields`*
-
-`cpu\_model=$(echo "$cpu\_info" | grep "Model name:" | cut -d: -f2 | xargs)`
-
-`cores=$(echo "$cpu\_info" | grep "^CPU(s):" | cut -d: -f2 | xargs)`
-
-`bogomips=$(echo "$cpu\_info" | grep "BogoMIPS:" | cut -d: -f2 | xargs | cut -d'.' -f1)`
-
-
-*`\# Step 3: Calculate bogomips per core`*
-
-`bogomips\_per\_core=$((bogomips / cores))`
-
-
-*`\# Step 4: Classify`*
-
-`if \[\[ $bogomips\_per\_core -lt 2000 \]\]; then`
-
-`    classification="low-end"`
-
-`elif \[\[ $bogomips\_per\_core -ge 2200 \]\] && \[\[ $cores -ge 2 \]\]; then`
-
-`    classification="capable"`
-
-`else`
-
-`    classification="modern"`
-
-`fi`
-
-
-*`\# Step 5: Special case detection`*
-
-`if \[\[ "$cpu\_model" =~ "Celeron" \]\] || \[\[ "$cpu\_model" =~ "Pentium" \]\] || \[\[ "$cpu\_model" =~ "Atom" \]\]; then`
-
-`    celeron\_class="yes"`
-
-`fi`
-
-
-*`\# Step 6: Store in state store`*
-
-`spike-config --state-set cpu model "$cpu\_model"`
-
-`spike-config --state-set cpu cores "$cores"`
-
-`spike-config --state-set cpu bogomips\_per\_core "$bogomips\_per\_core"`
-
-`spike-config --state-set cpu classification "$classification"`
+# Step 1: Read lscpu output
+cpu_info=$(lscpu 2>/dev/null) || return 1
+# Step 2: Extract key fields
+cpu_model=$(echo "$cpu_info" | grep "Model name:" | cut -d: -f2 | xargs)
+cores=$(echo "$cpu_info" | grep "^CPU(s):" | cut -d: -f2 | xargs)
+bogomips=$(echo "$cpu_info" | grep "BogoMIPS:" | cut -d: -f2 | xargs | cut -d'.' -f1)
+# Step 3: Calculate bogomips per core
+bogomips_per_core=$((bogomips / cores))
+# Step 4: Classify
+if [[ $bogomips_per_core -lt 2000 ]]; then
+    classification="low-end"
+elif [[ $bogomips_per_core -ge 2200 ]] && [[ $cores -ge 2 ]]; then
+    classification="capable"
+else
+    classification="modern"
+fi
+# Step 5: Special case detection
+if [[ "$cpu_model" =~ "Celeron" ]] || [[ "$cpu_model" =~ "Pentium" ]] || [[ "$cpu_model" =~ "Atom" ]]; then
+    celeron_class="yes"
+fi
+# Step 6: Store in state store
+spike-config --state-set cpu model "$cpu_model"
+spike-config --state-set cpu cores "$cores"
+spike-config --state-set cpu bogomips_per_core "$bogomips_per_core"
+spike-config --state-set cpu classification "$classification"
 ```
 
 ### 2.2 Storage Detection Steps
 
 ```
-*`\# Step 1: List block devices`*
-
-`devices=$(lsblk -d -o NAME,TYPE,SIZE,ROTA --json)`
-
-
-*`\# Step 2: Find primary storage (non-removable, largest)`*
-
-`primary\_dev=$(echo "$devices" | jq -r '.blockdevices\[\] | select(.type=="disk" and .rota!=null) | \{name, size, rota\} | sort\_by(.size) | last | .name')`
-
-
-*`\# Step 3: Check storage type`*
-
-`rotational=$(lsblk -d -o NAME,ROTA -n "$primary\_dev" | awk '\{print $2\}')`
-
-
-`if \[\[ "$rotational" == "0" \]\]; then`
-
-`    storage\_type="SSD"`
-
-`elif \[\[ "$rotational" == "1" \]\]; then`
-
-`    storage\_type="HDD"`
-
-`else`
-
-`    storage\_type="unknown"`
-
-`fi`
-
-
-*`\# Step 4: Check for eMMC (NOT SUPPORTED)`*
-
-`if lsblk -d -o NAME,MODEL -n | grep -qi "eMMC"; then`
-
-`    echo "ERROR: eMMC storage not supported (wear-out risk)" \>&2`
-
-`    exit 1`
-
-`fi`
-
-
-*`\# Step 5: Check minimum capacity`*
-
-`capacity\_gb=$((capacity\_bytes / 1024 / 1024 / 1024))`
-
-`if \[\[ $capacity\_gb -lt 128 \]\]; then`
-
-`    echo "WARNING: Less than 128GB recommended" \>&2`
-
-`fi`
-
-
-*`\# Step 6: Determine mount flags`*
-
-`if \[\[ "$storage\_type" == "SSD" \]\]; then`
-
-`    mount\_flags="defaults,noatime"`
-
-`elif \[\[ "$storage\_type" == "HDD" \]\]; then`
-
-`    mount\_flags="defaults,noatime,commit=60"`
-
-`fi`
-
-
-*`\# Step 7: Store in state store`*
-
-`spike-config --state-set storage type "$storage\_type"`
-
-`spike-config --state-set storage mount\_flags "$mount\_flags"`
+# Step 1: List block devices
+devices=$(lsblk -d -o NAME,TYPE,SIZE,ROTA --json)
+# Step 2: Find primary storage (non-removable, largest)
+primary_dev=$(echo "$devices" | jq -r '.blockdevices[] | select(.type=="disk" and .rota!=null) | {name, size, rota} | sort_by(.size) | last | .name')
+# Step 3: Check storage type
+rotational=$(lsblk -d -o NAME,ROTA -n "$primary_dev" | awk '{print $2}')
+if [[ "$rotational" == "0" ]]; then
+    storage_type="SSD"
+elif [[ "$rotational" == "1" ]]; then
+    storage_type="HDD"
+else
+    storage_type="unknown"
+fi
+# Step 4: Check for eMMC (NOT SUPPORTED)
+if lsblk -d -o NAME,MODEL -n | grep -qi "eMMC"; then
+    echo "ERROR: eMMC storage not supported (wear-out risk)" >&2
+    exit 1
+fi
+# Step 5: Check minimum capacity
+capacity_gb=$((capacity_bytes / 1024 / 1024 / 1024))
+if [[ $capacity_gb -lt 128 ]]; then
+    echo "WARNING: Less than 128GB recommended" >&2
+fi
+# Step 6: Determine mount flags
+if [[ "$storage_type" == "SSD" ]]; then
+    mount_flags="defaults,noatime"
+elif [[ "$storage_type" == "HDD" ]]; then
+    mount_flags="defaults,noatime,commit=60"
+fi
+# Step 7: Store in state store
+spike-config --state-set storage type "$storage_type"
+spike-config --state-set storage mount_flags "$mount_flags"
 ```
 
 ### 2.3 GPU Detection Steps
 
 ```
-*`\# Step 1: Detect GPU vendor`*
-
-`vendor=$(lspci | grep -i "vga\\|3d" | cut -d: -f3 | cut -d'(' -f1 | xargs)`
-
-
-*`\# Step 2: Match driver`*
-
-`if \[\[ "$vendor" =~ "Intel" \]\]; then`
-
-`    driver="i915"`
-
-`    vaapi\_driver="intel-media-va-driver-non-free"`
-
-`    libva\_name="iHD"`
-
-`elif \[\[ "$vendor" =~ "AMD" \]\]; then`
-
-`    driver="amdgpu"`
-
-`    vaapi\_driver="mesa-va-drivers"`
-
-`    libva\_name="radeonsi"`
-
-`elif \[\[ "$vendor" =~ "NVIDIA" \]\]; then`
-
-`    driver="nvidia"`
-
-`    vaapi\_driver="vdpau-va-driver"`
-
-`    libva\_name="N/A"  *\# Uses VDPAU, not VA-API`*
-
-`else`
-
-`    driver="unknown"`
-
-`fi`
-
-
-*`\# Step 3: Check AV1 support (Intel N4020 = no AV1)`*
-
-`if \[\[ "$vendor" =~ "Intel" \]\] && \[\[ "$cpu\_model" =~ "N4020" \]\]; then`
-
-`    av1\_support="no"`
-
-`    firefox\_av1\_setting="false"`
-
-`else`
-
-`    av1\_support="yes"`
-
-`    firefox\_av1\_setting="true"`
-
-`fi`
-
-
-*`\# Step 4: Store in state store`*
-
-`spike-config --state-set gpu vendor "$vendor"`
-
-`spike-config --state-set gpu driver "$driver"`
-
-`spike-config --state-set gpu vaapi\_driver "$vaapi\_driver"`
-
-`spike-config --state-set gpu av1\_support "$av1\_support"`
+# Step 1: Detect GPU vendor
+vendor=$(lspci | grep -i "vga\\|3d" | cut -d: -f3 | cut -d'(' -f1 | xargs)
+# Step 2: Match driver
+if [[ "$vendor" =~ "Intel" ]]; then
+    driver="i915"
+    vaapi_driver="intel-media-va-driver-non-free"
+    libva_name="iHD"
+elif [[ "$vendor" =~ "AMD" ]]; then
+    driver="amdgpu"
+    vaapi_driver="mesa-va-drivers"
+    libva_name="radeonsi"
+elif [[ "$vendor" =~ "NVIDIA" ]]; then
+    driver="nvidia"
+    vaapi_driver="vdpau-va-driver"
+    libva_name="N/A"  *# Uses VDPAU, not VA-API
+else
+    driver="unknown"
+fi
+# Step 3: Check AV1 support (Intel N4020 = no AV1)
+if [[ "$vendor" =~ "Intel" ]] && [[ "$cpu_model" =~ "N4020" ]]; then
+    av1_support="no"
+    firefox_av1_setting="false"
+else
+    av1_support="yes"
+    firefox_av1_setting="true"
+fi
+# Step 4: Store in state store
+spike-config --state-set gpu vendor "$vendor"
+spike-config --state-set gpu driver "$driver"
+spike-config --state-set gpu vaapi_driver "$vaapi_driver"
+spike-config --state-set gpu av1_support "$av1_support"
 ```
 
 ### 2.4 Network Detection Steps
 
 ```
-*`\# Step 1: Detect network interfaces`*
-
-`interfaces=$(ip link show | grep -E "^\[0-9\]+:" | awk -F': ' '\{print $2\}' | grep -v "lo")`
-
-
-*`\# Step 2: Check Wi-Fi`*
-
-`wifi\_interfaces=""`
-
-`for iface in $interfaces; do`
-
-`    if ip link show "$iface" | grep -q "wl"; then`
-
-`        wifi\_interfaces="$wifi\_interfaces $iface"`
-
-`    fi`
-
-`done`
-
-
-*`\# Step 3: Check Ethernet`*
-
-`ethernet\_interfaces=""`
-
-`for iface in $interfaces; do`
-
-`    if ip link show "$iface" | grep -q "en"; then`
-
-`        ethernet\_interfaces="$ethernet\_interfaces $iface"`
-
-`    fi`
-
-`done`
-
-
-*`\# Step 4: Check wireless firmware availability`*
-
-`firmware\_loaded=yes`
-
-`for fw in iwlwifi ath9k ath10k rtl8723de bcmwl; do`
-
-`    if \[\[ ! -f "/lib/firmware/$\{fw\}\*" \]\]; then`
-
-`        firmware\_loaded=no`
-
-`        break`
-
-`    fi`
-
-`done`
-
-
-*`\# Step 5: Store in state store`*
-
-`spike-config --state-set network wifi\_interfaces "$wifi\_interfaces"`
-
-`spike-config --state-set network ethernet\_interfaces "$ethernet\_interfaces"`
-
-`spike-config --state-set network firmware\_loaded "$firmware\_loaded"`
+# Step 1: Detect network interfaces
+interfaces=$(ip link show | grep -E "^[0-9]+:" | awk -F': ' '{print $2}' | grep -v "lo")
+# Step 2: Check Wi-Fi
+wifi_interfaces=""
+for iface in $interfaces; do
+    if ip link show "$iface" | grep -q "wl"; then
+        wifi_interfaces="$wifi_interfaces $iface"
+    fi
+done
+# Step 3: Check Ethernet
+ethernet_interfaces=""
+for iface in $interfaces; do
+    if ip link show "$iface" | grep -q "en"; then
+        ethernet_interfaces="$ethernet_interfaces $iface"
+    fi
+done
+# Step 4: Check wireless firmware availability
+firmware_loaded=yes
+for fw in iwlwifi ath9k ath10k rtl8723de bcmwl; do
+    if [[ ! -f "/lib/firmware/${fw}*" ]]; then
+        firmware_loaded=no
+        break
+    fi
+done
+# Step 5: Store in state store
+spike-config --state-set network wifi_interfaces "$wifi_interfaces"
+spike-config --state-set network ethernet_interfaces "$ethernet_interfaces"
+spike-config --state-set network firmware_loaded "$firmware_loaded"
 ```
 
 ### 2.5 Bluetooth Detection (Conditional)
 
 ```
-*`\# Only run if Bluetooth hardware detected`*
+# Only run if Bluetooth hardware detected
+if systemctl cat bluetooth.service >/dev/null 2>&1; then
+    if hciconfig -a >/dev/null 2>&1; then
+        bt_detected="yes"
 
-`if systemctl cat bluetooth.service \>/dev/null 2\>&1; then`
+        *# Check codec support based on variant
+        variant=$(spike-config --state-get system variant)
+        if [[ "$variant" == "plus" ]]; then
+            bt_codecs="SBC,AAC,LDAC,aptX"
+        else
+            bt_codecs="SBC"
+        fi
 
-`    if hciconfig -a \>/dev/null 2\>&1; then`
-
-`        bt\_detected="yes"`
-
-`        `
-
-`        *\# Check codec support based on variant`*
-
-`        variant=$(spike-config --state-get system variant)`
-
-`        if \[\[ "$variant" == "plus" \]\]; then`
-
-`            bt\_codecs="SBC,AAC,LDAC,aptX"`
-
-`        else`
-
-`            bt\_codecs="SBC"`
-
-`        fi`
-
-`        `
-
-`        spike-config --state-set bluetooth detected "$bt\_detected"`
-
-`        spike-config --state-set bluetooth codecs "$bt\_codecs"`
-
-`    else`
-
-`        bt\_detected="no"`
-
-`        spike-config --state-set bluetooth detected "$bt\_detected"`
-
-`    fi`
-
-`else`
-
-`    bt\_detected="no"`
-
-`    spike-config --state-set bluetooth detected "$bt\_detected"`
-
-`fi`
+        spike-config --state-set bluetooth detected "$bt_detected"
+        spike-config --state-set bluetooth codecs "$bt_codecs"
+    else
+        bt_detected="no"
+        spike-config --state-set bluetooth detected "$bt_detected"
+    fi
+else
+    bt_detected="no"
+    spike-config --state-set bluetooth detected "$bt_detected"
+fi
 ```
 
 
@@ -474,180 +295,96 @@ This document defines step-by-step protocols for common development, maintenance
 ### 3.1 Standard Generation Flow
 
 ```
-`┌─────────────────────┐`
-
-`│ spike-config --     │`
-
-`│ generate \<module\>   │`
-
-`└──────────┬──────────┘`
-
-`           ▼`
-
-`┌─────────────────────┐`
-
-`│ 1. Load state       │`
-
-`│    store (JSON)     │`
-
-`└──────────┬──────────┘`
-
-`           ▼`
-
-`┌─────────────────────┐`
-
-`│ 2. Read template    │`
-
-`│    (.tpl file)      │`
-
-`└──────────┬──────────┘`
-
-`           ▼`
-
-`┌─────────────────────┐`
-
-`│ 3. Substitute       │`
-
-`│    \{\{variables\}\}    │`
-
-`└──────────┬──────────┘`
-
-`           ▼`
-
-`┌─────────────────────┐`
-
-`│ 4. Validate output  │`
-
-`│    (syntax, empty   │`
-
-`│    critical fields) │`
-
-`└──────────┬──────────┘`
-
-`           ▼`
-
-`┌─────────────────────┐`
-
-`│ 5. Write to .tmp    │`
-
-`│    file             │`
-
-`└──────────┬──────────┘`
-
-`           ▼`
-
-`┌─────────────────────┐`
-
-`│ 6. fsync(.tmp)      │`
-
-`└──────────┬──────────┘`
-
-`           ▼`
-
-`┌─────────────────────┐`
-
-`│ 7. mv .tmp → final  │`
-
-`└──────────┬──────────┘`
-
-`           ▼`
-
-`┌─────────────────────┐`
-
-`│ 8. fsync(dir)       │`
-
-`└──────────┬──────────┘`
-
-`           ▼`
-
-`┌─────────────────────┐`
-
-`│ 9. Log to           │`
-
-`│    changelog.json   │`
-
-`└──────────┬──────────┘`
-
-`           ▼`
-
-`┌─────────────────────┐`
-
-`│ 10. Reload service  │`
-
-`│     (if configured) │`
-
-`└─────────────────────┘`
+┌─────────────────────┐
+│ spike-config --     │
+│ generate <module>   │
+└──────────┬──────────┘
+           ▼
+┌─────────────────────┐
+│ 1. Load state       │
+│    store (JSON)     │
+└──────────┬──────────┘
+           ▼
+┌─────────────────────┐
+│ 2. Read template    │
+│    (.tpl file)      │
+└──────────┬──────────┘
+           ▼
+┌─────────────────────┐
+│ 3. Substitute       │
+│    {{variables}}    │
+└──────────┬──────────┘
+           ▼
+┌─────────────────────┐
+│ 4. Validate output  │
+│    (syntax, empty   │
+│    critical fields) │
+└──────────┬──────────┘
+           ▼
+┌─────────────────────┐
+│ 5. Write to .tmp    │
+│    file             │
+└──────────┬──────────┘
+           ▼
+┌─────────────────────┐
+│ 6. fsync(.tmp)      │
+└──────────┬──────────┘
+           ▼
+┌─────────────────────┐
+│ 7. mv .tmp → final  │
+└──────────┬──────────┘
+           ▼
+┌─────────────────────┐
+│ 8. fsync(dir)       │
+└──────────┬──────────┘
+           ▼
+┌─────────────────────┐
+│ 9. Log to           │
+│    changelog.json   │
+└──────────┬──────────┘
+           ▼
+┌─────────────────────┐
+│ 10. Reload service  │
+│     (if configured) │
+└─────────────────────┘
 ```
 
 ### 3.2 Atomic Write Implementation
 
 ```
-*`\# Python pseudo-code for atomic config write`*
+# Python pseudo-code for atomic config write
+import os
+import json
+from pathlib import Path
+def atomic_write(filepath: Path, content: str) -> None:
+    """Write file atomically using temp + rename pattern."""
 
-`import os`
+    tmp_path = Path(f"{filepath}.tmp.{os.getpid()}")
 
-`import json`
+    try:
+        *# Step 1: Write to temp file
+        tmp_path.write_text(content)
 
-`from pathlib import Path`
+        *# Step 2: Flush to disk
+        with open(tmp_path, 'a') as f:
+            f.flush()
+            os.fsync(f.fileno())
 
+        *# Step 3: Rename (atomic on POSIX)
+        os.rename(tmp_path, filepath)
 
-`def atomic\_write(filepath: Path, content: str) -\> None:`
+        *# Step 4: Sync directory
+        dir_fd = os.open(os.path.dirname(filepath), os.O_RDONLY | os.O_DIRECTORY)
+        try:
+            os.fsync(dir_fd)
+        finally:
+            os.close(dir_fd)
 
-`    """Write file atomically using temp + rename pattern."""`
-
-`    `
-
-`    tmp\_path = Path(f"\{filepath\}.tmp.\{os.getpid()\}")`
-
-`    `
-
-`    try:`
-
-`        *\# Step 1: Write to temp file`*
-
-`        tmp\_path.write\_text(content)`
-
-`        `
-
-`        *\# Step 2: Flush to disk`*
-
-`        with open(tmp\_path, 'a') as f:`
-
-`            f.flush()`
-
-`            os.fsync(f.fileno())`
-
-`        `
-
-`        *\# Step 3: Rename (atomic on POSIX)`*
-
-`        os.rename(tmp\_path, filepath)`
-
-`        `
-
-`        *\# Step 4: Sync directory`*
-
-`        dir\_fd = os.open(os.path.dirname(filepath), os.O\_RDONLY | os.O\_DIRECTORY)`
-
-`        try:`
-
-`            os.fsync(dir\_fd)`
-
-`        finally:`
-
-`            os.close(dir\_fd)`
-
-`            `
-
-`    except Exception as exc:`
-
-`        *\# Cleanup temp file on failure`*
-
-`        if tmp\_path.exists():`
-
-`            tmp\_path.unlink()`
-
-`        raise ConfigWriteError(f"Atomic write failed: \{exc\}") from exc`
+    except Exception as exc:
+        *# Cleanup temp file on failure
+        if tmp_path.exists():
+            tmp_path.unlink()
+        raise ConfigWriteError(f"Atomic write failed: {exc}") from exc
 ```
 
 ### 3.3 Validation Checklist
@@ -656,66 +393,41 @@ Before writing any generated config:
 
 | **Check** | **Action** | **Fail Condition** |
 | :-: | :-: | :-: |
-| Template syntax | `grep -c '\{\{'` | Leftover `\{\{` un-substituted |
+| Template syntax | `grep -c '{{'` | Leftover `{{` un-substituted |
 | Critical fields | Check required keys exist | Empty/missing mandatory values |
 | Syntax validity | Run config-specific checker | Invalid GRUB syntax, JSON parse fail, etc. |
 | Security scan | Check for secrets/credentials | Hardcoded passwords, tokens, keys |
 | Variant consistency | Verify variant-specific values | Standard variant with Plus settings |
 
 ```
-*`\# Example validation for grub config`*
-
-`if grep -q '\{\{' /etc/default/grub; then`
-
-`    echo "ERROR: Unsubstituted template variables in GRUB config" \>&2`
-
-`    exit 1`
-
-`fi`
-
-
-*`\# Example validation for JSON state store`*
-
-`if ! python3 -c "import json; json.load(open('$STATE\_STORE'))"; then`
-
-`    echo "ERROR: Invalid JSON in state store" \>&2`
-
-`    exit 1`
-
-`fi`
+# Example validation for grub config
+if grep -q '{{' /etc/default/grub; then
+    echo "ERROR: Unsubstituted template variables in GRUB config" >&2
+    exit 1
+fi
+# Example validation for JSON state store
+if ! python3 -c "import json; json.load(open('$STATE_STORE'))"; then
+    echo "ERROR: Invalid JSON in state store" >&2
+    exit 1
+fi
 ```
 
 ### 3.4 Rollback Procedure
 
 ```
-*`\# Step 1: Identify rollback target`*
-
-`entry\_id=$(spike-config --changelog | jq -r '.\[0\].entry\_id')`
-
-
-*`\# Step 2: Execute rollback`*
-
-`spike-config --rollback "$entry\_id"`
-
-
-*`\# Step 3: Verify rollback succeeded`*
-
-`if \[\[ $? -ne 0 \]\]; then`
-
-`    echo "Rollback failed, attempting manual recovery" \>&2`
-
-`    *\# Trigger state store regeneration`*
-
-`    spike-config --detect`
-
-`    spike-config --generate-all`
-
-`fi`
-
-
-*`\# Step 4: Notify user`*
-
-`notify-send "Configuration rolled back" "Entry $entry\_id restored"`
+# Step 1: Identify rollback target
+entry_id=$(spike-config --changelog | jq -r '.[0].entry_id')
+# Step 2: Execute rollback
+spike-config --rollback "$entry_id"
+# Step 3: Verify rollback succeeded
+if [[ $? -ne 0 ]]; then
+    echo "Rollback failed, attempting manual recovery" >&2
+    *# Trigger state store regeneration
+    spike-config --detect
+    spike-config --generate-all
+fi
+# Step 4: Notify user
+notify-send "Configuration rolled back" "Entry $entry_id restored"
 ```
 
 
@@ -726,404 +438,203 @@ Before writing any generated config:
 ### 4.1 Pre-Install Checks
 
 ```
-*`\# Step 1: Verify live environment`*
+# Step 1: Verify live environment
+if [[ "$(cat /proc/cmdline)" != *"live-media"* ]]; then
+    echo "ERROR: Not running from live media" >&2
+    exit 1
+fi
+# Step 2: Check storage capacity
+target_disk="$1"
+capacity_gb=$(get_disk_size_gb "$target_disk")
+if [[ $capacity_gb -lt 128 ]]; then
+    echo "ERROR: Minimum 128GB required (found ${capacity_gb}GB)" >&2
+    exit 1
+fi
+# Step 3: Scan for existing OS/data
+existing_os=$(detect_existing_os "$target_disk")
+user_data=$(scan_user_data "$target_disk")
+# Step 4: Present options to user
+if [[ -n "$user_data" ]]; then
+    echo "WARNING: User data detected on disk"
+    echo "Options:"
+    echo "  1. Backup data to USB and proceed"
+    echo "  2. Cancel and backup manually"
+    read -p "Selection: " choice
 
-`if \[\[ "$(cat /proc/cmdline)" != \*"live-media"\* \]\]; then`
+    if [[ "$choice" != "1" ]]; then
+        exit 0  *# Cancel installation
+    fi
 
-`    echo "ERROR: Not running from live media" \>&2`
-
-`    exit 1`
-
-`fi`
-
-
-*`\# Step 2: Check storage capacity`*
-
-`target\_disk="$1"`
-
-`capacity\_gb=$(get\_disk\_size\_gb "$target\_disk")`
-
-`if \[\[ $capacity\_gb -lt 128 \]\]; then`
-
-`    echo "ERROR: Minimum 128GB required (found $\{capacity\_gb\}GB)" \>&2`
-
-`    exit 1`
-
-`fi`
-
-
-*`\# Step 3: Scan for existing OS/data`*
-
-`existing\_os=$(detect\_existing\_os "$target\_disk")`
-
-`user\_data=$(scan\_user\_data "$target\_disk")`
-
-
-*`\# Step 4: Present options to user`*
-
-`if \[\[ -n "$user\_data" \]\]; then`
-
-`    echo "WARNING: User data detected on disk"`
-
-`    echo "Options:"`
-
-`    echo "  1. Backup data to USB and proceed"`
-
-`    echo "  2. Cancel and backup manually"`
-
-`    read -p "Selection: " choice`
-
-`    `
-
-`    if \[\[ "$choice" != "1" \]\]; then`
-
-`        exit 0  *\# Cancel installation`*
-
-`    fi`
-
-`    `
-
-`    *\# Trigger backup wizard`*
-
-`    run\_backup\_wizard "$user\_data"`
-
-`fi`
+    *# Trigger backup wizard
+    run_backup_wizard "$user_data"
+fi
 ```
 
 ### 4.2 Partitioning Protocol
 
 ```
-*`\# WARNING: This wipes ALL data on target disk`*
-
-*`\# Must be explicit, confirmed by user`*
-
-
-`target\_disk="$1"`
-
-`variant="$2"  *\# standard or plus`*
-
-
-*`\# Step 1: Wipe partition table`*
-
-`wipefs -a "$target\_disk"`
-
-`partprobe "$target\_disk"`
-
-
-*`\# Step 2: Create partitions`*
-
-`case "$firmware\_type" in`
-
-`    UEFI)`
-
-`        parted "$target\_disk" mklabel gpt`
-
-`        parted "$target\_disk" mkpart ESP fat32 1MiB 513MiB`
-
-`        parted "$target\_disk" set 1 boot on`
-
-`        mkfs.vfat -F32 "$\{target\_disk\}1"`
-
-`        ;;`
-
-`    BIOS)`
-
-`        parted "$target\_disk" mklabel msdos`
-
-`        parted "$target\_disk" mkpart primary 1MiB 1025MiB`
-
-`        mkfs.ext4 "$\{target\_disk\}1"`
-
-`        ;;`
-
-`esac`
-
-
-*`\# Step 3: Create root partition`*
-
-`case "$firmware\_type" in`
-
-`    UEFI)`
-
-`        parted "$target\_disk" mkpart root ext4 513MiB 100%`
-
-`        mkfs.ext4 "$\{target\_disk\}2"`
-
-`        root\_part="$\{target\_disk\}2"`
-
-`        ;;`
-
-`    BIOS)`
-
-`        parted "$target\_disk" mkpart root ext4 1025MiB 100%`
-
-`        mkfs.ext4 "$\{target\_disk\}2"`
-
-`        root\_part="$\{target\_disk\}2"`
-
-`        ;;`
-
-`esac`
-
-
-*`\# Step 4: Create swapfile (deferred to post-install)`*
-
-*`\# Note: Using swapfile instead of swap partition for flexibility`*
-
-
-*`\# Step 5: Mount filesystems`*
-
-`mkdir -p /mnt/spike`
-
-`mount "$root\_part" /mnt/spike`
-
-`mkdir -p /mnt/spike/boot/efi`
-
-`mount "$\{target\_disk\}1" /mnt/spike/boot/efi  *\# UEFI only`*
-
-
-*`\# Step 6: Record partition mapping for post-install`*
-
-`cat \> /mnt/spike/etc/spike/partitions.conf \<\< EOF`
-
-`boot\_device=$\{target\_disk\}1`
-
-`root\_device=$root\_part`
-
-`swap\_size=8GB`
-
-`filesystem=ext4`
-
-`mount\_flags=$(get\_mount\_flags\_for\_storage\_type)`
-
-`EOF`
+# WARNING: This wipes ALL data on target disk
+# Must be explicit, confirmed by user
+target_disk="$1"
+variant="$2"  *# standard or plus
+# Step 1: Wipe partition table
+wipefs -a "$target_disk"
+partprobe "$target_disk"
+# Step 2: Create partitions
+case "$firmware_type" in
+    UEFI)
+        parted "$target_disk" mklabel gpt
+        parted "$target_disk" mkpart ESP fat32 1MiB 513MiB
+        parted "$target_disk" set 1 boot on
+        mkfs.vfat -F32 "${target_disk}1"
+        ;;
+    BIOS)
+        parted "$target_disk" mklabel msdos
+        parted "$target_disk" mkpart primary 1MiB 1025MiB
+        mkfs.ext4 "${target_disk}1"
+        ;;
+esac
+# Step 3: Create root partition
+case "$firmware_type" in
+    UEFI)
+        parted "$target_disk" mkpart root ext4 513MiB 100%
+        mkfs.ext4 "${target_disk}2"
+        root_part="${target_disk}2"
+        ;;
+    BIOS)
+        parted "$target_disk" mkpart root ext4 1025MiB 100%
+        mkfs.ext4 "${target_disk}2"
+        root_part="${target_disk}2"
+        ;;
+esac
+# Step 4: Create swapfile (deferred to post-install)
+# Note: Using swapfile instead of swap partition for flexibility
+# Step 5: Mount filesystems
+mkdir -p /mnt/spike
+mount "$root_part" /mnt/spike
+mkdir -p /mnt/spike/boot/efi
+mount "${target_disk}1" /mnt/spike/boot/efi  *# UEFI only
+# Step 6: Record partition mapping for post-install
+cat > /mnt/spike/etc/spike/partitions.conf << EOF
+boot_device=${target_disk}1
+root_device=$root_part
+swap_size=8GB
+filesystem=ext4
+mount_flags=$(get_mount_flags_for_storage_type)
+EOF
 ```
 
 ### 4.3 Base System Installation
 
 ```
-*`\# Step 1: Copy base system (from ISO, faster than debootstrap)`*
-
-`rsync -avHAX --progress /spike-base/ /mnt/spike/`
-
-
-*`\# Step 2: Install kernel`*
-
-`cp /boot/vmlinuz /mnt/spike/boot/`
-
-`cp /boot/initrd.img /mnt/spike/boot/`
-
-
-*`\# Step 3: Generate fstab`*
-
-`cat \> /mnt/spike/etc/fstab \<\< EOF`
-
-`$\{target\_disk\}1  /boot/efi  vfat  defaults,noatime  0  2`
-
-`$root\_part       /          ext4  $\{mount\_flags\}    0  1`
-
-`/swapfile        none       swap  sw                0  0`
-
-`EOF`
-
-
-*`\# Step 4: Chroot and configure`*
-
-`mount --bind /dev /mnt/spike/dev`
-
-`mount --bind /proc /mnt/spike/proc`
-
-`mount --bind /sys /mnt/spipe/sys`
-
-
-`chroot /mnt/spike /bin/bash \<\< 'CHROOT\_SCRIPT'`
-
-`    \# Set hostname`
-
-`    echo "$hostname" \> /etc/hostname`
-
-`    `
-
-`    \# Create user account`
-
-`    useradd -m -G sudo -s /bin/bash "$username"`
-
-`    echo "$username:$password" | chpasswd`
-
-`    `
-
-`    \# Lock root account`
-
-`    passwd -l root`
-
-`    `
-
-`    \# Configure timezone`
-
-`    ln -sf "/usr/share/zoneinfo/$timezone" /etc/localtime`
-
-`    `
-
-`    \# Install Flatpak`
-
-`    apt-get update`
-
-`    apt-get install -y flatpak`
-
-`    `
-
-`    \# Add Flathub remote`
-
-`    flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo`
-
-`    `
-
-`    \# Pre-seed runtimes (based on variant)`
-
-`    if \[\[ "$variant" == "standard" \]\]; then`
-
-`        flatpak install -y org.kde.Platform//5.15 org.gnome.Platform//45`
-
-`    else`
-
-`        flatpak install -y org.kde.Platform//5.15 org.gnome.Platform//45 org.freedesktop.Platform//24.08`
-
-`    fi`
-
-`    `
-
-`    \# Install KDE standalone apps`
-
-`    apt-get install -y dolphin konsole discover ark spectacle kate kcalc`
-
-`    `
-
-`    \# Install Firefox Flatpak`
-
-`    flatpak install -y org.mozilla.firefox`
-
-`    `
-
-`    \# Strip telemetry components`
-
-`    apt-get purge -y ubuntu-report apport whoopsie popularity-contest \\`
-
-`                       landscape-client ubuntu-advantage-tools \\`
-
-`                       motd-news-client cloud-init snapd`
-
-`    `
-
-`    \# Configure ZRAM (based on CPU detection)`
-
-`    configure\_zram()`
-
-`    `
-
-`    \# Configure power management`
-
-`    configure\_power()`
-
-`    `
-
-`    \# Configure automatic updates`
-
-`    configure\_updates()`
-
-`    `
-
-`    \# Generate spike-config state store`
-
-`    spike-config --detect`
-
-`    spike-config --generate-all`
-
-`CHROOT\_SCRIPT`
-
-
-*`\# Step 5: Unmount chroot`*
-
-`umount /mnt/spike/dev`
-
-`umount /mnt/spike/proc`
-
-`umount /mnt/spike/sys`
-
-
-*`\# Step 6: Install GRUB`*
-
-`case "$firmware\_type" in`
-
-`    UEFI)`
-
-`        grub-install --target=x86\_64-efi --efi-directory=/mnt/spike/boot/efi --bootloader-id=Spike`
-
-`        ;;`
-
-`    BIOS)`
-
-`        grub-install --target=i386-pc "$target\_disk"`
-
-`        ;;`
-
-`esac`
-
-
-*`\# Step 7: Generate GRUB config`*
-
-`chroot /mnt/spike update-grub`
-
-
-*`\# Step 8: Install Plymouth theme`*
-
-`install\_plymouth\_theme "$variant"`
-
-
-*`\# Step 9: Unmount filesystems`*
-
-`umount /mnt/spike/boot/efi`
-
-`umount /mnt/spike`
+# Step 1: Copy base system (from ISO, faster than debootstrap)
+rsync -avHAX --progress /spike-base/ /mnt/spike/
+# Step 2: Install kernel
+cp /boot/vmlinuz /mnt/spike/boot/
+cp /boot/initrd.img /mnt/spike/boot/
+# Step 3: Generate fstab
+cat > /mnt/spike/etc/fstab << EOF
+${target_disk}1  /boot/efi  vfat  defaults,noatime  0  2
+$root_part       /          ext4  ${mount_flags}    0  1
+/swapfile        none       swap  sw                0  0
+EOF
+# Step 4: Chroot and configure
+mount --bind /dev /mnt/spike/dev
+mount --bind /proc /mnt/spike/proc
+mount --bind /sys /mnt/spipe/sys
+chroot /mnt/spike /bin/bash << 'CHROOT_SCRIPT'
+    # Set hostname
+    echo "$hostname" > /etc/hostname
+
+    # Create user account
+    useradd -m -G sudo -s /bin/bash "$username"
+    echo "$username:$password" | chpasswd
+
+    # Lock root account
+    passwd -l root
+
+    # Configure timezone
+    ln -sf "/usr/share/zoneinfo/$timezone" /etc/localtime
+
+    # Install Flatpak
+    apt-get update
+    apt-get install -y flatpak
+
+    # Add Flathub remote
+    flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+
+    # Pre-seed runtimes (based on variant)
+    if [[ "$variant" == "standard" ]]; then
+        flatpak install -y org.kde.Platform//5.15 org.gnome.Platform//45
+    else
+        flatpak install -y org.kde.Platform//5.15 org.gnome.Platform//45 org.freedesktop.Platform//24.08
+    fi
+
+    # Install KDE standalone apps
+    apt-get install -y dolphin konsole discover ark spectacle kate kcalc
+
+    # Install Firefox Flatpak
+    flatpak install -y org.mozilla.firefox
+
+    # Strip telemetry components
+    apt-get purge -y ubuntu-report apport whoopsie popularity-contest \\
+                       landscape-client ubuntu-advantage-tools \\
+                       motd-news-client cloud-init snapd
+
+    # Configure ZRAM (based on CPU detection)
+    configure_zram()
+
+    # Configure power management
+    configure_power()
+
+    # Configure automatic updates
+    configure_updates()
+
+    # Generate spike-config state store
+    spike-config --detect
+    spike-config --generate-all
+CHROOT_SCRIPT
+# Step 5: Unmount chroot
+umount /mnt/spike/dev
+umount /mnt/spike/proc
+umount /mnt/spike/sys
+# Step 6: Install GRUB
+case "$firmware_type" in
+    UEFI)
+        grub-install --target=x86_64-efi --efi-directory=/mnt/spike/boot/efi --bootloader-id=Spike
+        ;;
+    BIOS)
+        grub-install --target=i386-pc "$target_disk"
+        ;;
+esac
+# Step 7: Generate GRUB config
+chroot /mnt/spike update-grub
+# Step 8: Install Plymouth theme
+install_plymouth_theme "$variant"
+# Step 9: Unmount filesystems
+umount /mnt/spike/boot/efi
+umount /mnt/spike
 ```
 
 ### 4.4 Post-Install First Boot
 
 ```
-*`\# First-boot script (runs via systemd FirstBoot.target)`*
-
-
-*`\# Step 1: Welcome wizard`*
-
-`if \[\[ ! -f /home/"$username"/.config/spike/first\_run\_completed \]\]; then`
-
-`    /usr/bin/spike-first-run-wizard`
-
-`fi`
-
-
-*`\# Step 2: Hardware detection confirmation`*
-
-`hardware\_report=$(generate\_hardware\_report)`
-
-`echo "$hardware\_report" \> /home/"$username"/Documents/Spike\_Hardware\_Report.txt`
-
-`notify-send "Welcome to Spike" "Hardware report saved to Documents/"`
-
-
-*`\# Step 3: Check for firmware updates`*
-
-`if apt-get check-firmware-update; then`
-
-`    notify-send "Firmware Update Available" "Visit Software Center to update"`
-
-`fi`
-
-
-*`\# Step 4: Mark first boot complete`*
-
-`touch /home/"$username"/.config/spike/first\_run\_completed`
-
-`chown "$username":"$username" /home/"$username"/.config/spike/first\_run\_completed`
+# First-boot script (runs via systemd FirstBoot.target)
+# Step 1: Welcome wizard
+if [[ ! -f /home/"$username"/.config/spike/first_run_completed ]]; then
+    /usr/bin/spike-first-run-wizard
+fi
+# Step 2: Hardware detection confirmation
+hardware_report=$(generate_hardware_report)
+echo "$hardware_report" > /home/"$username"/Documents/Spike_Hardware_Report.txt
+notify-send "Welcome to Spike" "Hardware report saved to Documents/"
+# Step 3: Check for firmware updates
+if apt-get check-firmware-update; then
+    notify-send "Firmware Update Available" "Visit Software Center to update"
+fi
+# Step 4: Mark first boot complete
+touch /home/"$username"/.config/spike/first_run_completed
+chown "$username":"$username" /home/"$username"/.config/spike/first_run_completed
 ```
 
 
@@ -1134,318 +645,171 @@ Before writing any generated config:
 ### 5.1 Layer 1 — Boot Failure Counter
 
 ```
-*`\# Script: /usr/lib/spike/boot-count-handler.sh`*
+# Script: /usr/lib/spike/boot-count-handler.sh
+COUNT_FILE="/var/lib/spike/boot/count"
+# Step 1: Read current count
+current_count=$(cat "$COUNT_FILE" 2>/dev/null || echo 0)
+# Step 2: Increment
+((current_count++))
+echo "$current_count" > "$COUNT_FILE"
+# Step 3: Check threshold
+if [[ $current_count -ge 3 ]]; then
+    *# Trigger GRUB automatic recovery mode
+    echo "3 consecutive boot failures detected" >> /var/log/spike/boot-failures.log
 
+    *# Create marker file for GRUB
+    touch /run/spike/force_recovery_mode
 
-`COUNT\_FILE="/var/lib/spike/boot/count"`
-
-
-*`\# Step 1: Read current count`*
-
-`current\_count=$(cat "$COUNT\_FILE" 2\>/dev/null || echo 0)`
-
-
-*`\# Step 2: Increment`*
-
-`((current\_count++))`
-
-`echo "$current\_count" \> "$COUNT\_FILE"`
-
-
-*`\# Step 3: Check threshold`*
-
-`if \[\[ $current\_count -ge 3 \]\]; then`
-
-`    *\# Trigger GRUB automatic recovery mode`*
-
-`    echo "3 consecutive boot failures detected" \>\> /var/log/spike/boot-failures.log`
-
-`    `
-
-`    *\# Create marker file for GRUB`*
-
-`    touch /run/spike/force\_recovery\_mode`
-
-`    `
-
-`    *\# Reset count on successful boot (done in Layer 2)`*
-
-`else`
-
-`    echo "$current\_count" \> "$COUNT\_FILE"`
-
-`fi`
-
-
-*`\# Step 4: If successful boot completes, reset counter`*
-
-*`\# (triggered by FirstBoot.target after 5 minutes of uptime)`*
-
-`if uptime -s | awk '\{print $1\}' == "$(date +%Y-%m-%d)"; then`
-
-`    echo "0" \> "$COUNT\_FILE"`
-
-`fi`
+    *# Reset count on successful boot (done in Layer 2)
+else
+    echo "$current_count" > "$COUNT_FILE"
+fi
+# Step 4: If successful boot completes, reset counter
+# (triggered by FirstBoot.target after 5 minutes of uptime)
+if uptime -s | awk '{print $1}' == "$(date +%Y-%m-%d)"; then
+    echo "0" > "$COUNT_FILE"
+fi
 ```
 
 ### 5.2 Layer 2 — Recovery Mode Procedure
 
 ```
-`User boots into GRUB → Selects "Spike (recovery mode)"`
-
-
-`┌─────────────────────────────────────────┐`
-
-`│ Recovery Menu:                          │`
-
-`│ ┌─────────────────────────────────────┐ │`
-
-`│ │ 1. dpkg — Repair broken packages    │ │`
-
-`│ │ 2. fsck — Check filesystem          │ │`
-
-`│ │ 3. network — Enable networking      │ │`
-
-`│ │ 4. root — Drop to root shell        │ │`
-
-`│ │ 5. clean — Free disk space          │ │`
-
-`│ │ 6. menu — Return to main menu       │ │`
-
-`│ │ 7. resume — Boot normally           │ │`
-
-`│ └─────────────────────────────────────┘ │`
-
-`└─────────────────────────────────────────┘`
+User boots into GRUB → Selects "Spike (recovery mode)"
+┌─────────────────────────────────────────┐
+│ Recovery Menu:                          │
+│ ┌─────────────────────────────────────┐ │
+│ │ 1. dpkg — Repair broken packages    │ │
+│ │ 2. fsck — Check filesystem          │ │
+│ │ 3. network — Enable networking      │ │
+│ │ 4. root — Drop to root shell        │ │
+│ │ 5. clean — Free disk space          │ │
+│ │ 6. menu — Return to main menu       │ │
+│ │ 7. resume — Boot normally           │ │
+│ └─────────────────────────────────────┘ │
+└─────────────────────────────────────────┘
 ```
 
 **Root shell commands:**
 
 ```
-*`\# Reset boot counter`*
-
-`echo "0" \> /var/lib/spike/boot/count`
-
-
-*`\# Rollback configuration`*
-
-`spike-config --rollback $(spike-config --changelog | jq -r '.\[0\].entry\_id')`
-
-
-*`\# Rebuild initramfs`*
-
-`update-initramfs -u -k all`
-
-
-*`\# Check filesystem`*
-
-`fsck -y /dev/nvme0n1p2`
-
-
-*`\# Reset permissions`*
-
-`chmod 755 /home`
-
-`chown -R username:username /home/username`
-
-
-*`\# Exit and resume`*
-
-`exit`
+# Reset boot counter
+echo "0" > /var/lib/spike/boot/count
+# Rollback configuration
+spike-config --rollback $(spike-config --changelog | jq -r '.[0].entry_id')
+# Rebuild initramfs
+update-initramfs -u -k all
+# Check filesystem
+fsck -y /dev/nvme0n1p2
+# Reset permissions
+chmod 755 /home
+chown -R username:username /home/username
+# Exit and resume
+exit
 ```
 
 ### 5.3 Layer 3 — Live ISO Rescue
 
 ```
-`Boot from Spike USB → Select "Rescue my data"`
-
-
-`┌─────────────────────────────────────────┐`
-
-`│ Rescue Wizard:                          │`
-
-`│                                         │`
-
-`│ 1. Scanning for data...                 │`
-
-`│    ✓ Found: /dev/nvme0n1p2 (Spike)     │`
-
-`│    ✓ Found: /dev/sdb1 (Windows)        │`
-
-`│                                         │`
-
-`│ 2. Selecting data to recover...         │`
-
-`│    ☑ Documents                         │`
-
-`│    ☑ Pictures                          │`
-
-`│    ☑ Videos                            │`
-
-`│    ☑ Music                             │`
-
-`│    ☑ Downloads                         │`
-
-`│    ☐ Applications (system configs)     │`
-
-`│                                         │`
-
-`│ 3. Selecting destination...             │`
-
-`│    Target: /media/user/USB\_BACKUP      │`
-
-`│    Space required: 4.2 GB              │`
-
-`│    Space available: 28.7 GB            │`
-
-`│                                         │`
-
-`│ \[Begin Recovery\]                        │`
-
-`└─────────────────────────────────────────┘`
+Boot from Spike USB → Select "Rescue my data"
+┌─────────────────────────────────────────┐
+│ Rescue Wizard:                          │
+│                                         │
+│ 1. Scanning for data...                 │
+│    ✓ Found: /dev/nvme0n1p2 (Spike)     │
+│    ✓ Found: /dev/sdb1 (Windows)        │
+│                                         │
+│ 2. Selecting data to recover...         │
+│    ☑ Documents                         │
+│    ☑ Pictures                          │
+│    ☑ Videos                            │
+│    ☑ Music                             │
+│    ☑ Downloads                         │
+│    ☐ Applications (system configs)     │
+│                                         │
+│ 3. Selecting destination...             │
+│    Target: /media/user/USB_BACKUP      │
+│    Space required: 4.2 GB              │
+│    Space available: 28.7 GB            │
+│                                         │
+│ [Begin Recovery]                        │
+└─────────────────────────────────────────┘
 ```
 
 **Rescue script:**
 
 ```
-*`\# Step 1: Mount source read-only (prevent further damage)`*
+# Step 1: Mount source read-only (prevent further damage)
+mount -o ro,noload /dev/nvme0n1p2 /mnt/source
+# Step 2: Scan for user data directories
+data_dirs=(
+    "/mnt/home/username/Documents"
+    "/mnt/home/username/Pictures"
+    "/mnt/home/username/Videos"
+    "/mnt/home/username/Music"
+    "/mnt/home/username/Downloads"
+    "/mnt/home/username/Desktop"
+)
+# Step 3: Copy with verification
+for dir in "${data_dirs[@]}"; do
+    if [[ -d "$dir" ]]; then
+        rsync -avH --checksum "$dir/" "/media/user/USB_BACKUP/$(basename $dir)/"
 
-`mount -o ro,noload /dev/nvme0n1p2 /mnt/source`
-
-
-*`\# Step 2: Scan for user data directories`*
-
-`data\_dirs=(`
-
-`    "/mnt/home/username/Documents"`
-
-`    "/mnt/home/username/Pictures"`
-
-`    "/mnt/home/username/Videos"`
-
-`    "/mnt/home/username/Music"`
-
-`    "/mnt/home/username/Downloads"`
-
-`    "/mnt/home/username/Desktop"`
-
-`)`
-
-
-*`\# Step 3: Copy with verification`*
-
-`for dir in "$\{data\_dirs\[@\]\}"; do`
-
-`    if \[\[ -d "$dir" \]\]; then`
-
-`        rsync -avH --checksum "$dir/" "/media/user/USB\_BACKUP/$(basename $dir)/"`
-
-`        `
-
-`        *\# Verify with checksum`*
-
-`        sha256sum "$dir" \> "/media/user/USB\_BACKUP/checksums.txt"`
-
-`    fi`
-
-`done`
-
-
-*`\# Step 4: Report results`*
-
-`total\_copied=$(du -sh /media/user/USB\_BACKUP | cut -f1)`
-
-`echo "Recovery complete: $\{total\_copied\} recovered"`
-
-`notify-send "Recovery Complete" "$\{total\_copied\} data recovered to USB"`
+        *# Verify with checksum
+        sha256sum "$dir" > "/media/user/USB_BACKUP/checksums.txt"
+    fi
+done
+# Step 4: Report results
+total_copied=$(du -sh /media/user/USB_BACKUP | cut -f1)
+echo "Recovery complete: ${total_copied} recovered"
+notify-send "Recovery Complete" "${total_copied} data recovered to USB"
 ```
 
 ### 5.4 Layer 4 — Reinstall with Restore
 
 ```
-`Installer detects existing Spike installation`
-
-
-`┌─────────────────────────────────────────┐`
-
-`│ Existing Installation Detected          │`
-
-`│                                         │`
-
-`│ Found Spike on /dev/nvme0n1p2           │`
-
-`│                                         │`
-
-`│ Options:                                │`
-
-`│ ○ Fresh install (delete everything)    │`
-
-`│ ● Fresh install and restore my data    │`
-
-`│ ○ Cancel                                │`
-
-`│                                         │`
-
-`│ If you choose restore:                  │`
-
-`│ - Personal files will be preserved     │`
-
-`│ - System configs will be fresh         │`
-
-`│ - App configs will be reset            │`
-
-`│                                         │`
-
-`│ \[Continue\]                              │`
-
-`└─────────────────────────────────────────┘`
+Installer detects existing Spike installation
+┌─────────────────────────────────────────┐
+│ Existing Installation Detected          │
+│                                         │
+│ Found Spike on /dev/nvme0n1p2           │
+│                                         │
+│ Options:                                │
+│ ○ Fresh install (delete everything)    │
+│ ● Fresh install and restore my data    │
+│ ○ Cancel                                │
+│                                         │
+│ If you choose restore:                  │
+│ - Personal files will be preserved     │
+│ - System configs will be fresh         │
+│ - App configs will be reset            │
+│                                         │
+│ [Continue]                              │
+└─────────────────────────────────────────┘
 ```
 
 **Restore procedure (post-install):**
 
 ```
-*`\# Step 1: Check for SpikeBackup folder`*
-
-`backup\_source="/media/user/USB\_BACKUP"`
-
-`if \[\[ ! -d "$backup\_source" \]\]; then`
-
-`    echo "No backup found, skipping restore"`
-
-`    exit 0`
-
-`fi`
-
-
-*`\# Step 2: Restore personal files`*
-
-`restore\_dirs=(Documents Pictures Videos Music Downloads Desktop)`
-
-`for dir in "$\{restore\_dirs\[@\]\}"; do`
-
-`    if \[\[ -d "$backup\_source/$dir" \]\]; then`
-
-`        rsync -av "$backup\_source/$dir/" "/home/username/$dir/"`
-
-`    fi`
-
-`done`
-
-
-*`\# Step 3: Fix ownership/permissions`*
-
-`chown -R username:username /home/username/Documents`
-
-`chown -R username:username /home/username/Pictures`
-
-*`\# ... repeat for all dirs`*
-
-
-*`\# Step 4: Verify restoration`*
-
-`restored\_total=$(du -sh /home/username/Documents /home/username/Pictures ...)`
-
-`notify-send "Installation Complete" "Restored $\{restored\_total\} of personal data"`
+# Step 1: Check for SpikeBackup folder
+backup_source="/media/user/USB_BACKUP"
+if [[ ! -d "$backup_source" ]]; then
+    echo "No backup found, skipping restore"
+    exit 0
+fi
+# Step 2: Restore personal files
+restore_dirs=(Documents Pictures Videos Music Downloads Desktop)
+for dir in "${restore_dirs[@]}"; do
+    if [[ -d "$backup_source/$dir" ]]; then
+        rsync -av "$backup_source/$dir/" "/home/username/$dir/"
+    fi
+done
+# Step 3: Fix ownership/permissions
+chown -R username:username /home/username/Documents
+chown -R username:username /home/username/Pictures
+# ... repeat for all dirs
+# Step 4: Verify restoration
+restored_total=$(du -sh /home/username/Documents /home/username/Pictures ...)
+notify-send "Installation Complete" "Restored ${restored_total} of personal data"
 ```
 
 
@@ -1456,116 +820,62 @@ Before writing any generated config:
 ### 6.1 Pre-Merge Checklist
 
 ```
-`┌─────────────────────────────────────────┐`
-
-`│ Pre-Merge Verification:                 │`
-
-`│                                         │`
-
-`│ □ Unit tests pass (pytest/ctest)       │`
-
-`│ □ Integration tests pass               │`
-
-`│ □ Lint checks pass (shellcheck, pylint)│`
-
-`│ □ Code coverage ≥80%                   │`
-
-`│ □ No new warnings in compiler output   │`
-
-`│ □ Manual test on target hardware       │`
-
-`│ □ Documentation updated                │`
-
-`│ □ CHANGELOG.md entry added             │`
-
-`│ □ DCO signed off                       │`
-
-`│                                         │`
-
-`│ \[Submit Merge Request\]                  │`
-
-`└─────────────────────────────────────────┘`
+┌─────────────────────────────────────────┐
+│ Pre-Merge Verification:                 │
+│                                         │
+│ □ Unit tests pass (pytest/ctest)       │
+│ □ Integration tests pass               │
+│ □ Lint checks pass (shellcheck, pylint)│
+│ □ Code coverage ≥80%                   │
+│ □ No new warnings in compiler output   │
+│ □ Manual test on target hardware       │
+│ □ Documentation updated                │
+│ □ CHANGELOG.md entry added             │
+│ □ DCO signed off                       │
+│                                         │
+│ [Submit Merge Request]                  │
+└─────────────────────────────────────────┘
 ```
 
 ### 6.2 CI/CD Pipeline Stages
 
 ```
-*`\# .gitlab-ci.yml stages`*
-
-
-`stages:`
-
-`  - lint`
-
-`  - test`
-
-`  - build`
-
-`  - package`
-
-
-`lint:`
-
-`  stage: lint`
-
-`  script:`
-
-`    - shellcheck \*.sh`
-
-`    - pylint spike/\*\*/\*.py`
-
-`    - clang-format --dry-run src/\*\*/\*.cpp`
-
-
-`test:`
-
-`  stage: test`
-
-`  script:`
-
-`    - pytest tests/python --cov=spike --cov-report=xml`
-
-`    - ctest --output-on-failure tests/cpp`
-
-`    - bash tests/shell/run\_all\_tests.sh`
-
-`  artifacts:`
-
-`    reports:`
-
-`      coverage\_report: coverage.xml`
-
-
-`build:`
-
-`  stage: build`
-
-`  script:`
-
-`    - cmake -B build -DCMAKE\_BUILD\_TYPE=Release`
-
-`    - cmake --build build`
-
-`  artifacts:`
-
-`    paths:`
-
-`      - build/`
-
-
-`package:`
-
-`  stage: package`
-
-`  script:`
-
-`    - cpack -G DEB`
-
-`  artifacts:`
-
-`    paths:`
-
-`      - spike-\*.deb`
+# .gitlab-ci.yml stages
+stages:
+  - lint
+  - test
+  - build
+  - package
+lint:
+  stage: lint
+  script:
+    - shellcheck *.sh
+    - pylint spike/**/*.py
+    - clang-format --dry-run src/**/*.cpp
+test:
+  stage: test
+  script:
+    - pytest tests/python --cov=spike --cov-report=xml
+    - ctest --output-on-failure tests/cpp
+    - bash tests/shell/run_all_tests.sh
+  artifacts:
+    reports:
+      coverage_report: coverage.xml
+build:
+  stage: build
+  script:
+    - cmake -B build -DCMAKE_BUILD_TYPE=Release
+    - cmake --build build
+  artifacts:
+    paths:
+      - build/
+package:
+  stage: package
+  script:
+    - cpack -G DEB
+  artifacts:
+    paths:
+      - spike-*.deb
 ```
 
 ### 6.3 Hardware Test Matrix
@@ -1586,43 +896,23 @@ Before writing any generated config:
 ### 6.4 Performance Baseline Testing
 
 ```
-*`\# Script: benchmarks/run\_all.sh`*
-
-
-*`\# Boot time`*
-
-`start\_time=$(date +%s%N)`
-
-`reboot`
-
-*`\# Wait for login screen`*
-
-`end\_time=$(date +%s%N)`
-
-`boot\_time\_ns=$((end\_time - start\_time))`
-
-`boot\_time\_ms=$((boot\_time\_ns / 1000000))`
-
-`echo "Boot time: $\{boot\_time\_ms\}ms" \>\> /var/log/spike/benchmarks.log`
-
-
-*`\# Idle memory`*
-
-`idle\_memory=$(free -m | awk '/^Mem:/ \{print $3\}')`
-
-`echo "Idle memory (Standard): $\{idle\_memory\}MB" \>\> /var/log/spike/benchmarks.log`
-
-
-*`\# App launch times`*
-
-`firefox\_launch=$(time -p firefox --headless 2\>&1 | grep real | awk '\{print $2\}')`
-
-`echo "Firefox launch: $\{firefox\_launch\}s" \>\> /var/log/spike/benchmarks.log`
-
-
-`dolphin\_launch=$(time -p dolphin --version 2\>&1 | grep real | awk '\{print $2\}')`
-
-`echo "Dolphin launch: $\{dolphin\_launch\}s" \>\> /var/log/spike/benchmarks.log`
+# Script: benchmarks/run_all.sh
+# Boot time
+start_time=$(date +%s%N)
+reboot
+# Wait for login screen
+end_time=$(date +%s%N)
+boot_time_ns=$((end_time - start_time))
+boot_time_ms=$((boot_time_ns / 1000000))
+echo "Boot time: ${boot_time_ms}ms" >> /var/log/spike/benchmarks.log
+# Idle memory
+idle_memory=$(free -m | awk '/^Mem:/ {print $3}')
+echo "Idle memory (Standard): ${idle_memory}MB" >> /var/log/spike/benchmarks.log
+# App launch times
+firefox_launch=$(time -p firefox --headless 2>&1 | grep real | awk '{print $2}')
+echo "Firefox launch: ${firefox_launch}s" >> /var/log/spike/benchmarks.log
+dolphin_launch=$(time -p dolphin --version 2>&1 | grep real | awk '{print $2}')
+echo "Dolphin launch: ${dolphin_launch}s" >> /var/log/spike/benchmarks.log
 ```
 
 
@@ -1650,53 +940,30 @@ Before writing any generated config:
 ### 7.2 Dependency Vulnerability Scan
 
 ```
-*`\# Step 1: Scan Python dependencies`*
-
-`pip-audit requirements.txt`
-
-
-*`\# Step 2: Scan system packages`*
-
-`apt-list-bugs --severity=high`
-
-
-*`\# Step 3: Scan Flatpak runtimes`*
-
-`flatpak remote-info --verbose flathub | grep -i vulnerability`
-
-
-*`\# Step 4: Generate SBOM (Software Bill of Materials)`*
-
-`cyclonedx-python -r requirements.txt -o sbom.json`
+# Step 1: Scan Python dependencies
+pip-audit requirements.txt
+# Step 2: Scan system packages
+apt-list-bugs --severity=high
+# Step 3: Scan Flatpak runtimes
+flatpak remote-info --verbose flathub | grep -i vulnerability
+# Step 4: Generate SBOM (Software Bill of Materials)
+cyclonedx-python -r requirements.txt -o sbom.json
 ```
 
 ### 7.3 Penetration Testing (Internal)
 
 ```
-*`\# Network attack surface analysis`*
-
-`sudo nmap -sV -sC localhost`
-
-
-*`\# Port scan (should show only expected services)`*
-
-`sudo nmap -p- localhost`
-
-*`\# Expected: None (no listening services by default)`*
-
-
-*`\# Service enumeration`*
-
-`systemctl list-unit-files --state=enabled`
-
-*`\# Verify: Only expected services enabled`*
-
-
-*`\# Firewall audit`*
-
-`sudo ufw status verbose`
-
-*`\# Verify: Incoming DENY, outgoing ALLOW, mDNS exception`*
+# Network attack surface analysis
+sudo nmap -sV -sC localhost
+# Port scan (should show only expected services)
+sudo nmap -p- localhost
+# Expected: None (no listening services by default)
+# Service enumeration
+systemctl list-unit-files --state=enabled
+# Verify: Only expected services enabled
+# Firewall audit
+sudo ufw status verbose
+# Verify: Incoming DENY, outgoing ALLOW, mDNS exception
 ```
 
 
@@ -1707,53 +974,30 @@ Before writing any generated config:
 ### 8.1 Phased Contribution Model
 
 ```
-`┌─────────────────────────────────────────┐`
-
-`│ Pre-Alpha                               │`
-
-`│ ├─ Repo: Read-only                      │`
-
-`│ ├─ Contributions: Issues only           │`
-
-`│ └─ Code: Not accepted                   │`
-
-`└─────────────────────────────────────────┘`
-
-`                  ▼`
-
-`┌─────────────────────────────────────────┐`
-
-`│ Alpha                                   │`
-
-`│ ├─ Repo: Public                         │`
-
-`│ ├─ Contributions: Bugs, translations,   │`
-
-`│ │   hardware submissions                │`
-
-`│ ├─ Patches: Case-by-case with DCO       │`
-
-`│ └─ Review: BDFL/maintainer approval     │`
-
-`└─────────────────────────────────────────┘`
-
-`                  ▼`
-
-`┌─────────────────────────────────────────┐`
-
-`│ Beta                                    │`
-
-`│ ├─ Repo: Public                         │`
-
-`│ ├─ Contributions: Full (code, docs,     │`
-
-`│ │   translations, features)             │`
-
-`│ ├─ Review: Code review required         │`
-
-`│ └─ Protection: Branch rules enforced    │`
-
-`└─────────────────────────────────────────┘`
+┌─────────────────────────────────────────┐
+│ Pre-Alpha                               │
+│ ├─ Repo: Read-only                      │
+│ ├─ Contributions: Issues only           │
+│ └─ Code: Not accepted                   │
+└─────────────────────────────────────────┘
+                  ▼
+┌─────────────────────────────────────────┐
+│ Alpha                                   │
+│ ├─ Repo: Public                         │
+│ ├─ Contributions: Bugs, translations,   │
+│ │   hardware submissions                │
+│ ├─ Patches: Case-by-case with DCO       │
+│ └─ Review: BDFL/maintainer approval     │
+└─────────────────────────────────────────┘
+                  ▼
+┌─────────────────────────────────────────┐
+│ Beta                                    │
+│ ├─ Repo: Public                         │
+│ ├─ Contributions: Full (code, docs,     │
+│ │   translations, features)             │
+│ ├─ Review: Code review required         │
+│ └─ Protection: Branch rules enforced    │
+└─────────────────────────────────────────┘
 ```
 
 ### 8.2 Pull Request Protocol
@@ -1763,7 +1007,7 @@ Before writing any generated config:
 2. **Create feature branch** 
 
 ```
-`git checkout -b feat/\<short-description\>`
+git checkout -b feat/<short-description>
 ```
 
 3. **Make changes following conventions** 
@@ -1775,17 +1019,12 @@ Before writing any generated config:
 6. **Submit PR** 
 
 ```
-`Title: \<type\>(\<scope\>): \<subject\>`
-
-`Body:`
-
-`- What changes were made`
-
-`- Why they were made`
-
-`- How to test`
-
-`- Related issues (Fixes: \#NN)`
+Title: <type>(<scope>): <subject>
+Body:
+- What changes were made
+- Why they were made
+- How to test
+- Related issues (Fixes: #NN)
 ```
 
 7. **Wait for review** 
@@ -1797,32 +1036,18 @@ Before writing any generated config:
 ### 8.3 Issue Reporting Protocol
 
 ```
-`Title: \[Component\] Short description`
-
-
-`Description:`
-
-`- Steps to reproduce`
-
-`- Expected behavior`
-
-`- Actual behavior`
-
-`- System info (hardware, variant, version)`
-
-
-`Attachments:`
-
-`- Screenshots (if UI issue)`
-
-`- Logs (from /var/log/spike/)`
-
-`- Hardware report (from Documents/)`
-
-
-`Labels: bug/enhancement/question/documentation`
-
-`Priority: low/medium/high/critical`
+Title: [Component] Short description
+Description:
+- Steps to reproduce
+- Expected behavior
+- Actual behavior
+- System info (hardware, variant, version)
+Attachments:
+- Screenshots (if UI issue)
+- Logs (from /var/log/spike/)
+- Hardware report (from Documents/)
+Labels: bug/enhancement/question/documentation
+Priority: low/medium/high/critical
 ```
 
 
@@ -1842,71 +1067,39 @@ Before writing any generated config:
 ### 9.2 Critical Incident Response
 
 ```
-`┌─────────────────────────────────────────┐`
-
-`│ 1. Identify severity                    │`
-
-`│    └─ Is it critical? (boot/data/sec)  │`
-
-`└──────────────────┬──────────────────────┘`
-
-`                   ▼ Yes`
-
-`         ┌──────────────────┐`
-
-`         │ 2. Communicate   │`
-
-`         │    (issue, email │`
-
-`         │    all maintainers) │`
-
-`         └────────┬─────────┘`
-
-`                  ▼`
-
-`        ┌──────────────────┐`
-
-`        │ 3. Contain       │`
-
-`        │    (hotfix,      │`
-
-`        │    rollback)     │`
-
-`        └────────┬─────────┘`
-
-`                 ▼`
-
-`       ┌──────────────────┐`
-
-`       │ 4. Diagnose      │`
-
-`       │    (root cause)  │`
-
-`       └────────┬─────────┘`
-
-`                ▼`
-
-`      ┌──────────────────┐`
-
-`      │ 5. Fix           │`
-
-`      │    (properly,    │`
-
-`      │    with tests)   │`
-
-`      └────────┬─────────┘`
-
-`               ▼`
-
-`     ┌──────────────────┐`
-
-`     │ 6. Document      │`
-
-`     │    (post-mortem, │`
-
-`     │    DECISIONS.md) │`
-
-`     └──────────────────┘`
+┌─────────────────────────────────────────┐
+│ 1. Identify severity                    │
+│    └─ Is it critical? (boot/data/sec)  │
+└──────────────────┬──────────────────────┘
+                   ▼ Yes
+         ┌──────────────────┐
+         │ 2. Communicate   │
+         │    (issue, email │
+         │    all maintainers) │
+         └────────┬─────────┘
+                  ▼
+        ┌──────────────────┐
+        │ 3. Contain       │
+        │    (hotfix,      │
+        │    rollback)     │
+        └────────┬─────────┘
+                 ▼
+       ┌──────────────────┐
+       │ 4. Diagnose      │
+       │    (root cause)  │
+       └────────┬─────────┘
+                ▼
+      ┌──────────────────┐
+      │ 5. Fix           │
+      │    (properly,    │
+      │    with tests)   │
+      └────────┬─────────┘
+               ▼
+     ┌──────────────────┐
+     │ 6. Document      │
+     │    (post-mortem, │
+     │    DECISIONS.md) │
+     └──────────────────┘
 ```
 
 ### 9.3 Security Vulnerability Handling
@@ -1915,7 +1108,7 @@ Before writing any generated config:
 
 1. **Report privately** (do not disclose publicly)
 
-   - Email: [security@bigrangatech.org](mailto:security@bigrangatech.org) (encrypted) 
+   - Email: [security@bigrangatech.com](mailto:security@bigrangatech.com) (encrypted) 
 
    - OR GitHub Security Advisory 
 

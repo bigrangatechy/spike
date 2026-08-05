@@ -30,17 +30,17 @@ This file lists every **non-negotiable technical constraint** in the Spike Linux
 | ZRAM cap (Standard) | 4GB max | `VARIANT-DIFFERENCES.md` |
 | ZRAM cap (Plus) | Uncapped (up to RAM size) | `VARIANT-DIFFERENCES.md` |
 | ZRAM condition | Only on "capable" or "modern" CPUs (bogomips ≥ 2200/core, dual-core+) | `MEMORY.md`, `HARDWARE.md` |
-| ZRAM skip condition | "low-end" CPUs (bogomips \< 2000/core) — swap only | `MEMORY.md`, `HARDWARE.md` |
+| ZRAM skip condition | "low-end" CPUs (bogomips < 2000/core) — swap only | `MEMORY.md`, `HARDWARE.md` |
 | Swap priority | 10 | `MEMORY.md` |
 | Swap location | `/swapfile` | `MEMORY.md` |
 | zswap | Disabled (kernel command line: `zswap.enabled=0`) | `KERNEL.md`, `BOOT-PROCESS.md` |
-| THP | `madvise` (kernel command line: `transparent\_hugepage=madvise`) | `KERNEL.md`, `BOOT-PROCESS.md` |
+| THP | `madvise` (kernel command line: `transparent_hugepage=madvise`) | `KERNEL.md`, `BOOT-PROCESS.md` |
 | Swappiness (SSD) | 15 | `MEMORY.md` |
 | Swappiness (HDD) | 5 | `MEMORY.md` |
 | Swappiness (SD/USB) | 10 | `MEMORY.md` |
 | Swappiness user range | 15–60 (SSD only, increase only) | `MEMORY.md` |
 | Earlyoom threshold | 10% of memory+swap remaining | `MEMORY.md` |
-| Earlyoom protected processes | spike-shell, kwin\_wayland, systemd, pipewire, wireplumber | `MEMORY.md` |
+| Earlyoom protected processes | spike-shell, kwin_wayland, systemd, pipewire, wireplumber | `MEMORY.md` |
 | Earlyoom preferred kill targets | firefox, chromium, libreoffice, gimp, blender | `MEMORY.md` |
 
 
@@ -52,15 +52,15 @@ This file lists every **non-negotiable technical constraint** in the Spike Linux
 | State store format | JSON (versioned) | `CONFIGURATION.md` |
 | State store permissions | 644 (root:root) | `CONFIGURATION.md` |
 | Defaults location | `/usr/lib/spike/config/defaults.json` | `CONFIGURATION.md` |
-| Template location | `/usr/lib/spike/config/templates/\*.tpl` | `CONFIGURATION.md` |
-| Template variable syntax | `\{\{variable\}\}` substituted from state store | `CONFIGURATION.md` |
-| Template validation | No leftover `\{\{\}\}` in output, no empty critical fields | `CONFIGURATION.md` |
+| Template location | `/usr/lib/spike/config/templates/*.tpl` | `CONFIGURATION.md` |
+| Template variable syntax | `{{variable}}` substituted from state store | `CONFIGURATION.md` |
+| Template validation | No leftover `{{}}` in output, no empty critical fields | `CONFIGURATION.md` |
 | Atomic write pattern | Write to `.tmp` → `fsync` → `rename` → `fsync(dir)` | `CONFIGURATION.md` |
 | Never write directly to target file | Enforced — always use temp+rename | `CONFIGURATION.md` |
 | Changelog location | `/var/lib/spike/config/changelog.json` | `CONFIGURATION.md` |
 | Changelog format | Append-only JSON array | `CONFIGURATION.md` |
 | Changelog max entries | 5000 (oldest pruned) | `CONFIGURATION.md` |
-| Changelog fields | timestamp, module, setting, old\_value, new\_value, source, files\_regenerated, services\_reloaded | `CONFIGURATION.md` |
+| Changelog fields | timestamp, module, setting, old_value, new_value, source, files_regenerated, services_reloaded | `CONFIGURATION.md` |
 | Idempotency | `spike-config --generate-all` produces identical output given same state | `CONFIGURATION.md` |
 | State recovery | If `state.json` lost/corrupted → regenerate from `defaults.json` + hardware detect | `CONFIGURATION.md` |
 | DBus interface | `org.spike.Config` | `CONFIGURATION.md` |
@@ -85,12 +85,12 @@ This file lists every **non-negotiable technical constraint** in the Spike Linux
 | **Command** | **Purpose** | **Source** |
 | :-: | :-: | :-: |
 | `spike-config --generate-all` | Regenerate all config files from state | `CONFIGURATION.md` |
-| `spike-config --generate \<module\>` | Regenerate single module | `CONFIGURATION.md` |
+| `spike-config --generate <module>` | Regenerate single module | `CONFIGURATION.md` |
 | `spike-config --detect` | Run hardware detection | `CONFIGURATION.md` |
 | `spike-config --state` | Dump state store | `CONFIGURATION.md` |
-| `spike-config --state-set \<module\> \<key\> \<value\>` | Set a state value | `CONFIGURATION.md` |
+| `spike-config --state-set <module> <key> <value>` | Set a state value | `CONFIGURATION.md` |
 | `spike-config --changelog` | View changelog | `CONFIGURATION.md` |
-| `spike-config --rollback \<entry-id\>` | Rollback to previous config state | `CONFIGURATION.md` |
+| `spike-config --rollback <entry-id>` | Rollback to previous config state | `CONFIGURATION.md` |
 | `spike-config --validate` | Validate all config files against state | `CONFIGURATION.md` |
 
 
@@ -99,7 +99,7 @@ This file lists every **non-negotiable technical constraint** in the Spike Linux
 | **Constraint** | **Value** | **Source** |
 | :-: | :-: | :-: |
 | Kernel | Ubuntu LTS kernel | `ARCHITECTURE.md` |
-| Architecture | x86\_64 only | `ARCHITECTURE.md` |
+| Architecture | x86_64 only | `ARCHITECTURE.md` |
 | 32-bit support | None (deferred indefinitely) | `ARCHITECTURE.md` |
 
 ### Boot Parameters (Kernel Command Line)
@@ -109,13 +109,13 @@ This file lists every **non-negotiable technical constraint** in the Spike Linux
 | `quiet` | Set | `BOOT-PROCESS.md` |
 | `splash` | Set | `BOOT-PROCESS.md` |
 | `zswap.enabled` | `0` | `KERNEL.md` |
-| `transparent\_hugepage` | `madvise` | `KERNEL.md` |
+| `transparent_hugepage` | `madvise` | `KERNEL.md` |
 
 ### Module Blacklisting Rules
 
 | **Rule** | **Detail** | **Source** |
 | :-: | :-: | :-: |
-| Never blacklist | `usbcore`, `uhci\_hcd`, `ehci\_hcd`, `xhci\_hcd` (USB) | `KERNEL.md` |
+| Never blacklist | `usbcore`, `uhci_hcd`, `ehci_hcd`, `xhci_hcd` (USB) | `KERNEL.md` |
 | Never blacklist | Network drivers (hot-pluggable) | `KERNEL.md` |
 | Never blacklist | Audio drivers | `KERNEL.md` |
 | Never blacklist | Bluetooth drivers | `KERNEL.md` |
@@ -126,12 +126,12 @@ This file lists every **non-negotiable technical constraint** in the Spike Linux
 
 | **sysctl Key** | **Value** | **Source** |
 | :-: | :-: | :-: |
-| `net.ipv4.conf.all.rp\_filter` | `1` | `SECURITY.md` |
-| `net.ipv4.conf.default.rp\_filter` | `1` | `SECURITY.md` |
-| `net.ipv4.conf.all.accept\_redirects` | `0` | `SECURITY.md` |
-| `net.ipv4.conf.default.accept\_redirects` | `0` | `SECURITY.md` |
-| `net.ipv6.conf.all.accept\_redirects` | `0` | `SECURITY.md` |
-| `net.ipv6.conf.default.accept\_redirects` | `0` | `SECURITY.md` |
+| `net.ipv4.conf.all.rp_filter` | `1` | `SECURITY.md` |
+| `net.ipv4.conf.default.rp_filter` | `1` | `SECURITY.md` |
+| `net.ipv4.conf.all.accept_redirects` | `0` | `SECURITY.md` |
+| `net.ipv4.conf.default.accept_redirects` | `0` | `SECURITY.md` |
+| `net.ipv6.conf.all.accept_redirects` | `0` | `SECURITY.md` |
+| `net.ipv6.conf.default.accept_redirects` | `0` | `SECURITY.md` |
 
 
 ## 5. Boot Process
@@ -139,9 +139,9 @@ This file lists every **non-negotiable technical constraint** in the Spike Linux
 | **Constraint** | **Value** | **Source** |
 | :-: | :-: | :-: |
 | Bootloader | GRUB2 | `BOOT-PROCESS.md` |
-| `GRUB\_DISABLE\_OS\_PROBER` | `true` (no dual boot detection) | `BOOT-PROCESS.md` |
-| `GRUB\_DISABLE\_SUBMENU` | `y` (flat kernel list) | `BOOT-PROCESS.md` |
-| `GRUB\_TERMINAL\_OUTPUT` | `gfxterm` (themed graphical) | `BOOT-PROCESS.md` |
+| `GRUB_DISABLE_OS_PROBER` | `true` (no dual boot detection) | `BOOT-PROCESS.md` |
+| `GRUB_DISABLE_SUBMENU` | `y` (flat kernel list) | `BOOT-PROCESS.md` |
+| `GRUB_TERMINAL_OUTPUT` | `gfxterm` (themed graphical) | `BOOT-PROCESS.md` |
 | Boot menu | Hidden by default, 3–5 second ESC window | `BOOT-PROCESS.md` |
 | Recovery entry | Always present in GRUB | `BOOT-PROCESS.md` |
 | Boot failure counter | After 3 consecutive failures → GRUB menu shows automatically, recovery highlighted, 10–15 second timeout | `BOOT-PROCESS.md`, `DISASTER-RECOVERY.md` |
@@ -172,11 +172,9 @@ This file lists every **non-negotiable technical constraint** in the Spike Linux
 ### eMMC Detection Gotcha
 
 ```
-`eMMC devices may report as non-rotational (like SSDs) in lsblk.`
-
-`Check for /dev/mmcblk\* device names to identify eMMC.`
-
-`Installer must REFUSE eMMC, not warn.`
+eMMC devices may report as non-rotational (like SSDs) in lsblk.
+Check for /dev/mmcblk* device names to identify eMMC.
+Installer must REFUSE eMMC, not warn.
 ```
 
 
@@ -184,7 +182,7 @@ This file lists every **non-negotiable technical constraint** in the Spike Linux
 
 | **Class** | **Condition** | **Behavior** | **Source** |
 | :-: | :-: | :-: | :-: |
-| "low-end" | bogomips \< 2000/core (e.g., AMD A4) | ZRAM skipped, swap only | `HARDWARE.md`, `MEMORY.md` |
+| "low-end" | bogomips < 2000/core (e.g., AMD A4) | ZRAM skipped, swap only | `HARDWARE.md`, `MEMORY.md` |
 | "capable" | bogomips ≥ 2200/core, dual-core+ (e.g., Celeron N4020) | ZRAM enabled | `HARDWARE.md`, `MEMORY.md` |
 | "modern" | Core i3/i5/i7/i9, Ryzen, Athlon (post-2018) | Full capabilities | `HARDWARE.md` |
 | "Celeron/Pentium class" | Model name contains Celeron/Pentium/Atom (pre-2018) | Conservative defaults | `HARDWARE.md` |
@@ -216,7 +214,7 @@ This file lists every **non-negotiable technical constraint** in the Spike Linux
 ### KDE Standalone Apps (Included)
 
 ```
-`Discover, Dolphin, Konsole, System Settings (KCMs), Kate, Ark, Spectacle, KCalc`
+Discover, Dolphin, Konsole, System Settings (KCMs), Kate, Ark, Spectacle, KCalc
 ```
 
 ### Qt Rendering
@@ -234,7 +232,7 @@ This file lists every **non-negotiable technical constraint** in the Spike Linux
 | Monospace font | Noto Sans Mono | `BRANDING.md` |
 | Icon theme | Breeze | `BRANDING.md` |
 | Cursor | Breeze, 24px | `BRANDING.md` |
-| Accent color | Purple (\#6d4aff) | `BRANDING.md` |
+| Accent color | Purple (#6d4aff) | `BRANDING.md` |
 | Secondary color | Cyan/teal | `BRANDING.md` |
 | Wallpapers | `/usr/share/spike/wallpapers/` | `BRANDING.md` |
 
@@ -269,8 +267,8 @@ This file lists every **non-negotiable technical constraint** in the Spike Linux
 
 | **Constraint** | **Value** | **Source** |
 | :-: | :-: | :-: |
-| Intel VA-API driver | `intel-media-va-driver-non-free` (LIBVA\_DRIVER\_NAME=iHD) | `MULTIMEDIA.md`, `HARDWARE.md` |
-| AMD VA-API driver | `mesa-va-drivers` (LIBVA\_DRIVER\_NAME=radeonsi) | `MULTIMEDIA.md` |
+| Intel VA-API driver | `intel-media-va-driver-non-free` (LIBVA_DRIVER_NAME=iHD) | `MULTIMEDIA.md`, `HARDWARE.md` |
+| AMD VA-API driver | `mesa-va-drivers` (LIBVA_DRIVER_NAME=radeonsi) | `MULTIMEDIA.md` |
 | NVIDIA VA-API driver | `vdpau-va-driver` (or proprietary via VDPAU) | `MULTIMEDIA.md` |
 | N4020 hardware decode | H.264, H.265 (8-bit), VP8, VP9 | `HARDWARE.md` |
 | N4020 AV1 | **NOT supported** — disabled in Firefox | `HARDWARE.md`, `MULTIMEDIA.md` |
@@ -302,7 +300,7 @@ This file lists every **non-negotiable technical constraint** in the Spike Linux
 ### Audio Routing Priority
 
 ```
-`Bluetooth → HDMI → headphone jack → speakers`
+Bluetooth → HDMI → headphone jack → speakers
 ```
 
 
@@ -339,7 +337,7 @@ This file lists every **non-negotiable technical constraint** in the Spike Linux
 | :-: | :-: | :-: | :-: |
 | Intel | `iwlwifi` | — | `NETWORKING.md` |
 | Atheros | `ath9k`, `ath10k` | — | `NETWORKING.md` |
-| Realtek | `rtl8723de` (`ant\_sel=2` for improved signal), `rtl88xx` | — | `NETWORKING.md` |
+| Realtek | `rtl8723de` (`ant_sel=2` for improved signal), `rtl88xx` | — | `NETWORKING.md` |
 | Broadcom | `bcmwl` | Requires MOK enrollment if Secure Boot enabled. `b43/ssb/bcma/brcmsmac` blacklisted. | `NETWORKING.md`, `SECURITY.md` |
 
 > **Gotcha:** Broadcom + Secure Boot = MOK enrollment prompt at first boot, NOT during install.
@@ -361,9 +359,8 @@ This file lists every **non-negotiable technical constraint** in the Spike Linux
 ### Removed Ubuntu Components (Stripped at ISO Build)
 
 ```
-`ubuntu-report, apport, whoopsie, popularity-contest, landscape-client,`
-
-`ubuntu-advantage-tools, motd-news, cloud-init, snapd`
+ubuntu-report, apport, whoopsie, popularity-contest, landscape-client,
+ubuntu-advantage-tools, motd-news, cloud-init, snapd
 ```
 
 > None of these can be accidentally enabled — they are not installed.
@@ -372,7 +369,7 @@ This file lists every **non-negotiable technical constraint** in the Spike Linux
 
 This is the **exhaustive** list of network connections Spike makes. Nothing else connects anywhere.
 
-| **\#** | **Connection** | **Destination** | **Data Sent** | **Frequency** | **Source** |
+| **#** | **Connection** | **Destination** | **Data Sent** | **Frequency** | **Source** |
 | :-: | :-: | :-: | :-: | :-: | :-: |
 | 1 | apt update | archive.ubuntu.com | Package lists (no user data) | Every 6 hours | `PRIVACY.md` |
 | 2 | Flatpak remote check | flathub.org | App metadata (no user data) | Every 6 hours | `PRIVACY.md` |
@@ -490,15 +487,11 @@ This is the **exhaustive** list of network connections Spike makes. Nothing else
 ### Contributor Security Checklist
 
 ```
-`- No secrets in code`
-
-`- No hardcoded credentials`
-
-`- Dependencies checked for known vulnerabilities`
-
-`- Config files validated before write`
-
-`- No network calls from system services except the 5 documented in PRIVACY.md`
+- No secrets in code
+- No hardcoded credentials
+- Dependencies checked for known vulnerabilities
+- Config files validated before write
+- No network calls from system services except the 5 documented in PRIVACY.md
 ```
 
 
@@ -519,8 +512,8 @@ This is the **exhaustive** list of network connections Spike makes. Nothing else
 | **Profile** | **Trigger** | **Governor** | **Wi-Fi/BT/USB Autosuspend** | **Dimming** | **Source** |
 | :-: | :-: | :-: | :-: | :-: | :-: |
 | Performance | AC power | schedutil/performance | OFF | None | `POWER-MANAGEMENT.md` |
-| Battery Saver | Battery \< 50% | powersave | ON | Aggressive | `POWER-MANAGEMENT.md` |
-| Critical | Battery \< 20% | powersave | ON | Dim to 30%, urgent notifications, auto-shutdown countdown at 5% | `POWER-MANAGEMENT.md` |
+| Battery Saver | Battery < 50% | powersave | ON | Aggressive | `POWER-MANAGEMENT.md` |
+| Critical | Battery < 20% | powersave | ON | Dim to 30%, urgent notifications, auto-shutdown countdown at 5% | `POWER-MANAGEMENT.md` |
 
 ### Screen Management
 
@@ -571,14 +564,14 @@ This is the **exhaustive** list of network connections Spike makes. Nothing else
 | Selection time | At install, based on hardware detection | `INSTALLER.md` |
 | User override | Allowed (warning shown if mismatched) | `INSTALLER.md` |
 | Post-install switching | Available (no reinstall) | `VARIANT-DIFFERENCES.md` |
-| Switch command | \`spike-config --state-set system variant \<plus | standard\>`then`spike-config --generate-all\` |
+| Switch command | \`spike-config --state-set system variant <plus | standard>`then`spike-config --generate-all\` |
 | Switch effects | Some immediate, some require re-login, some require reboot | `VARIANT-DIFFERENCES.md` |
 
 ### The 14 Differences
 
 Everything NOT listed here is identical between variants.
 
-| **\#** | **Feature** | **Standard** | **Plus** |
+| **#** | **Feature** | **Standard** | **Plus** |
 | :-: | :-: | :-: | :-: |
 | 1 | ZRAM cap | 4GB max | Uncapped (up to RAM) |
 | 2 | Animations | Off | On (150–200ms transitions) |
@@ -591,18 +584,16 @@ Everything NOT listed here is identical between variants.
 | 9 | Qt rendering | Software rasterizer preferred | OpenGL preferred |
 | 10 | Spike button hover | No glow | Subtle purple glow |
 | 11 | Hybrid sleep | ON | OFF |
-| 12 | Idle RAM target | \<400MB | \<800MB |
+| 12 | Idle RAM target | <400MB | <800MB |
 | 13 | Background services | Minimal set | Standard set |
 | 14 | Memory budget | ~280–370MB | ~420–650MB |
 
 ### Identical Between Variants
 
 ```
-`kernel, filesystem, partitioning, installer, desktop shell, networking,`
-
-`security, privacy, disaster recovery, configuration system, updates,`
-
-`community model, ISO, packages`
+kernel, filesystem, partitioning, installer, desktop shell, networking,
+security, privacy, disaster recovery, configuration system, updates,
+community model, ISO, packages
 ```
 
 
@@ -672,45 +663,26 @@ Everything NOT listed here is identical between variants.
 ### Installation Tasks (Automated During Step 9)
 
 ```
-` 1. Partition disk`
-
-` 2. Format partitions`
-
-` 3. Mount filesystems`
-
-` 4. Copy base system (from ISO, not debootstrap — faster)`
-
-` 5. Install kernel`
-
-` 6. Install GRUB2 (with Spike theme)`
-
-` 7. Create user account`
-
-` 8. Lock root account`
-
-` 9. Configure ZRAM/swap (based on CPU + storage + variant)`
-
-`10. Install Flatpak + pre-seed runtimes (based on variant)`
-
-`11. Install KDE standalone apps`
-
-`12. Install Firefox (with Spike-tuned prefs)`
-
-`13. Install Plymouth theme (based on variant)`
-
-`14. Apply desktop theme (animations, compositor, based on variant)`
-
-`15. Enable/disable services (based on hardware detection + variant)`
-
-`16. Set CPU governor (based on variant)`
-
-`17. Configure ufw firewall`
-
-`18. Configure automatic updates`
-
-`19. Strip telemetry components`
-
-`20. Generate initial state store (spike-config --detect + --generate-all)`
+ 1. Partition disk
+ 2. Format partitions
+ 3. Mount filesystems
+ 4. Copy base system (from ISO, not debootstrap — faster)
+ 5. Install kernel
+ 6. Install GRUB2 (with Spike theme)
+ 7. Create user account
+ 8. Lock root account
+ 9. Configure ZRAM/swap (based on CPU + storage + variant)
+10. Install Flatpak + pre-seed runtimes (based on variant)
+11. Install KDE standalone apps
+12. Install Firefox (with Spike-tuned prefs)
+13. Install Plymouth theme (based on variant)
+14. Apply desktop theme (animations, compositor, based on variant)
+15. Enable/disable services (based on hardware detection + variant)
+16. Set CPU governor (based on variant)
+17. Configure ufw firewall
+18. Configure automatic updates
+19. Strip telemetry components
+20. Generate initial state store (spike-config --detect + --generate-all)
 ```
 
 
@@ -760,13 +732,13 @@ If you detect that code (yours or existing) violates any constraint in this file
 
 3. **Flag to human:** 
 
-> "CONSTRAINT VIOLATION DETECTED: \[describe violation\]. Constraint: \[cite constraint from this file\]. Affected file: \[path\]."
+> "CONSTRAINT VIOLATION DETECTED: [describe violation]. Constraint: [cite constraint from this file]. Affected file: [path]."
 
 4. **Wait for human decision** 
 
 5. **Log in `DECISIONS.md`** as a constraint violation with resolution 
 
-6. **Update `SESSION\_LOG.md`** with details 
+6. **Update `SESSION_LOG.md`** with details 
 
 **Never silently fix a constraint violation.** The human needs to understand what happened and why before any fix is applied.
 

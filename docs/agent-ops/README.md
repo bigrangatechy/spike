@@ -26,27 +26,17 @@ This folder contains the operational reference for AI agents working on the Spik
 New agents (and humans) should read in this order:
 
 ```
-`1. README.md          → This file (orientation)`
-
-`2. RULES.md           → Core workflow rules (documentation-first mandate)`
-
-`3. CONSTRAINTS.md     → Hard technical constraints (never do X)`
-
-`4. GLOSSARY.md        → Project terminology`
-
-`5. STATE.md           → Current progress (what's done, in progress, blocked)`
-
-`6. SESSION\_LOG.md     → Recent sessions (what happened last time)`
-
-`7. DECISIONS.md       → Past decisions (what was settled, why)`
-
-`8. CONVENTIONS.md     → Code style, naming, commit format`
-
-`9. PROTOCOLS.md       → Step-by-step procedures for common situations`
-
-`10. PATTERNS.md       → Approved implementation patterns`
-
-`... → Then task-specific files as needed`
+1. README.md          → This file (orientation)
+2. RULES.md           → Core workflow rules (documentation-first mandate)
+3. CONSTRAINTS.md     → Hard technical constraints (never do X)
+4. GLOSSARY.md        → Project terminology
+5. STATE.md           → Current progress (what's done, in progress, blocked)
+6. SESSION_LOG.md     → Recent sessions (what happened last time)
+7. DECISIONS.md       → Past decisions (what was settled, why)
+8. CONVENTIONS.md     → Code style, naming, commit format
+9. PROTOCOLS.md       → Step-by-step procedures for common situations
+10. PATTERNS.md       → Approved implementation patterns
+... → Then task-specific files as needed
 ```
 
 After initial orientation, read only the files relevant to your current task. Don't read everything every time.
@@ -54,59 +44,33 @@ After initial orientation, read only the files relevant to your current task. Do
 ## File Structure
 
 ```
-`agent-ops/`
-
-`├── README.md              → Entry point (this file)`
-
-`├── RULES.md               → Workflow rules`
-
-`├── CONSTRAINTS.md         → Hard technical constraints`
-
-`├── PREFERENCES.md         → Soft preferences`
-
-`├── CONVENTIONS.md         → Code style, naming, commits`
-
-`├── PROTOCOLS.md           → Step-by-step procedures`
-
-`├── PATTERNS.md            → Approved implementation patterns`
-
-`├── TEMPLATES.md           → Fill-in structures for docs/specs`
-
-`├── GLOSSARY.md            → Project terminology`
-
-`├── GOTCHAS.md             → Known traps, easy mistakes`
-
-`├── SELF-CHECK.md          → Pre-completion checklist`
-
-`├── QUICK-REF.md           → One-page cheat sheet`
-
-`├── FAQ.md                 → Common questions with answers`
-
-`├── TROUBLESHOOTING.md     → What to try when stuck`
-
-`├── SECURITY-CHECKLIST.md  → Privacy/security review items`
-
-`├── MISTAKES.md            → Catalog of mistakes (grows over time)`
-
-`├── CHANGELOG.md           → Changelog for agent-ops itself`
-
-`│`
-
-`├── STATE.md               → Dynamic: progress tracker`
-
-`├── DECISIONS.md           → Dynamic: decision log`
-
-`├── SESSION\_LOG.md         → Dynamic: session history`
-
-`│`
-
-`└── adapters/`
-
-`    ├── .cursorrules       → Cursor IDE adapter`
-
-`    ├── CLAUDE-CODE.md     → Future: Claude Code adapter`
-
-`    └── AIDER.md           → Future: Aider adapter`
+agent-ops/
+├── README.md              → Entry point (this file)
+├── RULES.md               → Workflow rules
+├── CONSTRAINTS.md         → Hard technical constraints
+├── PREFERENCES.md         → Soft preferences
+├── CONVENTIONS.md         → Code style, naming, commits
+├── PROTOCOLS.md           → Step-by-step procedures
+├── PATTERNS.md            → Approved implementation patterns
+├── TEMPLATES.md           → Fill-in structures for docs/specs
+├── GLOSSARY.md            → Project terminology
+├── GOTCHAS.md             → Known traps, easy mistakes
+├── SELF-CHECK.md          → Pre-completion checklist
+├── QUICK-REF.md           → One-page cheat sheet
+├── FAQ.md                 → Common questions with answers
+├── TROUBLESHOOTING.md     → What to try when stuck
+├── SECURITY-CHECKLIST.md  → Privacy/security review items
+├── MISTAKES.md            → Catalog of mistakes (grows over time)
+├── CHANGELOG.md           → Changelog for agent-ops itself
+│
+├── STATE.md               → Dynamic: progress tracker
+├── DECISIONS.md           → Dynamic: decision log
+├── SESSION_LOG.md         → Dynamic: session history
+│
+└── adapters/
+    ├── .cursorrules       → Cursor IDE adapter
+    ├── CLAUDE-CODE.md     → Future: Claude Code adapter
+    └── AIDER.md           → Future: Aider adapter
 ```
 
 ### Static vs. Dynamic Files
@@ -114,7 +78,7 @@ After initial orientation, read only the files relevant to your current task. Do
 | **Type** | **Updates When** | **Examples** |
 | :-: | :-: | :-: |
 | **Static** | Only when process changes | RULES.md, CONSTRAINTS.md, CONVENTIONS.md |
-| **Dynamic** | Updated every session | STATE.md, DECISIONS.md, SESSION\_LOG.md |
+| **Dynamic** | Updated every session | STATE.md, DECISIONS.md, SESSION_LOG.md |
 
 Static files are rarely touched. Dynamic files are the **running record** of what's happening.
 
@@ -126,7 +90,7 @@ Static files are rarely touched. Dynamic files are the **running record** of wha
 
 3. **State Always Updates.** Check `STATE.md` at task start. Update `STATE.md` at task end.
 
-4. **No Silent Deviations.** If you deviate from a spec (even slightly), log it in `SESSION\_LOG.md` and notify the human.
+4. **No Silent Deviations.** If you deviate from a spec (even slightly), log it in `SESSION_LOG.md` and notify the human.
 
 5. **Tool-Agnostic Core.** This folder is not tied to any specific tool. `adapters/` contains tool-specific wrappers.
 
@@ -137,19 +101,13 @@ Static files are rarely touched. Dynamic files are the **running record** of wha
 ## Relationship to Main Docs
 
 ```
-`Main Specs (ROOT/)         agent-ops/`
-
-`├── INDEX.md               │`
-
-`├── AGENTS.md              │    ┌─────────────────┐`
-
-`├── MEMORY.md              │    │ OPERATIONAL     │`
-
-`├── CONFIGURATION.md       │───▶│ REFERENCE       │`
-
-`├── DESIGN-DECISIONS.md    │    │ (this folder)   │`
-
-`└── ...                    │    └─────────────────┘`
+Main Specs (ROOT/)         agent-ops/
+├── INDEX.md               │
+├── AGENTS.md              │    ┌─────────────────┐
+├── MEMORY.md              │    │ OPERATIONAL     │
+├── CONFIGURATION.md       │───▶│ REFERENCE       │
+├── DESIGN-DECISIONS.md    │    │ (this folder)   │
+└── ...                    │    └─────────────────┘
 ```
 
 Main specs define **what**. `agent-ops/` defines **how**.
@@ -170,23 +128,23 @@ When implementing a feature:
 
 6. Run `agent-ops/SELF-CHECK.md` 
 
-7. Update `agent-ops/STATE.md` and `agent-ops/SESSION\_LOG.md` 
+7. Update `agent-ops/STATE.md` and `agent-ops/SESSION_LOG.md` 
 
 ## Quick Links
 
-- [Workflow Rules](https://lumo.proton.me/RULES.md) — The documentation-first mandate 
+- [Workflow Rules](RULES.md) — The documentation-first mandate 
 
-- [Hard Constraints](https://lumo.proton.me/CONSTRAINTS.md) — Things that must never happen 
+- [Hard Constraints](CONSTRAINTS.md) — Things that must never happen 
 
-- [Code Conventions](https://lumo.proton.me/CONVENTIONS.md) — Style, naming, commits 
+- [Code Conventions](CONVENTIONS.md) — Style, naming, commits 
 
-- [Procedures](https://lumo.proton.me/PROTOCOLS.md) — What to do when X happens 
+- [Procedures](PROTOCOLS.md) — What to do when X happens 
 
-- [Implementation Patterns](https://lumo.proton.me/PATTERNS.md) — How to write Y code 
+- [Implementation Patterns](PATTERNS.md) — How to write Y code 
 
-- [Current State](https://lumo.proton.me/STATE.md) — What's being worked on now 
+- [Current State](STATE.md) — What's being worked on now 
 
-- [Decision Log](https://lumo.proton.me/DECISIONS.md) — What was decided and why 
+- [Decision Log](DECISIONS.md) — What was decided and why 
 
 ## For Humans
 
@@ -220,7 +178,7 @@ If you're an AI agent:
 
 7. Run `SELF-CHECK.md` before finishing 
 
-8. Update `STATE.md` and `SESSION\_LOG.md` after completion 
+8. Update `STATE.md` and `SESSION_LOG.md` after completion 
 
 ## Version History
 

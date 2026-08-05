@@ -9,57 +9,32 @@ Spike ships as a single ISO that supports two variants: Spike Standard (optimize
 ### Spike System Architecture
 
 ```
-`┌─────────────────────────────────────────────────────────┐`
-
-`│                    Spike Shell (Custom)                 │`
-
-`│  ┌─────────┐ ┌─────────┐ ┌──────────┐ ┌─────────────┐ │`
-
-`│  │ Panel   │ │ Launcher│ │ Notify   │ │ Settings    │ │`
-
-`│  │ +Applets│ │ (Kickoff│ │ Daemon   │ │ (Custom+KCM)│ │`
-
-`│  │         │ │  style) │ │          │ │             │ │`
-
-`│  └────┬────┘ └────┬────┘ └────┬─────┘ └──────┬──────┘ │`
-
-`│       │           │           │               │        │`
-
-`│       └───────────┴───────────┴───────────────┘        │`
-
-`│                         │                               │`
-
-`├─────────────────────────┼───────────────────────────────┤`
-
-`│                    KWin (Wayland)                        │`
-
-`│                    + XWayland                            │`
-
-`├─────────────────────────────────────────────────────────┤`
-
-`│              KDE Standalone Applications                 │`
-
-`│  Discover · Dolphin · Konsole · Kate · Ark · Spectacle  │`
-
-`├─────────────────────────────────────────────────────────┤`
-
-`│                  Flatpak Runtime                         │`
-
-`│              (Pre-seeded KDE + GNOME)                    │`
-
-`├─────────────────────────────────────────────────────────┤`
-
-`│               Ubuntu Server LTS (x86\_64)                 │`
-
-`│  systemd · NetworkManager · PipeWire · ufw · AppArmor   │`
-
-`├─────────────────────────────────────────────────────────┤`
-
-`│                    Linux Kernel                          │`
-
-`│            (Ubuntu LTS, module blacklisting)             │`
-
-`└─────────────────────────────────────────────────────────┘`
+┌─────────────────────────────────────────────────────────┐
+│                    Spike Shell (Custom)                 │
+│  ┌─────────┐ ┌─────────┐ ┌──────────┐ ┌─────────────┐ │
+│  │ Panel   │ │ Launcher│ │ Notify   │ │ Settings    │ │
+│  │ +Applets│ │ (Kickoff│ │ Daemon   │ │ (Custom+KCM)│ │
+│  │         │ │  style) │ │          │ │             │ │
+│  └────┬────┘ └────┬────┘ └────┬─────┘ └──────┬──────┘ │
+│       │           │           │               │        │
+│       └───────────┴───────────┴───────────────┘        │
+│                         │                               │
+├─────────────────────────┼───────────────────────────────┤
+│                    KWin (Wayland)                        │
+│                    + XWayland                            │
+├─────────────────────────────────────────────────────────┤
+│              KDE Standalone Applications                 │
+│  Discover · Dolphin · Konsole · Kate · Ark · Spectacle  │
+├─────────────────────────────────────────────────────────┤
+│                  Flatpak Runtime                         │
+│              (Pre-seeded KDE + GNOME)                    │
+├─────────────────────────────────────────────────────────┤
+│               Ubuntu Server LTS (x86_64)                 │
+│  systemd · NetworkManager · PipeWire · ufw · AppArmor   │
+├─────────────────────────────────────────────────────────┤
+│                    Linux Kernel                          │
+│            (Ubuntu LTS, module blacklisting)             │
+└─────────────────────────────────────────────────────────┘
 ```
 
 ## Base System
@@ -112,7 +87,7 @@ The following Ubuntu Server components are stripped during first-boot configurat
 
 ## Architecture
 
-Spike supports **x86\_64 only**. There are no plans for 32-bit support unless a separate conditional project demonstrates sufficient need and the maintenance burden of forking i386 libraries is justified.
+Spike supports **x86_64 only**. There are no plans for 32-bit support unless a separate conditional project demonstrates sufficient need and the maintenance burden of forking i386 libraries is justified.
 
 ## Display Stack
 
@@ -159,95 +134,51 @@ Spike Shell is the custom desktop environment. It is the primary development eff
 ### Component Architecture
 
 ```
-`Spike Shell:`
-
-`├── Panel`
-
-`│   ├── Layout manager (left/center/right zones)`
-
-`│   └── Applet host (loads and manages tray applets)`
-
-`├── Launcher (Kickoff-style)`
-
-`│   ├── Desktop file scanner (.desktop files)`
-
-`│   ├── Category model`
-
-`│   ├── Search/filter`
-
-`│   ├── Recently installed tracker (new-app badges)`
-
-`│   └── Favorites store`
-
-`├── Tray Applets (14 total, 4 conditional)`
-
-`│   ├── network/          → NetworkManager DBus`
-
-`│   ├── volume/           → PipeWire DBus`
-
-`│   ├── battery/          → UPower DBus`
-
-`│   ├── brightness/       → /sys/class/backlight`
-
-`│   ├── notifications/    → Internal notify daemon`
-
-`│   ├── removable/       → udisks2 DBus`
-
-`│   ├── bluetooth/       → BlueZ DBus (conditional)`
-
-`│   ├── airplane/        → rfkill (conditional)`
-
-`│   ├── keyboard-layout/ → libinput (conditional)`
-
-`│   ├── night-light/     → KWin gamma`
-
-`│   ├── update-notifier/ → apt + Flatpak polling`
-
-`│   ├── clock/           → systemd-timesyncd`
-
-`│   ├── session-menu/    → systemd loginctl`
-
-`│   └── (4th conditional: determined during development)`
-
-`├── Notification Daemon`
-
-`│   ├── DBus listener (org.freedesktop.Notifications)`
-
-`│   ├── Popup renderer (Qt, Spike-themed)`
-
-`│   ├── History persistence (disk-before-display, atomic writes)`
-
-`│   ├── History viewer (grouped by day, searchable)`
-
-`│   └── Tray badge (unread count, never auto-clears)`
-
-`├── Settings Panel`
-
-`│   ├── Custom pages (memory, boot, notifications, updates, storage, diagnostics)`
-
-`│   ├── KCM module loader (display, sound, power, keyboard, mouse, etc.)`
-
-`│   ├── Unified Spike-themed window`
-
-`│   └── Context-aware help (links to user guide sections)`
-
-`├── Session Manager`
-
-`│   ├── Login/logout/shutdown/suspend`
-
-`│   ├── Autostart management`
-
-`│   └── Boot failure counter`
-
-`└── Theme Engine`
-
-`    ├── Purple/cyan color scheme`
-
-`    ├── Qt stylesheet`
-
-`    ├── KWin window decoration config`
-
-`    └── Icon set`
+Spike Shell:
+├── Panel
+│   ├── Layout manager (left/center/right zones)
+│   └── Applet host (loads and manages tray applets)
+├── Launcher (Kickoff-style)
+│   ├── Desktop file scanner (.desktop files)
+│   ├── Category model
+│   ├── Search/filter
+│   ├── Recently installed tracker (new-app badges)
+│   └── Favorites store
+├── Tray Applets (14 total, 4 conditional)
+│   ├── network/          → NetworkManager DBus
+│   ├── volume/           → PipeWire DBus
+│   ├── battery/          → UPower DBus
+│   ├── brightness/       → /sys/class/backlight
+│   ├── notifications/    → Internal notify daemon
+│   ├── removable/       → udisks2 DBus
+│   ├── bluetooth/       → BlueZ DBus (conditional)
+│   ├── airplane/        → rfkill (conditional)
+│   ├── keyboard-layout/ → libinput (conditional)
+│   ├── night-light/     → KWin gamma
+│   ├── update-notifier/ → apt + Flatpak polling
+│   ├── clock/           → systemd-timesyncd
+│   ├── session-menu/    → systemd loginctl
+│   └── (4th conditional: determined during development)
+├── Notification Daemon
+│   ├── DBus listener (org.freedesktop.Notifications)
+│   ├── Popup renderer (Qt, Spike-themed)
+│   ├── History persistence (disk-before-display, atomic writes)
+│   ├── History viewer (grouped by day, searchable)
+│   └── Tray badge (unread count, never auto-clears)
+├── Settings Panel
+│   ├── Custom pages (memory, boot, notifications, updates, storage, diagnostics)
+│   ├── KCM module loader (display, sound, power, keyboard, mouse, etc.)
+│   ├── Unified Spike-themed window
+│   └── Context-aware help (links to user guide sections)
+├── Session Manager
+│   ├── Login/logout/shutdown/suspend
+│   ├── Autostart management
+│   └── Boot failure counter
+└── Theme Engine
+    ├── Purple/cyan color scheme
+    ├── Qt stylesheet
+    ├── KWin window decoration config
+    └── Icon set
 ```
 
 ### Design Principles
@@ -265,21 +196,14 @@ Spike Shell is the custom desktop environment. It is the primary development eff
 ### Performance Budget
 
 ```
-`Spike Shell memory targets (Spike Standard, idle):`
-
-`├── Panel + applets:          ~60-80MB`
-
-`├── Notification daemon:      ~5-8MB`
-
-`├── KWin (Wayland):           ~100-150MB`
-
-`├── System + kernel:          ~80-100MB`
-
-`├── Display server overhead:  ~40-60MB`
-
-`├── Total idle target:        \<400MB`
-
-`└── Available for apps:       ~3.5GB`
+Spike Shell memory targets (Spike Standard, idle):
+├── Panel + applets:          ~60-80MB
+├── Notification daemon:      ~5-8MB
+├── KWin (Wayland):           ~100-150MB
+├── System + kernel:          ~80-100MB
+├── Display server overhead:  ~40-60MB
+├── Total idle target:        <400MB
+└── Available for apps:       ~3.5GB
 ```
 
 ## KDE Standalone Applications
@@ -328,21 +252,17 @@ Common Flatpak runtimes are pre-installed on the ISO to avoid large downloads on
 **Spike Standard (selective):**
 
 ```
-`├── KDE Flatpak runtime`
-
-`└── GNOME Flatpak runtime`
+├── KDE Flatpak runtime
+└── GNOME Flatpak runtime
 ```
 
 **Spike Plus (all common):**
 
 ```
-`├── KDE Flatpak runtime`
-
-`├── GNOME Flatpak runtime`
-
-`├── freedesktop runtime`
-
-`└── Additional common runtimes`
+├── KDE Flatpak runtime
+├── GNOME Flatpak runtime
+├── freedesktop runtime
+└── Additional common runtimes
 ```
 
 ### System Packages
@@ -366,21 +286,17 @@ All installations use ext4. No Btrfs, no LVM, no manual partitioning.
 **UEFI systems:**
 
 ```
-`├── /boot/efi  (512MB, FAT32)`
-
-`├── /          (rest of disk, ext4)`
-
-`└── /swapfile  (8GB, on root)`
+├── /boot/efi  (512MB, FAT32)
+├── /          (rest of disk, ext4)
+└── /swapfile  (8GB, on root)
 ```
 
 **BIOS systems:**
 
 ```
-`├── /boot      (1GB, ext4)`
-
-`├── /          (rest of disk, ext4)`
-
-`└── /swapfile  (8GB, on root)`
+├── /boot      (1GB, ext4)
+├── /          (rest of disk, ext4)
+└── /swapfile  (8GB, on root)
 ```
 
 ### Mount Options
@@ -414,69 +330,50 @@ Memory management is configured at install time based on detected hardware:
 **Detection:**
 
 ```
-`├── CPU cores and bogomips → classify as capable or low-end`
-
-`├── Storage type → SSD, HDD, SD, USB`
-
-`└── RAM amount → swap sizing`
+├── CPU cores and bogomips → classify as capable or low-end
+├── Storage type → SSD, HDD, SD, USB
+└── RAM amount → swap sizing
 ```
 
 **If capable CPU:**
 
 ```
-`├── Enable ZRAM (zstd, equal to RAM, max 4GB)`
-
-`├── ZRAM priority: 100`
-
-`├── Swap file: 8GB, priority: 10`
-
-`└── Swappiness: per storage type`
+├── Enable ZRAM (zstd, equal to RAM, max 4GB)
+├── ZRAM priority: 100
+├── Swap file: 8GB, priority: 10
+└── Swappiness: per storage type
 ```
 
 **If low-end CPU:**
 
 ```
-`├── Skip ZRAM (avoid CPU bottleneck)`
-
-`├── Swap file: 8GB`
-
-`└── Swappiness: per storage type`
+├── Skip ZRAM (avoid CPU bottleneck)
+├── Swap file: 8GB
+└── Swappiness: per storage type
 ```
 
 **Safety valve:**
 
 ```
-`└── Earlyoom kills largest process before OOM`
+└── Earlyoom kills largest process before OOM
 ```
 
 ### Memory Ladder
 
 ```
-`Application requests memory`
-
-`        │`
-
-`        ▼`
-
-`   Physical RAM (4GB)`
-
-`        │ full`
-
-`        ▼`
-
-`   ZRAM compressed (4GB → ~8-10GB effective)`
-
-`        │ full (or skipped on weak CPU)`
-
-`        ▼`
-
-`   Swap file on disk (8GB)`
-
-`        │ full`
-
-`        ▼`
-
-`   Earlyoom kills largest process`
+Application requests memory
+        │
+        ▼
+   Physical RAM (4GB)
+        │ full
+        ▼
+   ZRAM compressed (4GB → ~8-10GB effective)
+        │ full (or skipped on weak CPU)
+        ▼
+   Swap file on disk (8GB)
+        │ full
+        ▼
+   Earlyoom kills largest process
 ```
 
 Total effective memory on a 4GB Celeron with ZRAM: approximately 12-14GB before intervention.
@@ -501,7 +398,7 @@ Total effective memory on a 4GB Celeron with ZRAM: approximately 12-14GB before 
 
 - VA-API hardware video decode via adaptive driver selection 
 
-- Intel GPUs: `intel-media-va-driver-non-free`, `LIBVA\_DRIVER\_NAME=iHD` 
+- Intel GPUs: `intel-media-va-driver-non-free`, `LIBVA_DRIVER_NAME=iHD` 
 
 - AMD GPUs: `mesa-va-drivers` with `radeonsi` 
 
@@ -522,13 +419,10 @@ Total effective memory on a 4GB Celeron with ZRAM: approximately 12-14GB before 
 The Celeron N4020 uses Intel UHD Graphics 600 (Gemini Lake Refresh). Driver configuration:
 
 ```
-`Kernel module:    i915 (in-tree, loaded via modeset=1)`
-
-`Userspace:        mesa (iris driver stack)`
-
-`VA-API driver:    intel-media-va-driver-non-free`
-
-`LIBVA\_DRIVER\_NAME: iHD`
+Kernel module:    i915 (in-tree, loaded via modeset=1)
+Userspace:        mesa (iris driver stack)
+VA-API driver:    intel-media-va-driver-non-free
+LIBVA_DRIVER_NAME: iHD
 ```
 
 The `iHD` driver covers Gen 8+ Intel graphics (Broadwell through Gemini Lake). The older `i965` driver is not used.
@@ -538,13 +432,10 @@ The `iHD` driver covers Gen 8+ Intel graphics (Broadwell through Gemini Lake). T
 AMD A4/A6/A9 (Jaguar architecture and newer):
 
 ```
-`Kernel module:    amdgpu (in-tree, loaded via modeset=1)`
-
-`Userspace:        mesa (radeonsi driver stack)`
-
-`VA-API driver:    mesa-va-drivers`
-
-`LIBVA\_DRIVER\_NAME: radeonsi`
+Kernel module:    amdgpu (in-tree, loaded via modeset=1)
+Userspace:        mesa (radeonsi driver stack)
+VA-API driver:    mesa-va-drivers
+LIBVA_DRIVER_NAME: radeonsi
 ```
 
 ### NVIDIA (Hybrid/Discrete GPU Support)
@@ -578,55 +469,33 @@ Spike ships the open-source nouveau driver by default. The proprietary NVIDIA dr
 **Driver selection at install time:**
 
 ```
-`If PCI device vendor == Intel:`
-
-`    apt install intel-media-va-driver-non-free`
-
-`    echo "LIBVA\_DRIVER\_NAME=iHD" \>\> /etc/environment`
-
-
-`If PCI device vendor == AMD:`
-
-`    apt install mesa-va-drivers`
-
-`    echo "LIBVA\_DRIVER\_NAME=radeonsi" \>\> /etc/environment`
-
-
-`If PCI device vendor == NVIDIA:`
-
-`    Load nouveau by default`
-
-`    Do NOT install proprietary driver automatically`
-
-`    Create post-install notification:`
-
-`        "NVIDIA hardware detected. The open-source driver is active.`
-
-`         If you need hardware video encoding, CUDA, or gaming`
-
-`         performance, install the NVIDIA driver from`
-
-`         Settings → Software Sources → Additional Drivers."`
+If PCI device vendor == Intel:
+    apt install intel-media-va-driver-non-free
+    echo "LIBVA_DRIVER_NAME=iHD" >> /etc/environment
+If PCI device vendor == AMD:
+    apt install mesa-va-drivers
+    echo "LIBVA_DRIVER_NAME=radeonsi" >> /etc/environment
+If PCI device vendor == NVIDIA:
+    Load nouveau by default
+    Do NOT install proprietary driver automatically
+    Create post-install notification:
+        "NVIDIA hardware detected. The open-source driver is active.
+         If you need hardware video encoding, CUDA, or gaming
+         performance, install the NVIDIA driver from
+         Settings → Software Sources → Additional Drivers."
 ```
 
 **Installation flow for proprietary driver:**
 
 ```
-`1. NVIDIA hardware detected at boot via udev`
-
-`2. nouveau loads by default — display works immediately`
-
-`3. Post-install notification informs user of optional proprietary driver`
-
-`4. User navigates to Settings → Software Sources → Additional Drivers`
-
-`5. ubuntu-drivers tool lists compatible NVIDIA driver versions`
-
-`6. User selects and installs`
-
-`7. nouveau is blacklisted, nvidia-drm is configured`
-
-`8. Reboot required (gentle notification, never forced)`
+1. NVIDIA hardware detected at boot via udev
+2. nouveau loads by default — display works immediately
+3. Post-install notification informs user of optional proprietary driver
+4. User navigates to Settings → Software Sources → Additional Drivers
+5. ubuntu-drivers tool lists compatible NVIDIA driver versions
+6. User selects and installs
+7. nouveau is blacklisted, nvidia-drm is configured
+8. Reboot required (gentle notification, never forced)
 ```
 
 ### Hybrid Graphics (NVIDIA Optimus)
@@ -634,13 +503,10 @@ Spike ships the open-source nouveau driver by default. The proprietary NVIDIA dr
 Laptops with both Intel/AMD integrated graphics and NVIDIA discrete GPU are supported:
 
 ```
-`Settings → Power Management → Graphics`
-
-`├── Integrated Only (default) — Uses only Intel/AMD iGPU, saves battery`
-
-`├── Hybrid Mode — Discrete GPU activates on-demand for intensive tasks`
-
-`└── Discrete Only — Uses NVIDIA GPU only (higher power consumption)`
+Settings → Power Management → Graphics
+├── Integrated Only (default) — Uses only Intel/AMD iGPU, saves battery
+├── Hybrid Mode — Discrete GPU activates on-demand for intensive tasks
+└── Discrete Only — Uses NVIDIA GPU only (higher power consumption)
 ```
 
 Hybrid mode uses PRIME render offload. The discrete GPU stays powered down unless an application explicitly requests it. This is the recommended mode for battery-powered laptops.
@@ -703,45 +569,26 @@ Users with NVIDIA hardware are encouraged to report their experience through the
 ### Boot Sequence
 
 ```
-`Power on`
-
-`    │`
-
-`    ▼`
-
-`GRUB2 (hidden, 3-5 sec ESC window)`
-
-`    │`
-
-`    ▼`
-
-`Kernel + initramfs`
-
-`    │  (module blacklist applied)`
-
-`    ▼`
-
-`systemd init`
-
-`    │`
-
-`    ├── Mount filesystems (ext4, adaptive mount flags)`
-
-`    ├── Start core services (NetworkManager, PipeWire, ufw)`
-
-`    ├── Start Spike Shell session`
-
-`    │   ├── KWin (Wayland)`
-
-`    │   ├── Panel + applets`
-
-`    │   ├── Notification daemon`
-
-`    │   └── Settings (on-demand)`
-
-`    ├── Clear boot failure counter (successful boot)`
-
-`    └── Desktop ready`
+Power on
+    │
+    ▼
+GRUB2 (hidden, 3-5 sec ESC window)
+    │
+    ▼
+Kernel + initramfs
+    │  (module blacklist applied)
+    ▼
+systemd init
+    │
+    ├── Mount filesystems (ext4, adaptive mount flags)
+    ├── Start core services (NetworkManager, PipeWire, ufw)
+    ├── Start Spike Shell session
+    │   ├── KWin (Wayland)
+    │   ├── Panel + applets
+    │   ├── Notification daemon
+    │   └── Settings (on-demand)
+    ├── Clear boot failure counter (successful boot)
+    └── Desktop ready
 ```
 
 ## Security
@@ -793,25 +640,16 @@ Users with NVIDIA hardware are encouraged to report their experience through the
 ### User Interaction
 
 ```
-`1. Language selection`
-
-`2. Timezone selection`
-
-`3. Wi-Fi connection`
-
-`4. Username and password`
-
-`5. Computer name (hostname, auto-generated suggestion: spike-laptop)`
-
-`6. Variant selection (installer recommends based on detected hardware)`
-
-`7. Data backup to USB (optional, scans for personal files)`
-
-`8. Disk wipe confirmation`
-
-`9. Install (automated, progress bar)`
-
-`10. Reboot to desktop`
+1. Language selection
+2. Timezone selection
+3. Wi-Fi connection
+4. Username and password
+5. Computer name (hostname, auto-generated suggestion: spike-laptop)
+6. Variant selection (installer recommends based on detected hardware)
+7. Data backup to USB (optional, scans for personal files)
+8. Disk wipe confirmation
+9. Install (automated, progress bar)
+10. Reboot to desktop
 ```
 
 ### Automated Steps
@@ -839,14 +677,10 @@ Users with NVIDIA hardware are encouraged to report their experience through the
 The installer detects hardware and recommends a variant:
 
 ```
-`If RAM \>= 8GB and CPU is modern dual-core+:`
-
-`    → Recommend Spike Plus`
-
-
-`If RAM \<= 4GB or CPU is Celeron-class:`
-
-`    → Recommend Spike Standard`
+If RAM >= 8GB and CPU is modern dual-core+:
+    → Recommend Spike Plus
+If RAM <= 4GB or CPU is Celeron-class:
+    → Recommend Spike Standard
 ```
 
 User can override recommendation.
@@ -884,21 +718,17 @@ User can override recommendation.
 ### Single ISO, Two Configurations
 
 ```
-`build/iso-build/`
-
-`├── spike-standard.conf   → Active, primary target`
-
-`├── spike-plus.conf        → Placeholder, future use`
-
-`└── shared-packages.conf  → Common packages for both`
+build/iso-build/
+├── spike-standard.conf   → Active, primary target
+├── spike-plus.conf        → Placeholder, future use
+└── shared-packages.conf  → Common packages for both
 ```
 
 **Build:**
 
 ```
-`./scripts/build-iso.sh --variant standard`
-
-`./scripts/build-iso.sh --variant plus`
+./scripts/build-iso.sh --variant standard
+./scripts/build-iso.sh --variant plus
 ```
 
 ### Configuration Differences
@@ -912,8 +742,8 @@ User can override recommendation.
 | Compositor effects | Minimal | Blur, transparency, fade |
 | Background services | Aggressively stripped | Standard level |
 | Flatpak runtimes | Selective pre-seed | All pre-seeded |
-| Idle RAM target | \<400MB | \<800MB |
-| Boot time target | \<40 seconds | \<30 seconds |
+| Idle RAM target | <400MB | <800MB |
+| Boot time target | <40 seconds | <30 seconds |
 | Module blacklisting | Aggressive | Conservative |
 | Plymouth theme | Minimal (static) | Full (animated) |
 | NVIDIA default mode | Integrated Only | Hybrid Mode |
@@ -924,23 +754,15 @@ User can override recommendation.
 Approximate ISO size: ~3.1GB
 
 ```
-`├── Ubuntu Server base:          ~800MB`
-
-`├── KDE standalone apps:          ~400MB`
-
-`├── Spike shell + config:         ~50MB`
-
-`├── Flatpak runtimes (pre-seeded): ~1.2GB`
-
-`├── Firmware and drivers:         ~300MB`
-
-`├── VA-API drivers:               ~50MB`
-
-`├── Bluetooth/modem/VPN:          ~80MB`
-
-`├── Branding and Plymouth:       ~20MB`
-
-`└── Live environment:             ~200MB`
+├── Ubuntu Server base:          ~800MB
+├── KDE standalone apps:          ~400MB
+├── Spike shell + config:         ~50MB
+├── Flatpak runtimes (pre-seeded): ~1.2GB
+├── Firmware and drivers:         ~300MB
+├── VA-API drivers:               ~50MB
+├── Bluetooth/modem/VPN:          ~80MB
+├── Branding and Plymouth:       ~20MB
+└── Live environment:             ~200MB
 ```
 
 Note: NVIDIA proprietary driver is NOT included on the ISO. It is available as an optional post-install download. nouveau (open-source) is included in the kernel.

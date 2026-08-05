@@ -33,7 +33,7 @@ These ten rules govern every design decision in Spike. They are non-negotiable a
 
 > **Note:** These rules may expand as the project evolves. Any addition must be logged in `DECISIONS.md` and require explicit BDFL approval.
 
-| **\#** | **Golden Rule** | **Purpose** | **Spec Reference** |
+| **#** | **Golden Rule** | **Purpose** | **Spec Reference** |
 | :-: | :-: | :-: | :-: |
 | 1 | Users never edit config files | Config files hidden behind Settings GUI | `PHILOSOPHY.md`, `CONFIGURATION.md` |
 | 2 | CLI tools exist for developers only | CLI reserved for dev tooling only | `PHILOSOPHY.md` |
@@ -234,7 +234,7 @@ Examples of this rule in action:
 | :-: | :-: | :-: |
 | Animations | Off (saves CPU) | On (visual polish) |
 | Compositor effects | Minimal | Full (blur/transparency) |
-| Idle RAM target | \<400MB | \<800MB |
+| Idle RAM target | <400MB | <800MB |
 | Memory budget | ~280–370MB | ~420–650MB |
 | Functionality | Identical between variants | Identical between variants |
 | Desktop shell | Same | Same |

@@ -9,29 +9,18 @@ Questions are grouped by topic. If a question has a longer answer elsewhere, a c
 ## Table Of Contents
 
 ```
-`1. What Is Spike?`
-
-`2. Who Is Spike For?`
-
-`3. Hardware Questions`
-
-`4. Installation Questions`
-
-`5. Using Spike (Everyday Questions)`
-
-`6. Software And Apps`
-
-`7. Comparisons With Other Operating Systems`
-
-`8. Privacy And Security`
-
-`9. Updates And Maintenance`
-
-`10. Troubleshooting Quick Answers`
-
-`11. Project And Community`
-
-`12. Developer Questions`
+1. What Is Spike?
+2. Who Is Spike For?
+3. Hardware Questions
+4. Installation Questions
+5. Using Spike (Everyday Questions)
+6. Software And Apps
+7. Comparisons With Other Operating Systems
+8. Privacy And Security
+9. Updates And Maintenance
+10. Troubleshooting Quick Answers
+11. Project And Community
+12. Developer Questions
 ```
 
 ## 1. What Is Spike?
@@ -101,43 +90,31 @@ Spike targets:
 **Tier 1 (Primary target — must be daily-driver usable):**
 
 ```
-`├── Intel Celeron N4020 (dual-core, 2 threads)`
-
-`├── 4GB RAM`
-
-`├── Intel UHD Graphics 600`
-
-`├── 128GB+ storage (SSD recommended, HDD supported)`
-
-`└── Typical 2019 budget laptop`
+├── Intel Celeron N4020 (dual-core, 2 threads)
+├── 4GB RAM
+├── Intel UHD Graphics 600
+├── 128GB+ storage (SSD recommended, HDD supported)
+└── Typical 2019 budget laptop
 ```
 
 **Tier 2 (Worst case — must boot and function):**
 
 ```
-`├── AMD A4 (Jaguar architecture, pre-2016)`
-
-`├── 4GB RAM`
-
-`├── AMD Radeon HD (integrated)`
-
-`├── 500GB SATA HDD`
-
-`└── Lenovo ThinkPad with AMD A4`
+├── AMD A4 (Jaguar architecture, pre-2016)
+├── 4GB RAM
+├── AMD Radeon HD (integrated)
+├── 500GB SATA HDD
+└── Lenovo ThinkPad with AMD A4
 ```
 
 **Tier 3 (Development machine — regression checking only):**
 
 ```
-`├── Intel Xeon (ThinkPad P50)`
-
-`├── 32GB RAM`
-
-`├── NVIDIA Quadro M2000M`
-
-`├── 512GB NVMe`
-
-`└── Not representative of target users`
+├── Intel Xeon (ThinkPad P50)
+├── 32GB RAM
+├── NVIDIA Quadro M2000M
+├── 512GB NVMe
+└── Not representative of target users
 ```
 
 See `HARDWARE.md` for full hardware specifications and detection logic.
@@ -221,11 +198,9 @@ No. The ISO is too large for a standard DVD (4.7GB capacity is sufficient, but S
 ### How Long Does Installation Take?
 
 ```
-`SSD: ~8-12 minutes (excluding data backup)`
-
-`HDD: ~12-18 minutes (excluding data backup)`
-
-`Data backup: Varies (depends on amount of data)`
+SSD: ~8-12 minutes (excluding data backup)
+HDD: ~12-18 minutes (excluding data backup)
+Data backup: Varies (depends on amount of data)
 ```
 
 See `PERFORMANCE-BASELINES.md` for installation time estimates.
@@ -341,45 +316,38 @@ Users who need clipboard history can install third-party clipboard managers via 
 **Internet:**
 
 ```
-`└── Firefox (Flatpak, with VA-API and privacy configuration)`
+└── Firefox (Flatpak, with VA-API and privacy configuration)
 ```
 
 **Office:**
 
 ```
-`└── LibreOffice Writer, Calc, Impress (Flatpak)`
+└── LibreOffice Writer, Calc, Impress (Flatpak)
 ```
 
 **Media:**
 
 ```
-`├── VLC (Flatpak)`
-
-`└── Celluloid (Flatpak, optional lightweight player)`
+├── VLC (Flatpak)
+└── Celluloid (Flatpak, optional lightweight player)
 ```
 
 **Utilities:**
 
 ```
-`├── Dolphin (file manager — native package)`
-
-`├── Konsole (terminal — native package)`
-
-`├── Kate (text editor — native package)`
-
-`├── Ark (archive tool — native package)`
-
-`├── Spectacle (screenshot — native package)`
-
-`└── KCalc (calculator — native package)`
+├── Dolphin (file manager — native package)
+├── Konsole (terminal — native package)
+├── Kate (text editor — native package)
+├── Ark (archive tool — native package)
+├── Spectacle (screenshot — native package)
+└── KCalc (calculator — native package)
 ```
 
 **System:**
 
 ```
-`├── Discover (software center)`
-
-`└── Settings panel (Spike custom pages + KDE KCM modules)`
+├── Discover (software center)
+└── Settings panel (Spike custom pages + KDE KCM modules)
 ```
 
 > **Note on package types:** System utilities (Dolphin, Konsole, Kate, etc.) are native Ubuntu packages for efficiency and tight system integration. User-facing applications (Firefox, LibreOffice, VLC, etc.) are Flatpaks from Flathub for sandboxing and easier updates.
@@ -417,35 +385,27 @@ Yes. Steam is available from Discover (Flathub). However, Spike targets Celeron-
 **Security updates** (apt + Flatpak):
 
 ```
-`├── Checked every 6 hours (spike-update.timer)`
-
-`├── Conditions: network available, system idle, enough memory`
-
-`├── Installed automatically (no user interaction needed)`
-
-`├── Notification: "Security updates installed"`
-
-`└── Kernel updates: held until reboot, notification to restart`
+├── Checked every 6 hours (spike-update.timer)
+├── Conditions: network available, system idle, enough memory
+├── Installed automatically (no user interaction needed)
+├── Notification: "Security updates installed"
+└── Kernel updates: held until reboot, notification to restart
 ```
 
 **Non-security updates:**
 
 ```
-`├── Notification: "Updates available"`
-
-`├── User clicks "Install" in Discover or Settings → Software Updates`
-
-`└── User controls timing`
+├── Notification: "Updates available"
+├── User clicks "Install" in Discover or Settings → Software Updates
+└── User controls timing
 ```
 
 **Flatpak app updates:**
 
 ```
-`├── Managed by Discover`
-
-`├── User-initiated or "Update all" in Discover`
-
-`└── Notification when updates are available`
+├── Managed by Discover
+├── User-initiated or "Update all" in Discover
+└── Notification when updates are available
 ```
 
 See `SECURITY.md` for the full update model.
@@ -615,7 +575,7 @@ Press ESC to see boot messages. If Plymouth (boot splash) is the problem, change
 
 ### I Forgot My Password
 
-Reboot, press ESC at GRUB, select "recovery mode." Type `passwd \[your-username\]` to set a new password. Reboot. See `TROUBLESHOOTING.md`, Section 11.
+Reboot, press ESC at GRUB, select "recovery mode." Type `passwd [your-username]` to set a new password. Reboot. See `TROUBLESHOOTING.md`, Section 11.
 
 ### The System Is Slow
 
@@ -648,39 +608,29 @@ Yes. Spike is free and open source software, licensed under GPLv2+. There is no 
 **During pre-alpha (now):**
 
 ```
-`├── Read the documentation`
-
-`├── Report documentation errors`
-
-`├── Suggest features (GitLab issues)`
-
-`├── Register your hardware (hardware survey)`
-
-`└── Discuss in the forum / Matrix`
+├── Read the documentation
+├── Report documentation errors
+├── Suggest features (GitLab issues)
+├── Register your hardware (hardware survey)
+└── Discuss in the forum / Matrix
 ```
 
 **During alpha:**
 
 ```
-`├── Test on your hardware`
-
-`├── Report bugs`
-
-`├── Submit translations`
-
-`└── Submit code patches (case-by-case)`
+├── Test on your hardware
+├── Report bugs
+├── Submit translations
+└── Submit code patches (case-by-case)
 ```
 
 **During beta and beyond:**
 
 ```
-`├── Submit code (DCO required, code review required)`
-
-`├── Translate (all 11 languages)`
-
-`├── Test and report`
-
-`└── Help other users in the forum`
+├── Submit code (DCO required, code review required)
+├── Translate (all 11 languages)
+├── Test and report
+└── Help other users in the forum
 ```
 
 See `CONTRIBUTING.md` for the full contribution guide.
@@ -695,7 +645,7 @@ The GitHub mirror is for visibility only. All issues, merge requests, and CI hap
 
 ### Is There A Forum Or Chat?
 
-Yes. The Spike community uses a self-hosted forum (`forum.bigrangatech.com`) and a Matrix room (`\#spike:matrix.org`). Links are available on the website (`spike.bigrangatech.com/community`).
+Yes. The Spike community uses a self-hosted forum (`forum.bigrangatech.com`) and a Matrix room (`#spike-linux:matrix.org`). Links are available on the website (`spike.bigrangatech.com/community`).
 
 ### Can I Fork Spike?
 
@@ -783,7 +733,7 @@ Yes, for development and testing. However, performance measurements taken in a V
 
 - Contribution workflow: See `CONTRIBUTING.md` 
 
-- Code of conduct: See `CODE\_OF\_CONDUCT.md` 
+- Code of conduct: See `CODE_OF_CONDUCT.md` 
 
 - Release timeline and milestones: See `ROADMAP.md` 
 

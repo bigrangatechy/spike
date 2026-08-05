@@ -9,33 +9,29 @@ This document specifies all audio and video configuration in Spike — PipeWire,
 **1. Functional over feature-rich**
 
 ```
-`├── Prioritize "it works" over "it has every feature"`
-
-`└── No JACK, no professional audio routing`
+├── Prioritize "it works" over "it has every feature"
+└── No JACK, no professional audio routing
 ```
 
 **2. Hardware-aware**
 
 ```
-`├── Detect GPU vendor for correct VA-API driver`
-
-`└── Disable codecs the hardware can't accelerate`
+├── Detect GPU vendor for correct VA-API driver
+└── Disable codecs the hardware can't accelerate
 ```
 
 **3. Conservative resource usage**
 
 ```
-`├── Fixed sample rate, no dynamic resampling`
-
-`└── Suppress unnecessary logging`
+├── Fixed sample rate, no dynamic resampling
+└── Suppress unnecessary logging
 ```
 
 **4. User-facing controls for everything**
 
 ```
-`├── Volume, output device, input device: all in GUI`
-
-`└── No terminal commands for audio troubleshooting (Golden Rule 2)`
+├── Volume, output device, input device: all in GUI
+└── No terminal commands for audio troubleshooting (Golden Rule 2)
 ```
 
 ## Audio Stack
@@ -43,47 +39,27 @@ This document specifies all audio and video configuration in Spike — PipeWire,
 ### Architecture
 
 ```
-`┌─────────────────────────────────────────────────┐`
-
-`│              Applications                       │`
-
-`│   (Firefox, VLC, LibreOffice, games)            │`
-
-`└──────────┬──────────────────────┬───────────────┘`
-
-`           │                      │`
-
-`     PulseAudio API        Native PipeWire API`
-
-`           │                      │`
-
-`┌──────────▼──────────────────────▼───────────────┐`
-
-`│                   PipeWire                      │`
-
-`│           (audio/video server, daemon)          │`
-
-`└──────────┬──────────────────────┬───────────────┘`
-
-`           │                      │`
-
-`│      libalsa            ALSA (kernel)`
-
-`│      (user-space         (hardware drivers)`
-
-`│       PCM mixing)`
-
-`│           │`
-
-`│   ┌───────▼───────────┐`
-
-`│   │  Audio Hardware    │`
-
-`│   │  (speakers, DAC,   │`
-
-`│   │   microphones)     │`
-
-`│   └───────────────────┘`
+┌─────────────────────────────────────────────────┐
+│              Applications                       │
+│   (Firefox, VLC, LibreOffice, games)            │
+└──────────┬──────────────────────┬───────────────┘
+           │                      │
+     PulseAudio API        Native PipeWire API
+           │                      │
+┌──────────▼──────────────────────▼───────────────┐
+│                   PipeWire                      │
+│           (audio/video server, daemon)          │
+└──────────┬──────────────────────┬───────────────┘
+           │                      │
+│      libalsa            ALSA (kernel)
+│      (user-space         (hardware drivers)
+│       PCM mixing)
+│           │
+│   ┌───────▼───────────┐
+│   │  Audio Hardware    │
+│   │  (speakers, DAC,   │
+│   │   microphones)     │
+│   └───────────────────┘
 ```
 
 ### Why PipeWire (Not PulseAudio)
@@ -91,27 +67,20 @@ This document specifies all audio and video configuration in Spike — PipeWire,
 PulseAudio was rejected for these reasons:
 
 ```
-`├── Higher memory overhead (~8-15MB vs PipeWire's ~3-5MB)`
-
-`├── Heavier DBus interaction and internal threads`
-
-`├── Worse Bluetooth audio support (relies on separate pulseaudio-modules-bt)`
-
-`├── Slow development, much code cruft`
-
-`└── No unified video handling (PipeWire handles both)`
+├── Higher memory overhead (~8-15MB vs PipeWire's ~3-5MB)
+├── Heavier DBus interaction and internal threads
+├── Worse Bluetooth audio support (relies on separate pulseaudio-modules-bt)
+├── Slow development, much code cruft
+└── No unified video handling (PipeWire handles both)
 ```
 
 PipeWire advantages:
 
 ```
-`├── Drop-in PulseAudio replacement (PulseAudio API compat)`
-
-`├── Lower memory footprint`
-
-`├── Better Bluetooth audio (native LE Audio, LDAC, aptX)`
-
-`└── Handles screen capture (Portal API) — no separate framework needed`
+├── Drop-in PulseAudio replacement (PulseAudio API compat)
+├── Lower memory footprint
+├── Better Bluetooth audio (native LE Audio, LDAC, aptX)
+└── Handles screen capture (Portal API) — no separate framework needed
 ```
 
 ### PipeWire Configuration
@@ -119,15 +88,11 @@ PipeWire advantages:
 Configuration files:
 
 ```
-`├── /etc/pipewire/pipewire.conf        → Global PipeWire config`
-
-`├── /etc/pipewire/client.conf          → Client defaults`
-
-`├── /etc/pipewire/client-rt.conf       → Real-time client defaults`
-
-`├── /etc/pipewire/jack.conf            → JACK compat (mostly inactive)`
-
-`└── /etc/pipewire/pipewire-pulse.conf  → PulseAudio compat layer`
+├── /etc/pipewire/pipewire.conf        → Global PipeWire config
+├── /etc/pipewire/client.conf          → Client defaults
+├── /etc/pipewire/client-rt.conf       → Real-time client defaults
+├── /etc/pipewire/jack.conf            → JACK compat (mostly inactive)
+└── /etc/pipewire/pipewire-pulse.conf  → PulseAudio compat layer
 ```
 
 Spike customizations (applied by `spike-config` at install time):
@@ -135,102 +100,55 @@ Spike customizations (applied by `spike-config` at install time):
 **`/etc/pipewire/pipewire.conf` (Spike Customizations)**
 
 ```
-*`\# Spike PipeWire Configuration`*
-
-*`\# Generated by spike-config at install time`*
-
-
-`\[context\]`
-
-*`\# Reduce log verbosity (save memory, reduce disk I/O)`*
-
-`log.level = 1           \# Warnings only (default: 2 = info)`
-
-`log.timestamp = false    \# No timestamps (journal handles this)`
-
-`log.color = false        \# No color codes (goes to syslog)`
-
-*`\#log.line = false        \# No line numbers`*
-
-*`\#log.file = false        \# No file logging (use systemd journal)`*
-
-
-`\[core\]`
-
-*`\# Disable unnecessary features`*
-
-*`\# allow-module-autoload = true  (leave default)`*
-
-*`\# x11-bell = false              (disable X11 bell — not needed on Wayland)`*
-
-
-*`\# Properties for daemon behavior`*
-
-`\[properties\]`
-
-*`\# Default sample rate (do not change unless hardware requires)`*
-
-`default.clock.rate = 44100`
-
-*`\# Default buffer size (quantum)`*
-
-`default.clock.quantum = 1024`
-
-*`\# Minimum and maximum quantum`*
-
-`default.clock.min-quantum = 32`
-
-`default.clock.max-quantum = 2048`
-
-*`\# Allowed sample rates (lock to 44100 — prevent dynamic rate switching)`*
-
-`default.clock.allowed-rates = \[ 44100 \]`
-
-
-*`\# Disable video processing features (use Portal for capture)`*
-
-*`\# video is handled by PipeWire but not configured as server`*
-
-`\[modules\]`
-
-*`\# Load only necessary modules`*
-
-*`\# ALSA: Audio hardware`*
-
-*`\# Module: libspa-libcamera (for webcam via SPA plugin)`*
-
-*`\# Module: libspa-v4l2 (for video capture via V4L2)`*
+# Spike PipeWire Configuration
+# Generated by spike-config at install time
+[context]
+# Reduce log verbosity (save memory, reduce disk I/O)
+log.level = 1           # Warnings only (default: 2 = info)
+log.timestamp = false    # No timestamps (journal handles this)
+log.color = false        # No color codes (goes to syslog)
+#log.line = false        # No line numbers
+#log.file = false        # No file logging (use systemd journal)
+[core]
+# Disable unnecessary features
+# allow-module-autoload = true  (leave default)
+# x11-bell = false              (disable X11 bell — not needed on Wayland)
+# Properties for daemon behavior
+[properties]
+# Default sample rate (do not change unless hardware requires)
+default.clock.rate = 44100
+# Default buffer size (quantum)
+default.clock.quantum = 1024
+# Minimum and maximum quantum
+default.clock.min-quantum = 32
+default.clock.max-quantum = 2048
+# Allowed sample rates (lock to 44100 — prevent dynamic rate switching)
+default.clock.allowed-rates = [ 44100 ]
+# Disable video processing features (use Portal for capture)
+# video is handled by PipeWire but not configured as server
+[modules]
+# Load only necessary modules
+# ALSA: Audio hardware
+# Module: libspa-libcamera (for webcam via SPA plugin)
+# Module: libspa-v4l2 (for video capture via V4L2)
 ```
 
 **`/etc/pipewire/client.conf` (Spike Customizations)**
 
 ```
-*`\# Spike PipeWire Client Defaults`*
-
-*`\# Generated by spike-config at install time`*
-
-
-`\[properties\]`
-
-*`\# Default sample format`*
-
-`channelmix.disable-vector = false`
-
-*`\# Resampler quality (1-4, lower is faster)`*
-
-`resample.quality = 1`
-
-*`\# Disable channel remixing upmixing (don't artificially create surround from stereo)`*
-
-`channelmix.upmix = false`
-
-*`\# Disable LFE (subwoofer) channel generation`*
-
-`channelmix.lfe-cutoff = 0`
-
-*`\# Stereo only — no surround sound processing`*
-
-`channelmix.channels = 2`
+# Spike PipeWire Client Defaults
+# Generated by spike-config at install time
+[properties]
+# Default sample format
+channelmix.disable-vector = false
+# Resampler quality (1-4, lower is faster)
+resample.quality = 1
+# Disable channel remixing upmixing (don't artificially create surround from stereo)
+channelmix.upmix = false
+# Disable LFE (subwoofer) channel generation
+channelmix.lfe-cutoff = 0
+# Stereo only — no surround sound processing
+channelmix.channels = 2
 ```
 
 ### Resampler Quality
@@ -238,35 +156,27 @@ Spike customizations (applied by `spike-config` at install time):
 PipeWire `resample.quality` values:
 
 ```
-`0: Lowest (fastest CPU)`
-
-`1: Low (medium-fast CPU) — Spike default`
-
-`4: Highest (slowest CPU)`
+0: Lowest (fastest CPU)
+1: Low (medium-fast CPU) — Spike default
+4: Highest (slowest CPU)
 ```
 
 Spike uses quality 1:
 
 ```
-`├── Provides acceptable audio quality for speech and music`
-
-`├── Minimizes CPU usage on Celeron N4020`
-
-`├── Celeron N4020 is dual-core; resampling is per-stream`
-
-`└── If quality 4 were used: multiple audio streams could stutter`
+├── Provides acceptable audio quality for speech and music
+├── Minimizes CPU usage on Celeron N4020
+├── Celeron N4020 is dual-core; resampling is per-stream
+└── If quality 4 were used: multiple audio streams could stutter
 ```
 
 When resampling is triggered:
 
 ```
-`├── Audio stream sample rate ≠ 44100Hz`
-
-`├── Audio stream has more channels than output (e.g., 5.1 → stereo downmix)`
-
-`├── Bluetooth audio with different sample rate`
-
-`└── Microphone input at 48000Hz (downsampled to 44100Hz)`
+├── Audio stream sample rate ≠ 44100Hz
+├── Audio stream has more channels than output (e.g., 5.1 → stereo downmix)
+├── Bluetooth audio with different sample rate
+└── Microphone input at 48000Hz (downsampled to 44100Hz)
 ```
 
 ### Audio Sample Rate
@@ -276,41 +186,30 @@ Spike locks to **44100Hz** globally.
 Why 44100Hz (not 48000Hz):
 
 ```
-`├── Most music is 44100Hz natively`
-
-`├── Most Bluetooth audio operates at 44100Hz`
-
-`├── Video audio tracks are often 44100Hz`
-
-`└── Locking prevents dynamic rate switching overhead`
+├── Most music is 44100Hz natively
+├── Most Bluetooth audio operates at 44100Hz
+├── Video audio tracks are often 44100Hz
+└── Locking prevents dynamic rate switching overhead
 ```
 
 Why not 48000Hz:
 
 ```
-`├── 48000Hz is technically superior (even division by 24, 25, 30 fps video)`
-
-`├── However, most consumer audio hardware and Bluetooth codecs operate at 44100Hz`
-
-`├── Dynamic switching between 44100/48000 wastes CPU on resampling`
-
-`└── Fixed 44100 minimizes resampling across all media types`
+├── 48000Hz is technically superior (even division by 24, 25, 30 fps video)
+├── However, most consumer audio hardware and Bluetooth codecs operate at 44100Hz
+├── Dynamic switching between 44100/48000 wastes CPU on resampling
+└── Fixed 44100 minimizes resampling across all media types
 ```
 
 Exception — Video audio:
 
 ```
-`├── If video plays at 48000Hz audio track:`
-
-`│   ├── Downsampled to 44100Hz by PipeWire`
-
-`│   ├── Quality loss is imperceptible at resample.quality 1`
-
-`│   └── CD-quality audio is 44100Hz (the universal standard)`
-
-`└── Audio formats:`
-
-`    └── 44100Hz is native for music`
+├── If video plays at 48000Hz audio track:
+│   ├── Downsampled to 44100Hz by PipeWire
+│   ├── Quality loss is imperceptible at resample.quality 1
+│   └── CD-quality audio is 44100Hz (the universal standard)
+└── Audio formats:
+    └── 44100Hz is native for music
 ```
 
 ### WirePlumber Configuration
@@ -318,39 +217,29 @@ Exception — Video audio:
 WirePlumber is the session manager for PipeWire. It handles:
 
 ```
-`├── Device detection and stream routing`
-
-`├── Default device selection`
-
-`├── Profile management (e.g., headset profile vs hands-free)`
-
-`├── Conditional Bluetooth profile switching`
-
-`└── Volume and muting management`
+├── Device detection and stream routing
+├── Default device selection
+├── Profile management (e.g., headset profile vs hands-free)
+├── Conditional Bluetooth profile switching
+└── Volume and muting management
 ```
 
 Configuration:
 
 ```
-`├── /etc/wireplumber/main.lua              → Main Lua script`
-
-`│   (WirePlumber 0.5+ uses Lua config format)`
-
-`└── /etc/wireplumber/pipewire.lua          → PipeWire-specific config`
+├── /etc/wireplumber/main.lua              → Main Lua script
+│   (WirePlumber 0.5+ uses Lua config format)
+└── /etc/wireplumber/pipewire.lua          → PipeWire-specific config
 ```
 
 Spike WirePlumber settings:
 
 ```
-`├── Auto-switching to headphone jack on insertion`
-
-`├── Device probe: Only ALSA devices (no Bluetooth or libcamera for audio)`
-
-`├── Default sink: Last used output device`
-
-`├── Default source: Last used input device`
-
-`└── Bluetooth: Auto-connect to last paired audio device`
+├── Auto-switching to headphone jack on insertion
+├── Device probe: Only ALSA devices (no Bluetooth or libcamera for audio)
+├── Default sink: Last used output device
+├── Default source: Last used input device
+└── Bluetooth: Auto-connect to last paired audio device
 ```
 
 ## Bluetooth Audio
@@ -360,61 +249,43 @@ Spike supports Bluetooth audio via PipeWire's native BT module. No separate `pul
 Supported Bluetooth codecs:
 
 ```
-`├── SBC: Universal (all BT audio devices)`
-
-`├── AAC: Apple devices, some modern Android phones`
-
-`├── LDAC: Sony hi-res audio (Plus variant only)`
-
-`└── aptX/aptX HD: Qualcomm (Plus variant only)`
+├── SBC: Universal (all BT audio devices)
+├── AAC: Apple devices, some modern Android phones
+├── LDAC: Sony hi-res audio (Plus variant only)
+└── aptX/aptX HD: Qualcomm (Plus variant only)
 ```
 
 **Standard variant:**
 
 ```
-`├── SBC only (lowest CPU overhead, universal compatibility)`
-
-`├── AAC disabled (CPU cost of encoding)`
-
-`├── LDAC disabled (CPU cost of encoding)`
-
-`└── Focus on battery life and low CPU usage`
+├── SBC only (lowest CPU overhead, universal compatibility)
+├── AAC disabled (CPU cost of encoding)
+├── LDAC disabled (CPU cost of encoding)
+└── Focus on battery life and low CPU usage
 ```
 
 **Plus variant:**
 
 ```
-`├── SBC, AAC, LDAC, aptX`
-
-`├── Higher quality Bluetooth audio`
-
-`└── Sufficient CPU available for encoding`
+├── SBC, AAC, LDAC, aptX
+├── Higher quality Bluetooth audio
+└── Sufficient CPU available for encoding
 ```
 
 Bluetooth audio profile selection:
 
 ```
-`├── A2DP (Advanced Audio Distribution Profile):`
-
-`│   ├── High-quality audio output (headphones, speakers)`
-
-`│   └── One-directional (output only, no microphone)`
-
-`├── HSP/HFP (Headset/Hands-Free Profile):`
-
-`│   ├── Lower quality audio (narrowband/wideband speech)`
-
-`│   ├── Two-directional (output + microphone)`
-
-`│   └── Used for video calls (Zoom, Teams, etc.)`
-
-`└── WirePlumber automatically selects:`
-
-`│   ├── A2DP for music/headphones`
-
-`│   ├── HSP/HFP for video calls (when mic needed)`
-
-`│   └── User can override in Settings → Sound → Bluetooth device properties`
+├── A2DP (Advanced Audio Distribution Profile):
+│   ├── High-quality audio output (headphones, speakers)
+│   └── One-directional (output only, no microphone)
+├── HSP/HFP (Headset/Hands-Free Profile):
+│   ├── Lower quality audio (narrowband/wideband speech)
+│   ├── Two-directional (output + microphone)
+│   └── Used for video calls (Zoom, Teams, etc.)
+└── WirePlumber automatically selects:
+│   ├── A2DP for music/headphones
+│   ├── HSP/HFP for video calls (when mic needed)
+│   └── User can override in Settings → Sound → Bluetooth device properties
 ```
 
 ## Audio Routing
@@ -434,25 +305,19 @@ Device priorities (when multiple audio outputs are present):
 Auto-switching:
 
 ```
-`├── Insert headphone jack → switch to headphones (prevents speaker echo)`
-
-`├── Connect Bluetooth audio → switch to Bluetooth`
-
-`├── Connect HDMI monitor → switch to HDMI audio`
-
-`└── Disconnect all → revert to internal speakers`
+├── Insert headphone jack → switch to headphones (prevents speaker echo)
+├── Connect Bluetooth audio → switch to Bluetooth
+├── Connect HDMI monitor → switch to HDMI audio
+└── Disconnect all → revert to internal speakers
 ```
 
 **Settings → Sound:**
 
 ```
-`├── Output device dropdown (lists all available outputs)`
-
-`├── Input device dropdown (lists all available inputs)`
-
-`├── User can override auto-switching by manually selecting a device`
-
-`└── Manual selection persists until device disconnects`
+├── Output device dropdown (lists all available outputs)
+├── Input device dropdown (lists all available inputs)
+├── User can override auto-switching by manually selecting a device
+└── Manual selection persists until device disconnects
 ```
 
 ### Volume Control
@@ -460,37 +325,28 @@ Auto-switching:
 Volume range: 0–150%
 
 ```
-`├── 0%: Silence`
-
-`├── 0–100%: Normal volume range`
-
-`└── 100–150%: Boost (software amplification, may introduce distortion)`
+├── 0%: Silence
+├── 0–100%: Normal volume range
+└── 100–150%: Boost (software amplification, may introduce distortion)
 ```
 
 Software volume vs hardware volume:
 
 ```
-`├── Hardware volume: Controlled by audio chip (ALSA)`
-
-`├── Software volume: Controlled by PipeWire (between stream and hardware)`
-
-`│   └── PipeWire scales the stream before sending to hardware`
+├── Hardware volume: Controlled by audio chip (ALSA)
+├── Software volume: Controlled by PipeWire (between stream and hardware)
+│   └── PipeWire scales the stream before sending to hardware
 ```
 
 Spike behavior:
 
 ```
-`├── Volume slider controls software volume (full 0–150% range)`
-
-`│   ├── Normal range (0–100%): Pure ALSA hardware volume`
-
-`│   ├── Boost range (100–150%): PipeWire software amplification`
-
-`│   └── Use boost sparingly (distortion at high boost)`
-
-`├── Hardware volume: Managed by PipeWire/WirePlumber`
-
-`└── Volume applet in tray provides slider + mute toggle`
+├── Volume slider controls software volume (full 0–150% range)
+│   ├── Normal range (0–100%): Pure ALSA hardware volume
+│   ├── Boost range (100–150%): PipeWire software amplification
+│   └── Use boost sparingly (distortion at high boost)
+├── Hardware volume: Managed by PipeWire/WirePlumber
+└── Volume applet in tray provides slider + mute toggle
 ```
 
 ### Audio Permissions
@@ -498,41 +354,30 @@ Spike behavior:
 Every user on the system can:
 
 ```
-`├── Listen to audio (playback)`
-
-`├── Record audio (microphone)`
-
-`├── Receive notification sounds`
-
-`└── Produce system sounds (e.g., SDDM greeter)`
+├── Listen to audio (playback)
+├── Record audio (microphone)
+├── Receive notification sounds
+└── Produce system sounds (e.g., SDDM greeter)
 ```
 
 User groups:
 
 ```
-`├── All Spike users belong to: audio, pipewire, video, render`
-
-`└── No separate "audio rights" configuration needed`
+├── All Spike users belong to: audio, pipewire, video, render
+└── No separate "audio rights" configuration needed
 ```
 
 Wayland portals:
 
 ```
-`├── xdg-desktop-portal for Wayland`
-
-`├── xdg-desktop-portal-kde (provides KDE-specific portal implementation)`
-
-`├── Audio capture (microphone) requires permission via Portal API`
-
-`│   ├── Application sends request to portal`
-
-`│   ├── Portal shows dialog: "\[App\] wants to use your microphone. Allow?"`
-
-`│   │   (customized Spike dialog via xdg-desktop-portal-kde)`
-
-`│   └── Permission stored per-application`
-
-`└── Screen capture also uses Portal API`
+├── xdg-desktop-portal for Wayland
+├── xdg-desktop-portal-kde (provides KDE-specific portal implementation)
+├── Audio capture (microphone) requires permission via Portal API
+│   ├── Application sends request to portal
+│   ├── Portal shows dialog: "[App] wants to use your microphone. Allow?"
+│   │   (customized Spike dialog via xdg-desktop-portal-kde)
+│   └── Permission stored per-application
+└── Screen capture also uses Portal API
 ```
 
 ## Video Acceleration (VA-API)
@@ -546,21 +391,17 @@ CPU usage comparison (1080p H.264 video, Celeron N4020):
 **Without VA-API (software decode):**
 
 ```
-`├── CPU usage: 60–90% on both cores`
-
-`├── Frame drops at 1080p60`
-
-`└── Battery: Rapid drain due to CPU pegged`
+├── CPU usage: 60–90% on both cores
+├── Frame drops at 1080p60
+└── Battery: Rapid drain due to CPU pegged
 ```
 
 **With VA-API (hardware decode):**
 
 ```
-`├── CPU usage: 5–15%`
-
-`├── Smooth 1080p60 playback`
-
-`└── Battery: Normal drain`
+├── CPU usage: 5–15%
+├── Smooth 1080p60 playback
+└── Battery: Normal drain
 ```
 
 ### GPU Driver Selection
@@ -570,49 +411,34 @@ At install time, `spike-config` detects GPU vendor and installs the correct driv
 **Intel (`i915` driver):**
 
 ```
-`├── Package: intel-media-va-driver-non-free`
-
-`│   └── "non-free" means non-open-source (not paid — it's free)`
-
-`├── Environment: LIBVA\_DRIVER\_NAME=iHD`
-
-`├── Applies to: Intel Broadwell (5th gen) and newer`
-
-`├── Gemini Lake (N4020): Full VA-API support (MPEG-2, AVC/H.264, HEVC/H.265, VP9)`
-
-`└── Note: Gemini Lake does NOT support AV1 hardware decode`
+├── Package: intel-media-va-driver-non-free
+│   └── "non-free" means non-open-source (not paid — it's free)
+├── Environment: LIBVA_DRIVER_NAME=iHD
+├── Applies to: Intel Broadwell (5th gen) and newer
+├── Gemini Lake (N4020): Full VA-API support (MPEG-2, AVC/H.264, HEVC/H.265, VP9)
+└── Note: Gemini Lake does NOT support AV1 hardware decode
 ```
 
 **AMD (`amdgpu` driver):**
 
 ```
-`├── Package: mesa-va-drivers`
-
-`├── Environment: LIBVA\_DRIVER\_NAME=radeonsi`
-
-`├── Applies to: AMD GCN architecture and newer`
-
-`└── Full VA-API support varies by GPU generation`
+├── Package: mesa-va-drivers
+├── Environment: LIBVA_DRIVER_NAME=radeonsi
+├── Applies to: AMD GCN architecture and newer
+└── Full VA-API support varies by GPU generation
 ```
 
 **NVIDIA (`nouveau` driver):**
 
 ```
-`├── Package: vdpau-va-driver (VA-API wrapper)`
-
-`├── Environment: LIBVA\_DRIVER\_NAME=vdpau`
-
-`├── VA-API support limited (nouveau's VA-API is incomplete)`
-
-`│   └── Some codecs may not accelerate`
-
-`├── If proprietary driver installed post-install:`
-
-`│   ├── VDPAU backend: NVIDIA's VDPAU (nvidia-vdpau-va-driver)`
-
-`│   └── VA-API wrapper: Provides VA-API via VDPAU bridge`
-
-`└── See KERNEL.md for full NVIDIA driver policy`
+├── Package: vdpau-va-driver (VA-API wrapper)
+├── Environment: LIBVA_DRIVER_NAME=vdpau
+├── VA-API support limited (nouveau's VA-API is incomplete)
+│   └── Some codecs may not accelerate
+├── If proprietary driver installed post-install:
+│   ├── VDPAU backend: NVIDIA's VDPAU (nvidia-vdpau-va-driver)
+│   └── VA-API wrapper: Provides VA-API via VDPAU bridge
+└── See KERNEL.md for full NVIDIA driver policy
 ```
 
 ### Supported Codecs Per Hardware
@@ -639,17 +465,12 @@ Firefox configuration (applied to Flatpak Firefox):
 **Preferences:**
 
 ```
-`media.ffmpeg.vaapi.enabled = true`
-
-`media.ffmpeg.vaapi.force-enabled = true`
-
-`media.ffvpx.enabled = false       *// Disable FFVP9 (force VP9 hardware decode)`*
-
-`media.rdd-vpx-enabled = false`
-
-`media.av1.enabled = false          *// Disable AV1 (Gemini Lake can't decode it)`*
-
-`gfx.webrender.all = true           *// Enable WebRender (GPU compositing)`*
+media.ffmpeg.vaapi.enabled = true
+media.ffmpeg.vaapi.force-enabled = true
+media.ffvpx.enabled = false       *// Disable FFVP9 (force VP9 hardware decode)
+media.rdd-vpx-enabled = false
+media.av1.enabled = false          *// Disable AV1 (Gemini Lake can't decode it)
+gfx.webrender.all = true           *// Enable WebRender (GPU compositing)
 ```
 
 ### AV1 Disabled
@@ -657,45 +478,32 @@ Firefox configuration (applied to Flatpak Firefox):
 Why AV1 is disabled on Spike:
 
 ```
-`1. Gemini Lake (Intel UHD 600) does NOT have AV1 hardware decode`
-
-`2. If AV1 enabled, Firefox attempts software decode → CPU pegged`
-
-`3. YouTube and other platforms fall back to VP9 when AV1 unavailable`
-
-`4. VP9 IS hardware-decoded on Gemini Lake → smooth playback`
-
-`5. Disabling AV1 forces VP9 fallback → hardware decode → low CPU`
+1. Gemini Lake (Intel UHD 600) does NOT have AV1 hardware decode
+2. If AV1 enabled, Firefox attempts software decode → CPU pegged
+3. YouTube and other platforms fall back to VP9 when AV1 unavailable
+4. VP9 IS hardware-decoded on Gemini Lake → smooth playback
+5. Disabling AV1 forces VP9 fallback → hardware decode → low CPU
 ```
 
 Effect on user:
 
 ```
-`├── YouTube: Uses VP9 instead of AV1 (imperceptible quality difference)`
-
-`├── Netflix: Uses H.264 or HEVC (platform falls back from AV1)`
-
-`├── Minor quality difference (AV1 is more efficient, but at 1080p`
-
-`│   the difference is negligible)`
-
-`└── Major CPU/battery improvement (hardware decode vs software decode)`
+├── YouTube: Uses VP9 instead of AV1 (imperceptible quality difference)
+├── Netflix: Uses H.264 or HEVC (platform falls back from AV1)
+├── Minor quality difference (AV1 is more efficient, but at 1080p
+│   the difference is negligible)
+└── Major CPU/battery improvement (hardware decode vs software decode)
 ```
 
 **Settings → Advanced → Multimedia:**
 
 ```
-`├── \[x\] Use hardware video acceleration (if supported)`
-
-`├── \[x\] Disable AV1 video format (recommended for your hardware)`
-
-`├── Info text: "Your GPU (Intel UHD 600) doesn't support AV1 hardware`
-
-`    decoding. Disabling AV1 forces platforms to use VP9, which your`
-
-`    GPU can decode in hardware, saving CPU and battery."`
-
-`└── User can toggle off if they want AV1 (advanced users only)`
+├── [x] Use hardware video acceleration (if supported)
+├── [x] Disable AV1 video format (recommended for your hardware)
+├── Info text: "Your GPU (Intel UHD 600) doesn't support AV1 hardware
+    decoding. Disabling AV1 forces platforms to use VP9, which your
+    GPU can decode in hardware, saving CPU and battery."
+└── User can toggle off if they want AV1 (advanced users only)
 ```
 
 ### Verification
@@ -705,65 +513,42 @@ How to verify VA-API is working:
 Via **Settings → Advanced → Diagnostics → Video:**
 
 ```
-`├── VA-API driver: iHD (Intel) / radeonsi (AMD) / vdpau (NVIDIA)`
-
-`├── Decoder support: H.264 ✓, H.265 ✓, VP9 ✓, AV1 ✗`
-
-`├── Active decode sessions: 0`
-
-`└── "Run VA-API test" button → executes vainfo command`
-
-`    └── Output parsed and displayed in GUI`
+├── VA-API driver: iHD (Intel) / radeonsi (AMD) / vdpau (NVIDIA)
+├── Decoder support: H.264 ✓, H.265 ✓, VP9 ✓, AV1 ✗
+├── Active decode sessions: 0
+└── "Run VA-API test" button → executes vainfo command
+    └── Output parsed and displayed in GUI
 ```
 
 What the user sees:
 
 ```
-`┌──────────────────────────────────────────────────┐`
-
-`│  Video Acceleration                              │`
-
-`│                                                  │`
-
-`│  Driver: iHD (Intel)                            │`
-
-`│  GPU: Intel UHD Graphics 600                    │`
-
-`│                                                  │`
-
-`│  Supported codecs:                               │`
-
-`│    H.264 (AVC)         ✓                       │`
-
-`│    H.265 (HEVC)         ✓                       │`
-
-`│    VP8                  ✓                       │`
-
-`│    VP9                  ✓                       │`
-
-`│    AV1                  ✗ (hardware not supported)│`
-
-`│                                                  │`
-
-`│  \[Test hardware video decode\]                    │`
-
-`│  Last test result: Passed                        │`
-
-`│                                                  │`
-
-`└──────────────────────────────────────────────────┘`
+┌──────────────────────────────────────────────────┐
+│  Video Acceleration                              │
+│                                                  │
+│  Driver: iHD (Intel)                            │
+│  GPU: Intel UHD Graphics 600                    │
+│                                                  │
+│  Supported codecs:                               │
+│    H.264 (AVC)         ✓                       │
+│    H.265 (HEVC)         ✓                       │
+│    VP8                  ✓                       │
+│    VP9                  ✓                       │
+│    AV1                  ✗ (hardware not supported)│
+│                                                  │
+│  [Test hardware video decode]                    │
+│  Last test result: Passed                        │
+│                                                  │
+└──────────────────────────────────────────────────┘
 ```
 
 Developer verification commands (for testing, not user-facing):
 
 ```
-`vainfo                  → Check VA-API driver and supported profiles`
-
-`vdpauinfo               → Check VDPAU state (NVIDIA)`
-
-`mpv --hwdec=vaapi video.mp4  → Test hardware decode with mpv`
-
-`firefox about:support   → Check "HARDWARE\_VIDEO\_DECODING" status`
+vainfo                  → Check VA-API driver and supported profiles
+vdpauinfo               → Check VDPAU state (NVIDIA)
+mpv --hwdec=vaapi video.mp4  → Test hardware decode with mpv
+firefox about:support   → Check "HARDWARE_VIDEO_DECODING" status
 ```
 
 ## Screen Capture
@@ -779,45 +564,32 @@ Tool: **Spectacle** (KDE screenshot tool)
 Capabilities:
 
 ```
-`├── Full screen capture`
-
-`├── Active window capture`
-
-`├── Rectangular region capture`
-
-`├── Current screen capture`
-
-`├── Edit/annotate after capture (basic)`
-
-`└── Save to file or copy to clipboard`
+├── Full screen capture
+├── Active window capture
+├── Rectangular region capture
+├── Current screen capture
+├── Edit/annotate after capture (basic)
+└── Save to file or copy to clipboard
 ```
 
 Shot mode:
 
 ```
-`Print Screen key             → Full screen capture`
-
-`Shift+Print Screen           → Rectangular region`
-
-`Super+Shift+Print Screen     → Active window`
-
-` │`
-
-` ├── Default save: PNG to ~/Pictures/Screenshots/`
-
-` └── Clipboard copy`
+Print Screen key             → Full screen capture
+Shift+Print Screen           → Rectangular region
+Super+Shift+Print Screen     → Active window
+ │
+ ├── Default save: PNG to ~/Pictures/Screenshots/
+ └── Clipboard copy
 ```
 
 **Settings → Keyboard → Screenshots:**
 
 ```
-`├── Customizable shortcuts`
-
-`├── Save location: ~/Pictures/Screenshots/ (default, user can change)`
-
-`├── Save format: PNG (default), JPEG (smaller for photos)`
-
-`└── Copy to clipboard: On/Off (each capture can go to file, clipboard, or both)`
+├── Customizable shortcuts
+├── Save location: ~/Pictures/Screenshots/ (default, user can change)
+├── Save format: PNG (default), JPEG (smaller for photos)
+└── Copy to clipboard: On/Off (each capture can go to file, clipboard, or both)
 ```
 
 ### Screen Recording
@@ -827,13 +599,10 @@ Tool: **Spectacle** (KDE screenshot tool) and Portal API
 Capabilities:
 
 ```
-`├── Full screen recording`
-
-`├── Active window recording`
-
-`├── Rectangular region recording`
-
-`└── Saves to ~/Videos/Screencasts/`
+├── Full screen recording
+├── Active window recording
+├── Rectangular region recording
+└── Saves to ~/Videos/Screencasts/
 ```
 
 Spike does **not** ship a full video editor or screen recorder like OBS Studio. If the user wants advanced recording, they can install OBS via Discover.
@@ -841,15 +610,11 @@ Spike does **not** ship a full video editor or screen recorder like OBS Studio. 
 Screen capture portal (Wayland):
 
 ```
-`├── xdg-desktop-portal-kde provides ScreenCast interface`
-
-`├── Applications request screen capture via portal`
-
-`│   └── xdg-desktop-portal-kde handles the request`
-
-`├── Panel shows "recording" indicator when screen is being captured`
-
-`└── Permission prompt: "\[App\] wants to record your screen. Allow?"`
+├── xdg-desktop-portal-kde provides ScreenCast interface
+├── Applications request screen capture via portal
+│   └── xdg-desktop-portal-kde handles the request
+├── Panel shows "recording" indicator when screen is being captured
+└── Permission prompt: "[App] wants to record your screen. Allow?"
 ```
 
 ## Video Playback
@@ -861,29 +626,21 @@ Spike can play the following video formats out of the box:
 **Codecs (via GStreamer + ffmpeg):**
 
 ```
-`├── H.264 (AVC): ✓ (hardware decoded via VA-API)`
-
-`├── H.265 (HEVC): ✓ (hardware decoded)`
-
-`├── VP8: ✓ (hardware decoded)`
-
-`├── VP9: ✓ (hardware decoded)`
-
-`├── AV1: ✓ (software decoded, disabled in Firefox, available in VLC)`
-
-`│   └── Warning: CPU-intensive on Celeron, may stutter at 1080p`
-
-`├── MPEG-2: ✓ (hardware decoded, fine for DVD/SD content)`
-
-`└── Theora: ✓ (software decoded, rare format)`
+├── H.264 (AVC): ✓ (hardware decoded via VA-API)
+├── H.265 (HEVC): ✓ (hardware decoded)
+├── VP8: ✓ (hardware decoded)
+├── VP9: ✓ (hardware decoded)
+├── AV1: ✓ (software decoded, disabled in Firefox, available in VLC)
+│   └── Warning: CPU-intensive on Celeron, may stutter at 1080p
+├── MPEG-2: ✓ (hardware decoded, fine for DVD/SD content)
+└── Theora: ✓ (software decoded, rare format)
 ```
 
 **Containers:**
 
 ```
-`├── MP4, MKV, WebM, AVI, FLV, MOV`
-
-`└── Standard GStreamer/ffmpeg support`
+├── MP4, MKV, WebM, AVI, FLV, MOV
+└── Standard GStreamer/ffmpeg support
 ```
 
 ## WebRTC and Video Calls
@@ -893,39 +650,29 @@ Spike can play the following video formats out of the box:
 Spike supports WebRTC-based video calls in Firefox:
 
 ```
-`├── Camera access: Via Wayland portal (permission required)`
-
-`├── Microphone access: Via Wayland portal (permission required)`
-
-`├── Firefox uses and supports screen sharing via portal`
-
-`├── Works with: Google Meet, Discord (web), Jitsi Meet, Teams (web)`
-
-`├── Echo cancellation: Provided by PipeWire (audio-processing module)`
-
-`└── Noise suppression: Provided by PipeWire (audio-processing module)`
+├── Camera access: Via Wayland portal (permission required)
+├── Microphone access: Via Wayland portal (permission required)
+├── Firefox uses and supports screen sharing via portal
+├── Works with: Google Meet, Discord (web), Jitsi Meet, Teams (web)
+├── Echo cancellation: Provided by PipeWire (audio-processing module)
+└── Noise suppression: Provided by PipeWire (audio-processing module)
 ```
 
 Camera drivers:
 
 ```
-`├── Intel cameras: uvcvideo module (universal USB camera driver)`
-
-`├── External cameras: uvcvideo (if USB-attached)`
-
-`└── Legacy cameras: may require specialized drivers (rare)`
+├── Intel cameras: uvcvideo module (universal USB camera driver)
+├── External cameras: uvcvideo (if USB-attached)
+└── Legacy cameras: may require specialized drivers (rare)
 ```
 
 Camera permissions:
 
 ```
-`├── First time an app requests camera: Permission dialog`
-
-`│   ├── "\[App\] wants to use your camera. Allow?"`
-
-`│   └── Permission remembered per application`
-
-`└── Permissions can be revoked in Settings → Privacy → Camera`
+├── First time an app requests camera: Permission dialog
+│   ├── "[App] wants to use your camera. Allow?"
+│   └── Permission remembered per application
+└── Permissions can be revoked in Settings → Privacy → Camera
 ```
 
 ## Keyboard Shortcuts
@@ -933,33 +680,23 @@ Camera permissions:
 **Audio:**
 
 ```
-`├── Volume Up: Volume Up key (physical)`
-
-`├── Volume Down: Volume Down key (physical)`
-
-`├── Mute: Volume Mute key (physical)`
-
-`├── Mic Mute: Mic Mute key (physical) or F4 / Fn+F4`
-
-`└── These map to PipeWire via systemd-logind / media keys`
+├── Volume Up: Volume Up key (physical)
+├── Volume Down: Volume Down key (physical)
+├── Mute: Volume Mute key (physical)
+├── Mic Mute: Mic Mute key (physical) or F4 / Fn+F4
+└── These map to PipeWire via systemd-logind / media keys
 ```
 
 **Display:**
 
 ```
-`├── Brightness Up/Down: Physical function keys`
-
-`├── Cycle Display: Super+P`
-
-`├── Night Light: Super+N`
-
-`│   (To visualize the Spike Shell layout, reference DESKTOP.md)`
-
-`├── Screenshot (Full): Print Screen`
-
-`├── Screenshot (Region): Shift+Print Screen`
-
-`└── Screenshot (Window): Super+Shift+Print Screen`
+├── Brightness Up/Down: Physical function keys
+├── Cycle Display: Super+P
+├── Night Light: Super+N
+│   (To visualize the Spike Shell layout, reference DESKTOP.md)
+├── Screenshot (Full): Print Screen
+├── Screenshot (Region): Shift+Print Screen
+└── Screenshot (Window): Super+Shift+Print Screen
 ```
 
 ## Settings Integration
@@ -967,111 +704,62 @@ Camera permissions:
 ### Settings → Sound
 
 ```
-`┌──────────────────────────────────────────────────┐`
-
-`│  Sound                                            │`
-
-`│                                                  │`
-
-`│  OUTPUT                                           │`
-
-`│  ──────                                          │`
-
-`│  Output Device: \[Speakers — Built-In Audio\] ▼    │`
-
-`│                                                  │`
-
-`│  Volume: \[██████████░░░░░░░░░░\] 65%             │`
-
-`│  \[🔊\] \[🔇\]                                        │`
-
-`│  Visualization: Real-time VU meter                │`
-
-`│  Allow boosting above 100%: \[ \]                  │`
-
-`│                                                  │`
-
-`│  INPUT                                            │`
-
-`│  ─────                                           │`
-
-`│  Input Device: \[Microphone — Built-In Audio\] ▼    │`
-
-`│                                                  │`
-
-`│  Volume: \[████████░░░░░░░░░░░░\] 50%             │`
-
-`│  \[🎤\] \[🔇\]                                        │`
-
-`│  Visualization: Real-time VU meter                │`
-
-`│                                                  │`
-
-`│  BLUETOOTH                                        │`
-
-`│  ─────────                                       │`
-
-`│  Connected device: \[Sony WH-1000XM4\]             │`
-
-`│  Codec: LDAC                                      │`
-
-`│  Profile: A2DP (high quality)                     │`
-
-`│  \[Device settings\]                                │`
-
-`│                                                  │`
-
-`└──────────────────────────────────────────────────┘`
+┌──────────────────────────────────────────────────┐
+│  Sound                                            │
+│                                                  │
+│  OUTPUT                                           │
+│  ──────                                          │
+│  Output Device: [Speakers — Built-In Audio] ▼    │
+│                                                  │
+│  Volume: [██████████░░░░░░░░░░] 65%             │
+│  [🔊] [🔇]                                        │
+│  Visualization: Real-time VU meter                │
+│  Allow boosting above 100%: [ ]                  │
+│                                                  │
+│  INPUT                                            │
+│  ─────                                           │
+│  Input Device: [Microphone — Built-In Audio] ▼    │
+│                                                  │
+│  Volume: [████████░░░░░░░░░░░░] 50%             │
+│  [🎤] [🔇]                                        │
+│  Visualization: Real-time VU meter                │
+│                                                  │
+│  BLUETOOTH                                        │
+│  ─────────                                       │
+│  Connected device: [Sony WH-1000XM4]             │
+│  Codec: LDAC                                      │
+│  Profile: A2DP (high quality)                     │
+│  [Device settings]                                │
+│                                                  │
+└──────────────────────────────────────────────────┘
 ```
 
 ### Settings → Advanced → Multimedia
 
 ```
-`┌──────────────────────────────────────────────────┐`
-
-`│  Multimedia                                       │`
-
-`│                                                  │`
-
-`│  VIDEO ACCELERATION                              │`
-
-`│  ──────────────────────────────────────          │`
-
-`│  \[x\] Use hardware video acceleration (VA-API)   │`
-
-`│  \[x\] Disable AV1 in Firefox (recommended for     │`
-
-`│      your hardware)                              │`
-
-`│  \[Test hardware video decode\] → shows results    │`
-
-`│  Last test result: Passed, VA-API active          │`
-
-`│                                                  │`
-
-`│  AUDIO                                           │`
-
-`│  ─────────                                       │`
-
-`│  \[x\] Enable audio echo cancellation             │`
-
-`│  \[x\] Enable audio noise suppression             │`
-
-`│  Sample rate display: 44100 Hz (fixed)           │`
-
-`│  Resampler quality: 1 (low — saves CPU)          │`
-
-`│  Stereo only: \[On\] (fixed)                       │`
-
-`│  Bluetooth codecs: SBC (Standard) /              │`
-
-`│    SBC+AAC+LDAC+aptX (Plus)                      │`
-
-`│  \[Test audio\] → plays test tone                 │`
-
-`│                                                  │`
-
-`└──────────────────────────────────────────────────┘`
+┌──────────────────────────────────────────────────┐
+│  Multimedia                                       │
+│                                                  │
+│  VIDEO ACCELERATION                              │
+│  ──────────────────────────────────────          │
+│  [x] Use hardware video acceleration (VA-API)   │
+│  [x] Disable AV1 in Firefox (recommended for     │
+│      your hardware)                              │
+│  [Test hardware video decode] → shows results    │
+│  Last test result: Passed, VA-API active          │
+│                                                  │
+│  AUDIO                                           │
+│  ─────────                                       │
+│  [x] Enable audio echo cancellation             │
+│  [x] Enable audio noise suppression             │
+│  Sample rate display: 44100 Hz (fixed)           │
+│  Resampler quality: 1 (low — saves CPU)          │
+│  Stereo only: [On] (fixed)                       │
+│  Bluetooth codecs: SBC (Standard) /              │
+│    SBC+AAC+LDAC+aptX (Plus)                      │
+│  [Test audio] → plays test tone                 │
+│                                                  │
+└──────────────────────────────────────────────────┘
 ```
 
 ## What This Document Does Not Cover

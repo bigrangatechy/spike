@@ -28,11 +28,9 @@ Each decision includes the context that led to it, the alternatives considered, 
 **Trade-offs accepted:**
 
 ```
-`├── Ubuntu's Snap architecture is present in the ecosystem (we strip it, but it exists upstream)`
-
-`├── Canonical's direction may shift in ways we can't control (mitigated by LTS pinning)`
-
-`└── Some Ubuntu-specific patches may cause friction with upstream KDE (acceptable, KDE actively supports Ubuntu)`
+├── Ubuntu's Snap architecture is present in the ecosystem (we strip it, but it exists upstream)
+├── Canonical's direction may shift in ways we can't control (mitigated by LTS pinning)
+└── Some Ubuntu-specific patches may cause friction with upstream KDE (acceptable, KDE actively supports Ubuntu)
 ```
 
 **Why Server, not Desktop:** Starting from Ubuntu Server gives a clean minimal base. No GNOME shell to remove, no Snap to purge from a pre-configured desktop session, no Canonical desktop tooling to strip. The Spike team builds its own desktop from a blank slate.
@@ -46,20 +44,18 @@ Each decision includes the context that led to it, the alternatives considered, 
 **Trade-offs accepted:**
 
 ```
-`├── The kernel includes drivers and modules for hardware Spike will never encounter`
-
-`├── Some kernel parameters need boot-time tuning rather than compile-time exclusion`
-
-`└── Module blacklisting at install time handles the unused-driver problem adequately`
+├── The kernel includes drivers and modules for hardware Spike will never encounter
+├── Some kernel parameters need boot-time tuning rather than compile-time exclusion
+└── Module blacklisting at install time handles the unused-driver problem adequately
 ```
 
 **Configuration approach:** Kernel boot parameters and module blacklisting are applied at install time. See **KERNEL.md** for details.
 
-### x86\_64 Only
+### x86_64 Only
 
-**Decision:** Support x86\_64 architecture only. No i386 build.
+**Decision:** Support x86_64 architecture only. No i386 build.
 
-**Context:** 32-bit support was considered as a future conditional project. The maintenance burden of forking i386 libraries, finding compatible Flatpak runtimes, and testing on 32-bit hardware is significant. The target hardware (2013+ Celerons, AMD Jaguars) is overwhelmingly x86\_64.
+**Context:** 32-bit support was considered as a future conditional project. The maintenance burden of forking i386 libraries, finding compatible Flatpak runtimes, and testing on 32-bit hardware is significant. The target hardware (2013+ Celerons, AMD Jaguars) is overwhelmingly x86_64.
 
 **Condition for revisiting:** Only if significant user demand demonstrates that a meaningful population of 32-only hardware exists and cannot run a 64-bit kernel with 32-bit userspace (a common workaround).
 
@@ -74,11 +70,9 @@ Each decision includes the context that led to it, the alternatives considered, 
 **Trade-offs accepted:**
 
 ```
-`├── Some older applications may have rendering quirks under XWayland`
-
-`├── NVIDIA proprietary drivers have historically poor Wayland support (mitigated by nouveau fallback and improving upstream support)`
-
-`└── Debugging Wayland issues is harder than X11 (mitigated by strong upstream support from KDE)`
+├── Some older applications may have rendering quirks under XWayland
+├── NVIDIA proprietary drivers have historically poor Wayland support (mitigated by nouveau fallback and improving upstream support)
+└── Debugging Wayland issues is harder than X11 (mitigated by strong upstream support from KDE)
 ```
 
 **XWayland behavior:** Launches on demand. When no X11 applications are running, XWayland consumes zero resources.
@@ -145,33 +139,23 @@ Each decision includes the context that led to it, the alternatives considered, 
 **Approach taken:**
 
 ```
-`├── nouveau is included in the kernel and works out of the box for display and basic compositing`
-
-`├── Proprietary driver is available for users who need CUDA, gaming, or hardware video acceleration`
-
-`├── ubuntu-drivers tool (included with Ubuntu Server LTS) handles driver listing and installation`
-
-`├── Installation is initiated through Settings → Software Sources → Additional Drivers (GUI, no terminal)`
-
-`├── Post-install notification informs NVIDIA users of the option without forcing action`
-
-`└── Hybrid graphics (Optimus) supported via PRIME render offload with three modes: Integrated Only, Hybrid, Discrete Only`
+├── nouveau is included in the kernel and works out of the box for display and basic compositing
+├── Proprietary driver is available for users who need CUDA, gaming, or hardware video acceleration
+├── ubuntu-drivers tool (included with Ubuntu Server LTS) handles driver listing and installation
+├── Installation is initiated through Settings → Software Sources → Additional Drivers (GUI, no terminal)
+├── Post-install notification informs NVIDIA users of the option without forcing action
+└── Hybrid graphics (Optimus) supported via PRIME render offload with three modes: Integrated Only, Hybrid, Discrete Only
 ```
 
 **Trade-offs accepted:**
 
 ```
-`├── nouveau has weaker Wayland support (mitigated by XWayland automatic fallback)`
-
-`├── nouveau lacks VA-API hardware video decode on most NVIDIA GPUs (users use integrated GPU for video playback)`
-
-`├── Proprietary driver must be installed manually (beginner UX: notification explains this clearly)`
-
-`├── Fermi-era GPUs (pre-GTX 600) are unsupported by modern proprietary driver (use nouveau only)`
-
-`├── Secure Boot requires MOK enrollment for proprietary driver (installer handles notification if needed)`
-
-`└── Some users may blame Spike for NVIDIA issues that are upstream nouveau limitations (documented in troubleshooting)`
+├── nouveau has weaker Wayland support (mitigated by XWayland automatic fallback)
+├── nouveau lacks VA-API hardware video decode on most NVIDIA GPUs (users use integrated GPU for video playback)
+├── Proprietary driver must be installed manually (beginner UX: notification explains this clearly)
+├── Fermi-era GPUs (pre-GTX 600) are unsupported by modern proprietary driver (use nouveau only)
+├── Secure Boot requires MOK enrollment for proprietary driver (installer handles notification if needed)
+└── Some users may blame Spike for NVIDIA issues that are upstream nouveau limitations (documented in troubleshooting)
 ```
 
 ## Filesystem
@@ -194,11 +178,9 @@ Each decision includes the context that led to it, the alternatives considered, 
 **Trade-offs accepted:**
 
 ```
-`├── No snapshot-based rollback (replaced by USB backup + reinstall-with-restore)`
-
-`├── No transparent compression (ZRAM handles memory compression instead)`
-
-`└── No built-in data integrity checking beyond ext4's journaling`
+├── No snapshot-based rollback (replaced by USB backup + reinstall-with-restore)
+├── No transparent compression (ZRAM handles memory compression instead)
+└── No built-in data integrity checking beyond ext4's journaling
 ```
 
 ### No Manual Partitioning
@@ -210,11 +192,9 @@ Each decision includes the context that led to it, the alternatives considered, 
 **Trade-offs accepted:**
 
 ```
-`├── Power users cannot customize partition layouts (they can use another distribution)`
-
-`├── Dual-boot configurations are impossible by design`
-
-`└── Users with exotic storage setups may not be supported`
+├── Power users cannot customize partition layouts (they can use another distribution)
+├── Dual-boot configurations are impossible by design
+└── Users with exotic storage setups may not be supported
 ```
 
 ### No eMMC Support
@@ -226,9 +206,8 @@ Each decision includes the context that led to it, the alternatives considered, 
 **Trade-offs accepted:**
 
 ```
-`├── Some budget laptops with only eMMC storage are excluded`
-
-`└── Users with eMMC-only devices are directed to replace the storage or use a different distribution`
+├── Some budget laptops with only eMMC storage are excluded
+└── Users with eMMC-only devices are directed to replace the storage or use a different distribution
 ```
 
 ## Memory Management
@@ -242,21 +221,17 @@ Each decision includes the context that led to it, the alternatives considered, 
 **Detection method:**
 
 ```
-`├── CPU cores: nproc`
-
-`├── CPU speed: /proc/cpuinfo bogomips`
-
-`├── Capable: dual-core+ with bogomips ≥ ~2200 per core`
-
-`└── Low-end: single-core or bogomips below threshold`
+├── CPU cores: nproc
+├── CPU speed: /proc/cpuinfo bogomips
+├── Capable: dual-core+ with bogomips ≥ ~2200 per core
+└── Low-end: single-core or bogomips below threshold
 ```
 
 **Trade-offs accepted:**
 
 ```
-`├── Detection heuristics may misclassify edge-case CPUs (mitigated by conservative thresholds)`
-
-`└── Users can't manually toggle ZRAM without the Settings GUI (acceptable — if CPU is borderline, the safer choice is no ZRAM)`
+├── Detection heuristics may misclassify edge-case CPUs (mitigated by conservative thresholds)
+└── Users can't manually toggle ZRAM without the Settings GUI (acceptable — if CPU is borderline, the safer choice is no ZRAM)
 ```
 
 ### Swap File, Not Swap Partition
@@ -274,9 +249,8 @@ Each decision includes the context that led to it, the alternatives considered, 
 **Trade-offs accepted:**
 
 ```
-`├── Applications may be killed unexpectedly under memory pressure (better than a frozen system)`
-
-`└── Earlyoom adds a small constant background process (~2MB)`
+├── Applications may be killed unexpectedly under memory pressure (better than a frozen system)
+└── Earlyoom adds a small constant background process (~2MB)
 ```
 
 ### Swappiness Tuning By Storage Type
@@ -296,9 +270,8 @@ Each decision includes the context that led to it, the alternatives considered, 
 **Trade-offs accepted:**
 
 ```
-`├── Some Ubuntu-specific applications are only available as Snaps (not relevant to target users)`
-
-`└── Flatpak runtime sizes are significant (mitigated by pre-seeding on ISO)`
+├── Some Ubuntu-specific applications are only available as Snaps (not relevant to target users)
+└── Flatpak runtime sizes are significant (mitigated by pre-seeding on ISO)
 ```
 
 ### Pre-Seeded Flatpak Runtimes
@@ -318,9 +291,8 @@ Each decision includes the context that led to it, the alternatives considered, 
 **Trade-offs accepted:**
 
 ```
-`├── Discover occasionally has bugs related to Flatpak integration (mitigated by upstream KDE development)`
-
-`└── Discover pulls in some KDE Frameworks dependencies (acceptable, shared with other KDE apps)`
+├── Discover occasionally has bugs related to Flatpak integration (mitigated by upstream KDE development)
+└── Discover pulls in some KDE Frameworks dependencies (acceptable, shared with other KDE apps)
 ```
 
 ## Desktop Shell
@@ -342,21 +314,17 @@ Each decision includes the context that led to it, the alternatives considered, 
 **Firmware included:**
 
 ```
-`├── Intel Wi-Fi (iwlwifi)`
-
-`├── Atheros (ath)`
-
-`├── Realtek (rtl)`
-
-`└── Broadcom (bcmwl-kernel-source, proprietary)`
+├── Intel Wi-Fi (iwlwifi)
+├── Atheros (ath)
+├── Realtek (rtl)
+└── Broadcom (bcmwl-kernel-source, proprietary)
 ```
 
 **Trade-offs accepted:**
 
 ```
-`├── Larger ISO size (~300MB for firmware)`
-
-`└── Proprietary Broadcom driver included (necessary for broad hardware support)`
+├── Larger ISO size (~300MB for firmware)
+└── Proprietary Broadcom driver included (necessary for broad hardware support)
 ```
 
 ### Notification Disk-Before-Display Invariant
@@ -368,23 +336,18 @@ Each decision includes the context that led to it, the alternatives considered, 
 **Implementation:**
 
 ```
-`├── DBus notification received`
-
-`├── Write to ~/.local/share/spike/notifications/history.json (atomic write)`
-
-`├── Display popup`
-
-`├── If display fails, notification is still in history`
-
-`└── Tray badge shows unread count, persists until user opens history`
+├── DBus notification received
+├── Write to ~/.local/share/spike/notifications/history.json (atomic write)
+├── Display popup
+├── If display fails, notification is still in history
+└── Tray badge shows unread count, persists until user opens history
 ```
 
 **Trade-offs accepted:**
 
 ```
-`├── Slight latency increase (disk write before display, typically \<5ms)`
-
-`└── Transient notifications are kept in history (only display behavior changes, not persistence)`
+├── Slight latency increase (disk write before display, typically <5ms)
+└── Transient notifications are kept in history (only display behavior changes, not persistence)
 ```
 
 ### 3-Day Default Notification Retention
@@ -402,19 +365,13 @@ Each decision includes the context that led to it, the alternatives considered, 
 **Custom Spike settings pages handle Spike-specific configuration that KDE doesn't cover:**
 
 ```
-`├── Memory management status`
-
-`├── Boot behavior`
-
-`├── Notification settings`
-
-`├── Update preferences`
-
-`├── Storage diagnostics`
-
-`├── System diagnostics`
-
-`└── NVIDIA driver management (Additional Drivers, accessed via Software Sources section)`
+├── Memory management status
+├── Boot behavior
+├── Notification settings
+├── Update preferences
+├── Storage diagnostics
+├── System diagnostics
+└── NVIDIA driver management (Additional Drivers, accessed via Software Sources section)
 ```
 
 ## Boot
@@ -428,13 +385,10 @@ Each decision includes the context that led to it, the alternatives considered, 
 **Behavior:**
 
 ```
-`├── Menu hidden, 3-5 second ESC window during boot`
-
-`├── 3 consecutive boot failures → menu appears automatically, recovery entry highlighted`
-
-`├── Recovery entry always present when menu is shown`
-
-`└── GRUB2 themed with Spike branding`
+├── Menu hidden, 3-5 second ESC window during boot
+├── 3 consecutive boot failures → menu appears automatically, recovery entry highlighted
+├── Recovery entry always present when menu is shown
+└── GRUB2 themed with Spike branding
 ```
 
 **Alternatives considered:**
@@ -448,11 +402,9 @@ Each decision includes the context that led to it, the alternatives considered, 
 **Migration to Limine — trigger criteria:**
 
 ```
-`├── Limine reaches sufficient stability on target hardware`
-
-`├── GRUB2 maintenance becomes burdensome`
-
-`└── Community pressure for faster boot times`
+├── Limine reaches sufficient stability on target hardware
+├── GRUB2 maintenance becomes burdensome
+└── Community pressure for faster boot times
 ```
 
 ### Module Blacklisting At Install Time
@@ -474,15 +426,11 @@ Each decision includes the context that led to it, the alternatives considered, 
 **Configuration choices:**
 
 ```
-`├── 44100Hz sample rate (saves CPU on weak processors; 48000Hz provides no audible benefit for the target use case)`
-
-`├── Stereo-only (target hardware is laptops with built-in stereo speakers)`
-
-`├── Medium resampling quality (balanced CPU/quality)`
-
-`├── Logging suppressed (unnecessary I/O on low-end storage)`
-
-`└── No JACK support (pro audio is not the target use case)`
+├── 44100Hz sample rate (saves CPU on weak processors; 48000Hz provides no audible benefit for the target use case)
+├── Stereo-only (target hardware is laptops with built-in stereo speakers)
+├── Medium resampling quality (balanced CPU/quality)
+├── Logging suppressed (unnecessary I/O on low-end storage)
+└── No JACK support (pro audio is not the target use case)
 ```
 
 ### Conditional Bluetooth
@@ -502,9 +450,8 @@ Each decision includes the context that led to it, the alternatives considered, 
 **Trade-offs accepted:**
 
 ```
-`├── Users can't watch AV1-only content with hardware acceleration (rare — most content has VP9 fallback)`
-
-`└── Bandwidth may be slightly higher (VP9 files are generally larger than AV1)`
+├── Users can't watch AV1-only content with hardware acceleration (rare — most content has VP9 fallback)
+└── Bandwidth may be slightly higher (VP9 files are generally larger than AV1)
 ```
 
 ## Security
@@ -518,9 +465,8 @@ Each decision includes the context that led to it, the alternatives considered, 
 **Trade-offs accepted:**
 
 ```
-`├── Stolen laptops expose user data (acceptable risk for the target audience)`
-
-`└── Users who need encryption should use a different distribution`
+├── Stolen laptops expose user data (acceptable risk for the target audience)
+└── Users who need encryption should use a different distribution
 ```
 
 **Mitigation:** ufw firewall protects against network threats. AppArmor provides application sandboxing. User password protects local login.
@@ -556,13 +502,10 @@ Each decision includes the context that led to it, the alternatives considered, 
 **Implementation:**
 
 ```
-`├── Scans for Windows, Linux, and macOS user directories (Documents, Photos, Videos, Music, Downloads, Desktop)`
-
-`├── Copies to USB with checksum verification`
-
-`├── Preserves folder structure`
-
-`└── Reports what was and wasn't copied`
+├── Scans for Windows, Linux, and macOS user directories (Documents, Photos, Videos, Music, Downloads, Desktop)
+├── Copies to USB with checksum verification
+├── Preserves folder structure
+└── Reports what was and wasn't copied
 ```
 
 ### One ISO, Two Variants
@@ -608,13 +551,10 @@ Each decision includes the context that led to it, the alternatives considered, 
 **Governance structure:**
 
 ```
-`├── All contributors have a voice — Ideas, critiques, and proposals are welcome from anyone. Discussion happens openly through issues, merge requests, and communication channels.`
-
-`├── The BDFL has final say — When consensus cannot be reached, when arguments stall progress, or when a technical decision requires arbitration, the BDFL breaks the tie and the project moves forward.`
-
-`├── Input is not ignored — The BDFL considers all feedback before ruling. Bad ideas that don't get adopted are explained respectfully. Good ideas get merged.`
-
-`└── Prevents chaos — Without a clear authority figure, endless debates can paralyze a project. Contributors leave when nothing gets decided. BDFL ensures the project has direction.`
+├── All contributors have a voice — Ideas, critiques, and proposals are welcome from anyone. Discussion happens openly through issues, merge requests, and communication channels.
+├── The BDFL has final say — When consensus cannot be reached, when arguments stall progress, or when a technical decision requires arbitration, the BDFL breaks the tie and the project moves forward.
+├── Input is not ignored — The BDFL considers all feedback before ruling. Bad ideas that don't get adopted are explained respectfully. Good ideas get merged.
+└── Prevents chaos — Without a clear authority figure, endless debates can paralyze a project. Contributors leave when nothing gets decided. BDFL ensures the project has direction.
 ```
 
 **Succession plan:** If the BDFL steps away, the position transfers to whoever is appointed as head developer. The successor inherits the same authority: final say on disputes, but expected to listen to the community first. BigRangaTech retains organizational ownership throughout.
@@ -622,11 +562,9 @@ Each decision includes the context that led to it, the alternatives considered, 
 **Transition triggers:**
 
 ```
-`├── BDFL voluntarily appoints a successor`
-
-`├── BDFL passes away or becomes permanently unavailable`
-
-`└── BDFL loses trust of the community (extremely rare, requires documented reasons)`
+├── BDFL voluntarily appoints a successor
+├── BDFL passes away or becomes permanently unavailable
+└── BDFL loses trust of the community (extremely rare, requires documented reasons)
 ```
 
 When succession occurs, the incoming head developer maintains the same model: collaborative input with a tiebreaker role.
@@ -636,21 +574,14 @@ When succession occurs, the incoming head developer maintains the same model: co
 **What this means in practice:**
 
 ```
-`Contributor proposes a feature → Discussion ensues → Consensus attempts`
-
-`    │`
-
-`    ├── If consensus reached → Feature merged`
-
-`    │`
-
-`    └── If debate stalls or splits evenly → BDFL weighs in`
-
-`        ├── Considers all arguments`
-
-`        ├── Makes a ruling`
-
-`        └── Project proceeds according to that ruling`
+Contributor proposes a feature → Discussion ensues → Consensus attempts
+    │
+    ├── If consensus reached → Feature merged
+    │
+    └── If debate stalls or splits evenly → BDFL weighs in
+        ├── Considers all arguments
+        ├── Makes a ruling
+        └── Project proceeds according to that ruling
 ```
 
 Even when the BDFL makes the final call, contributors retain the ability to fork the code under the GPLv2+ license if they fundamentally disagree with the direction.

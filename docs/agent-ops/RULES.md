@@ -7,7 +7,7 @@ These are the **non-negotiable workflow rules** that govern how AI agents (and h
 > **Golden Rule:** If you're unsure whether something violates these rules, ASK before proceeding. One question is cheaper than one revert.
 
 
-## 1. Documentation-First Mandate (Priority \#1)
+## 1. Documentation-First Mandate (Priority #1)
 
 **Before writing ANY implementation code**, verify a specification exists for the feature you're building.
 
@@ -17,7 +17,7 @@ These are the **non-negotiable workflow rules** that govern how AI agents (and h
 
 2. **Check the relevant section** — Find the specific section describing the feature (e.g., `MEMORY.md §3.2 ZRAM setup`) 
 
-3. **Verify completeness** — Ensure the section has concrete values, not placeholders like `\[TBD\]` or `\[TODO\]` 
+3. **Verify completeness** — Ensure the section has concrete values, not placeholders like `[TBD]` or `[TODO]` 
 
 4. **If anything fails:** STOP and follow the **Missing Spec Protocol** below 
 
@@ -45,7 +45,7 @@ These are the **non-negotiable workflow rules** that govern how AI agents (and h
 
 3. **Ask human:** 
 
-> "No spec exists for \[FEATURE\]. I'll need to create \[DOC-NAME.md\]. Should I proceed with drafting?"
+> "No spec exists for [FEATURE]. I'll need to create [DOC-NAME.md]. Should I proceed with drafting?"
 
 4. **Upon approval:** 
 
@@ -55,7 +55,7 @@ These are the **non-negotiable workflow rules** that govern how AI agents (and h
 
    - Add to dependency map in `INDEX.md` if applicable 
 
-   - Mark all sections as **\[DRAFT\]** with timestamp 
+   - Mark all sections as **[DRAFT]** with timestamp 
 
    - Update `STATE.md` as "📝 Drafted, pending review" 
 
@@ -80,18 +80,18 @@ These are the **non-negotiable workflow rules** that govern how AI agents (and h
 
 3. **Draft the missing section** with concrete values (not placeholders) 
 
-4. **Mark as \[DRAFT\]** with timestamp 
+4. **Mark as [DRAFT]** with timestamp 
 
 5. **Wait for human approval** 
 
 6. **Once approved:** Implement per the approved section 
 
-7. **Remove \[DRAFT\]** tag after implementation 
+7. **Remove [DRAFT]** tag after implementation 
 
 ### Scenario C: Spec Has Placeholders
 
 > *Request: "Implement atomic config writes"*  
-*Reality: `CONFIGURATION.md` says "write pattern: \[INSERT METHOD\]"*
+*Reality: `CONFIGURATION.md` says "write pattern: [INSERT METHOD]"*
 
 **Steps:**
 
@@ -99,11 +99,11 @@ These are the **non-negotiable workflow rules** that govern how AI agents (and h
 
 2. **Ask human:** 
 
-> "`CONFIGURATION.md` §6.1 has placeholder '\[INSERT METHOD\]'. Based on `PATTERNS.md`, the pattern is tmp→fsync→rename→fsync(dir). Should I update the spec?"
+> "`CONFIGURATION.md` §6.1 has placeholder '[INSERT METHOD]'. Based on `PATTERNS.md`, the pattern is tmp→fsync→rename→fsync(dir). Should I update the spec?"
 
 3. **Upon approval:** Update the spec to replace the placeholder 
 
-4. **Mark change as \[IMPLEMENTATION NOTE\]** with date 
+4. **Mark change as [IMPLEMENTATION NOTE]** with date 
 
 5. **THEN implement** per the corrected spec 
 
@@ -142,23 +142,23 @@ Silence ≠ approval. Ambiguity ≠ approval. "Sounds good" is okay only if it c
 
 - Read `agent-ops/STATE.md` to see current progress 
 
-- Check `SESSION\_LOG.md` for what happened last session 
+- Check `SESSION_LOG.md` for what happened last session 
 
 - Check `DECISIONS.md` for recent decisions affecting your work 
 
-- Confirm with human: "Continuing \[MODULE\] from last session. Last state was \[STATE\]. Proceed?" 
+- Confirm with human: "Continuing [MODULE] from last session. Last state was [STATE]. Proceed?" 
 
 **At the end of EVERY task:**
 
 - Update `STATE.md` with current progress 
 
-- Append to `SESSION\_LOG.md` with summary 
+- Append to `SESSION_LOG.md` with summary 
 
 - Update `INDEX.md` if any docs were modified 
 
 - Commit all changes (code + spec + state files together) 
 
-- Notify human: "Task complete per \[SPEC.md\]. Ready for review." 
+- Notify human: "Task complete per [SPEC.md]. Ready for review." 
 
 
 ## 5. No Silent Deviation Rule
@@ -169,7 +169,7 @@ Silence ≠ approval. Ambiguity ≠ approval. "Sounds good" is okay only if it c
 
 | **Deviation Type** | **Example** | **Required Action** |
 | :-: | :-: | :-: |
-| **Value change** | Spec says "priority 100", you implement "priority 95" | Update spec, log in `SESSION\_LOG.md` |
+| **Value change** | Spec says "priority 100", you implement "priority 95" | Update spec, log in `SESSION_LOG.md` |
 | **Behavior change** | Spec says "always enabled", you add a conditional | Update spec, flag for review |
 | **Omission** | Spec section exists, you skip it entirely | STOP, notify human |
 | **Addition** | You add a feature not in the spec | STOP, ask for approval |
@@ -184,7 +184,7 @@ Silence ≠ approval. Ambiguity ≠ approval. "Sounds good" is okay only if it c
 
 | **Change Size** | **Documentation Required?** |
 | :-: | :-: |
-| One-line code fix | Yes — log in `SESSION\_LOG.md` |
+| One-line code fix | Yes — log in `SESSION_LOG.md` |
 | Comment update | Yes — if it changes semantics |
 | Variable rename | Yes — update spec if it affects interface |
 | Typo fix in spec | Yes — mark as correction with date |
@@ -193,11 +193,9 @@ Silence ≠ approval. Ambiguity ≠ approval. "Sounds good" is okay only if it c
 **Commit Message Requirement:** Every commit must cite the spec doc updated.
 
 ```
-`\[memory\] Implement ZRAM setup per MEMORY.md §3.2`
-
-`\[config\] Add atomic write pattern per CONFIGURATION.md §6.1`
-
-`\[docs\] Update MEMORY.md with implementation discovery §3.2`
+[memory] Implement ZRAM setup per MEMORY.md §3.2
+[config] Add atomic write pattern per CONFIGURATION.md §6.1
+[docs] Update MEMORY.md with implementation discovery §3.2
 ```
 
 
@@ -210,12 +208,11 @@ Silence ≠ approval. Ambiguity ≠ approval. "Sounds good" is okay only if it c
 2. **Suggest it as a comment** in the code: 
 
 ```
-*`\# POTENTIAL OPTIMIZATION: zstd compression is slower than lz4 on low-end CPUs.`*
-
-*`\# MEMORY.md specifies zstd for better ratios. Consider benchmarking before changing.`*
+# POTENTIAL OPTIMIZATION: zstd compression is slower than lz4 on low-end CPUs.
+# MEMORY.md specifies zstd for better ratios. Consider benchmarking before changing.
 ```
 
-3. **Notify human in `SESSION\_LOG.md`:** 
+3. **Notify human in `SESSION_LOG.md`:** 
 
 > "Discovery: lz4 might be faster than zstd on Celeron N4020. MEMORY.md specifies zstd. Proposed optimization logged for review."
 
@@ -234,7 +231,7 @@ Silence ≠ approval. Ambiguity ≠ approval. "Sounds good" is okay only if it c
 
 3. **Flag to human:** 
 
-> "Discrepancy found: \[FILE\] implements \[X\], but \[SPEC.md\] §\[N\] specifies \[Y\]."
+> "Discrepancy found: [FILE] implements [X], but [SPEC.md] §[N] specifies [Y]."
 
 4. **Wait for human decision:** 
 
@@ -261,26 +258,19 @@ Silence ≠ approval. Ambiguity ≠ approval. "Sounds good" is okay only if it c
 
 3. **If any dependency is "🟡 In Progress" or "🔲 Not Started":** 
 
-   - Ask human: "Can't start \[MODULE\] yet. \[DEPENDENCY\] is still \[STATUS\]. Proceed?" 
+   - Ask human: "Can't start [MODULE] yet. [DEPENDENCY] is still [STATUS]. Proceed?" 
 
-4. **Upon explicit override:** You may proceed, but note risk in `SESSION\_LOG.md` 
+4. **Upon explicit override:** You may proceed, but note risk in `SESSION_LOG.md` 
 
 ### Example
 
 ```
-`Module: power`
-
-`Depends on: hardware (detection), variant (selection)`
-
-
-`State:`
-
-`├── hardware: ✅ Complete`
-
-`└── variant: 🟡 In Progress`
-
-
-`Action: STOP. Power module cannot start until variant is complete.`
+Module: power
+Depends on: hardware (detection), variant (selection)
+State:
+├── hardware: ✅ Complete
+└── variant: 🟡 In Progress
+Action: STOP. Power module cannot start until variant is complete.
 ```
 
 
@@ -290,11 +280,11 @@ Silence ≠ approval. Ambiguity ≠ approval. "Sounds good" is okay only if it c
 
 1. **Read `STATE.md`** — Current progress, blockers 
 
-2. **Read `SESSION\_LOG.md`** — What happened last session 
+2. **Read `SESSION_LOG.md`** — What happened last session 
 
 3. **Read `DECISIONS.md`** — Recent decisions affecting current work 
 
-4. **Confirm with human:** "Continuing \[MODULE\] from \[DATE\]. Last state: \[STATUS\]. Ready to proceed?" 
+4. **Confirm with human:** "Continuing [MODULE] from [DATE]. Last state: [STATUS]. Ready to proceed?" 
 
 **Never begin coding without confirming current context.**
 
@@ -311,7 +301,7 @@ Silence ≠ approval. Ambiguity ≠ approval. "Sounds good" is okay only if it c
 
    - Log completion date 
 
-3. **Append to `SESSION\_LOG.md`:** 
+3. **Append to `SESSION_LOG.md`:** 
 
    - Focus area 
 
@@ -330,9 +320,8 @@ Silence ≠ approval. Ambiguity ≠ approval. "Sounds good" is okay only if it c
 5. **Commit all changes together:** 
 
 ```
-`git commit -m "\[module\] Implement per \[SPEC.md\] §\[N\]"`
-
-`git push origin main`
+git commit -m "[module] Implement per [SPEC.md] §[N]"
+git push origin main
 ```
 
 6. **Notify human:** "Task complete. State updated. Ready for review." 
@@ -358,7 +347,7 @@ When in doubt, escalate rather than guess.
 
 If an emergency requires breaking a rule:
 
-1. **Document the exception** in `SESSION\_LOG.md` (timestamp, reason, scope) 
+1. **Document the exception** in `SESSION_LOG.md` (timestamp, reason, scope) 
 
 2. **Get explicit human authorization** before proceeding 
 

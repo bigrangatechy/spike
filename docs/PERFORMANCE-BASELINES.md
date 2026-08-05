@@ -70,79 +70,55 @@ All measurements must be taken on physical hardware, not virtual machines. VMs d
 **Boot time:**
 
 ```
-`├── Start: Power button pressed (firmware POST begins)`
-
-`├── End: Spike Shell panel visible, input responsive`
-
-`├── Method: Stopwatch (manual) or timestamped boot log analysis`
-
-`├── Runs: 5 consecutive boots, report median + range`
-
-`└── Conditions: Cold boot (not reboot), no USB devices, no network`
+├── Start: Power button pressed (firmware POST begins)
+├── End: Spike Shell panel visible, input responsive
+├── Method: Stopwatch (manual) or timestamped boot log analysis
+├── Runs: 5 consecutive boots, report median + range
+└── Conditions: Cold boot (not reboot), no USB devices, no network
 ```
 
 **Idle memory:**
 
 ```
-`├── Start measuring: 60 seconds after desktop appears`
-
-`├── Tool: free -h (report "used" value, not "available")`
-
-`├── Exclude: Page cache (report MemAvailable context separately)`
-
-`├── Runs: 3 measurements, report median`
-
-`└── Conditions: No applications launched, no network connection`
-
-`    (network adds NetworkManager overhead, measured separately)`
+├── Start measuring: 60 seconds after desktop appears
+├── Tool: free -h (report "used" value, not "available")
+├── Exclude: Page cache (report MemAvailable context separately)
+├── Runs: 3 measurements, report median
+└── Conditions: No applications launched, no network connection
+    (network adds NetworkManager overhead, measured separately)
 ```
 
 **Application launch time:**
 
 ```
-`├── Start: Mouse click on launcher entry`
-
-`├── End: Application window fully rendered, accepts input`
-
-`├── Method: Manual stopwatch (human reaction ~200ms variance) or`
-
-`│   scripted with xdotool/wlr-randr timestamp logging`
-
-`├── Runs: 5 launches per app, report median + range`
-
-`└── Conditions: App not already cached (cold launch), no other`
-
-`    apps running beyond desktop shell`
+├── Start: Mouse click on launcher entry
+├── End: Application window fully rendered, accepts input
+├── Method: Manual stopwatch (human reaction ~200ms variance) or
+│   scripted with xdotool/wlr-randr timestamp logging
+├── Runs: 5 launches per app, report median + range
+└── Conditions: App not already cached (cold launch), no other
+    apps running beyond desktop shell
 ```
 
 **Shutdown time:**
 
 ```
-`├── Start: User clicks Shut Down in session menu`
-
-`├── End: Machine powers off (fan stops, lights off)`
-
-`├── Method: Manual stopwatch`
-
-`├── Runs: 3 shutdowns, report median`
-
-`└── Conditions: No applications running, clean shutdown`
+├── Start: User clicks Shut Down in session menu
+├── End: Machine powers off (fan stops, lights off)
+├── Method: Manual stopwatch
+├── Runs: 3 shutdowns, report median
+└── Conditions: No applications running, clean shutdown
 ```
 
 **Hibernate resume:**
 
 ```
-`├── Start: Power button pressed (resume from hibernate)`
-
-`├── End: Spike Shell panel visible, input responsive`
-
-`├── Method: Manual stopwatch`
-
-`├── Runs: 3 resumes, report median`
-
-`└── Conditions: Hibernated with no apps open (baseline), then`
-
-`    with Firefox + LibreOffice open (loaded resume)`
+├── Start: Power button pressed (resume from hibernate)
+├── End: Spike Shell panel visible, input responsive
+├── Method: Manual stopwatch
+├── Runs: 3 resumes, report median
+└── Conditions: Hibernated with no apps open (baseline), then
+    with Firefox + LibreOffice open (loaded resume)
 ```
 
 ### Measurement Environment
@@ -150,35 +126,24 @@ All measurements must be taken on physical hardware, not virtual machines. VMs d
 **Standard measurement conditions:**
 
 ```
-`├── No USB devices connected (except measurement tools if needed)`
-
-`├── No network connection (Wi-Fi off, no Ethernet)`
-
-`├── No background tasks running (no updates, no indexing)`
-
-`├── Display at native resolution`
-
-`├── Firmware at default settings (no Fast Boot, no overclocking)`
-
-`└── Room temperature (~22°C — thermal throttling affects performance)`
+├── No USB devices connected (except measurement tools if needed)
+├── No network connection (Wi-Fi off, no Ethernet)
+├── No background tasks running (no updates, no indexing)
+├── Display at native resolution
+├── Firmware at default settings (no Fast Boot, no overclocking)
+└── Room temperature (~22°C — thermal throttling affects performance)
 ```
 
 **For each measurement, record:**
 
 ```
-`├── Hardware: exact model, CPU, RAM, storage`
-
-`├── Spike version: x.x.x-alpha/beta/production`
-
-`├── Variant: Standard or Plus`
-
-`├── Date: when measured`
-
-`├── Median value`
-
-`├── Range (min-max)`
-
-`└── Notes: anything anomalous (thermal throttle, background activity)`
+├── Hardware: exact model, CPU, RAM, storage
+├── Spike version: x.x.x-alpha/beta/production
+├── Variant: Standard or Plus
+├── Date: when measured
+├── Median value
+├── Range (min-max)
+└── Notes: anything anomalous (thermal throttle, background activity)
 ```
 
 
@@ -186,15 +151,15 @@ All measurements must be taken on physical hardware, not virtual machines. VMs d
 
 ### Cold Boot Time
 
-**Target:** \< 40 seconds (Tier 1, SSD)
+**Target:** < 40 seconds (Tier 1, SSD)
 
 This is the headline metric. The user presses power and waits. 40 seconds is the maximum acceptable time from power button to usable desktop on the primary target hardware.
 
 | **Storage Type** | **Target** | **Estimate** | **Stretch Goal** |
 | :-: | :-: | :-: | :-: |
-| Tier 1 (SSD) | \< 40s | ~15-25s | \< 25s |
-| Tier 1 (HDD) | \< 60s | ~30-50s | \< 45s |
-| Tier 2 (HDD) | \< 90s | ~45-65s | \< 70s |
+| Tier 1 (SSD) | < 40s | ~15-25s | < 25s |
+| Tier 1 (HDD) | < 60s | ~30-50s | < 45s |
+| Tier 2 (HDD) | < 90s | ~45-65s | < 70s |
 
 **Stage breakdown (estimated, Tier 1 SSD, Spike Standard):**
 
@@ -215,11 +180,11 @@ This is the headline metric. The user presses power and waits. 40 seconds is the
 
 | **Storage Type** | **Estimated Boot** | **Target Met?** |
 | :-: | :-: | :-: |
-| SATA SSD | ~15-25s | ✓ (\< 40s target) |
-| NVMe SSD | ~12-20s | ✓ (\< 40s target) |
-| SATA HDD | ~30-50s | ✓ (\< 60s HDD target) |
-| SD card (UHS-I+) | ~40-60s | ✓ (\< 70s SD target) |
-| USB 3.0+ | ~35-55s | ✓ (\< 60s USB target) |
+| SATA SSD | ~15-25s | ✓ (< 40s target) |
+| NVMe SSD | ~12-20s | ✓ (< 40s target) |
+| SATA HDD | ~30-50s | ✓ (< 60s HDD target) |
+| SD card (UHS-I+) | ~40-60s | ✓ (< 70s SD target) |
+| USB 3.0+ | ~35-55s | ✓ (< 60s USB target) |
 
 **Variant comparison (estimated, Tier 1 SSD):**
 
@@ -229,13 +194,13 @@ This is the headline metric. The user presses power and waits. 40 seconds is the
 | Plymouth splash | spike-minimal | spike-full (slight GPU init overhead for Plus) |
 | Session startup | ~7-11s | ~9-14s (Plus: effects + GL init) |
 | Total (auto-login) | ~17-29s | ~19-32s |
-| Target | \< 40s | \< 30s |
+| Target | < 40s | < 30s |
 
 ### Warm Boot (Reboot)
 
 | **Scenario** | **Tier 1 (SSD)** | **Tier 2 (HDD)** |
 | :-: | :-: | :-: |
-| Target | \< 45s | \< 70s |
+| Target | < 45s | < 70s |
 | Estimate | ~18-30s | ~35-55s |
 
 Warm boot (reboot) is slightly slower than cold boot in some cases because firmware may perform additional checks on reboot. Generally within ±5 seconds of cold boot.
@@ -244,7 +209,7 @@ Warm boot (reboot) is slightly slower than cold boot in some cases because firmw
 
 | **Scenario** | **Tier 1 (SSD)** | **Tier 2 (HDD)** |
 | :-: | :-: | :-: |
-| Target | \< 10s | \< 20s |
+| Target | < 10s | < 20s |
 | Estimate | ~5-8s | ~10-15s |
 
 This measures logout → SDDM → login → desktop ready, without a full reboot. Faster than cold boot because kernel and firmware are already initialized.
@@ -254,15 +219,15 @@ This measures logout → SDDM → login → desktop ready, without a full reboot
 
 ### Idle Memory (Spike Standard)
 
-**Target:** \< 400MB (Tier 1, 4GB RAM)
+**Target:** < 400MB (Tier 1, 4GB RAM)
 
 This is the most critical memory metric. 4GB total RAM minus 400MB idle leaves ~3.6GB for user applications. Every megabyte saved in idle is a megabyte available for Firefox tabs, LibreOffice documents, and user workflow.
 
 | **Scenario** | **Tier 1 (4GB)** | **Tier 2 (4GB)** |
 | :-: | :-: | :-: |
-| Target | \< 400MB | \< 450MB |
+| Target | < 400MB | < 450MB |
 | Estimate | ~280-370MB | ~320-400MB |
-| Stretch goal | \< 350MB | \< 400MB |
+| Stretch goal | < 350MB | < 400MB |
 
 Tier 2 has a slightly higher target because AMD A4 hardware may have slightly higher driver overhead.
 
@@ -292,13 +257,13 @@ Tier 2 has a slightly higher target because AMD A4 hardware may have slightly hi
 
 ### Idle Memory (Spike Plus)
 
-**Target:** \< 800MB (8GB+ RAM)
+**Target:** < 800MB (8GB+ RAM)
 
 | **Scenario** | **Tier 1 (8GB)** | **Tier 3 (32GB)** |
 | :-: | :-: | :-: |
-| Target | \< 800MB | \< 800MB |
+| Target | < 800MB | < 800MB |
 | Estimate | ~420-650MB | ~450-680MB |
-| Stretch goal | \< 700MB | \< 700MB |
+| Stretch goal | < 700MB | < 700MB |
 
 **Memory breakdown (Spike Plus, estimated):**
 
@@ -337,11 +302,11 @@ When memory approaches the earlyoom threshold, the largest non-protected process
 
 | **Metric** | **Target** | **Estimate** |
 | :-: | :-: | :-: |
-| ZRAM compression ratio (typical) | \> 2.5:1 | ~3:1 to 4:1 |
-| ZRAM compression ratio (worst case) | \> 1.5:1 | ~2:1 |
-| ZRAM CPU overhead (idle) | \< 2% | ~0-1% |
-| ZRAM CPU overhead (under swap pressure) | \< 15% | ~5-10% |
-| ZRAM activation time (at boot) | \< 2s | ~1s |
+| ZRAM compression ratio (typical) | > 2.5:1 | ~3:1 to 4:1 |
+| ZRAM compression ratio (worst case) | > 1.5:1 | ~2:1 |
+| ZRAM CPU overhead (idle) | < 2% | ~0-1% |
+| ZRAM CPU overhead (under swap pressure) | < 15% | ~5-10% |
+| ZRAM activation time (at boot) | < 2s | ~1s |
 | Effective memory (4GB + 4GB ZRAM) | ~10-14GB | ~12-14GB |
 
 **Compression ratio depends on data type:**
@@ -359,36 +324,36 @@ When memory approaches the earlyoom threshold, the largest non-protected process
 | **Metric** | **Target** |
 | :-: | :-: |
 | Swap file usage at idle | 0MB |
-| Swap file usage (normal workload) | \< 1GB |
-| Swap file usage (heavy workload) | \< 4GB (Standard) / \< 6GB (Plus) |
-| ZRAM fills before swap file | Always (priority 100 \> priority 10) |
+| Swap file usage (normal workload) | < 1GB |
+| Swap file usage (heavy workload) | < 4GB (Standard) / < 6GB (Plus) |
+| ZRAM fills before swap file | Always (priority 100 > priority 10) |
 
 
 ## Application Launch Performance
 
 ### Application Launch Times
 
-**Target:** \< 2 seconds (average application, Tier 1, SSD)
+**Target:** < 2 seconds (average application, Tier 1, SSD)
 
 This is the second most critical metric after boot time. If clicking an app takes 5 seconds to open, the system feels slow regardless of how fast it boots.
 
 | **Application** | **Tier 1 (SSD)** | **Tier 1 (HDD)** | **Tier 2 (HDD)** |
 | :-: | :-: | :-: | :-: |
-| Discover (software center) | \< 2s | \< 4s | \< 5s |
-| Firefox (Flatpak) | \< 3s | \< 5s | \< 7s |
-| Dolphin (file manager) | \< 1.5s | \< 3s | \< 4s |
-| Konsole (terminal) | \< 1s | \< 2s | \< 3s |
-| Kate (text editor) | \< 1.5s | \< 3s | \< 4s |
-| Settings | \< 1.5s | \< 2.5s | \< 3.5s |
-| Spectacle (screenshot) | \< 1s | \< 2s | \< 3s |
-| KCalc (calculator) | \< 1s | \< 2s | \< 3s |
-| LibreOffice Writer (Flatpak) | \< 4s | \< 7s | \< 10s |
-| VLC (Flatpak) | \< 2s | \< 4s | \< 5s |
-| **Average** | **\< 2s** | **\< 3.5s** | **\< 5s** |
+| Discover (software center) | < 2s | < 4s | < 5s |
+| Firefox (Flatpak) | < 3s | < 5s | < 7s |
+| Dolphin (file manager) | < 1.5s | < 3s | < 4s |
+| Konsole (terminal) | < 1s | < 2s | < 3s |
+| Kate (text editor) | < 1.5s | < 3s | < 4s |
+| Settings | < 1.5s | < 2.5s | < 3.5s |
+| Spectacle (screenshot) | < 1s | < 2s | < 3s |
+| KCalc (calculator) | < 1s | < 2s | < 3s |
+| LibreOffice Writer (Flatpak) | < 4s | < 7s | < 10s |
+| VLC (Flatpak) | < 2s | < 4s | < 5s |
+| **Average** | **< 2s** | **< 3.5s** | **< 5s** |
 
 **Notes:**
 
-- Firefox has a higher target because it's a heavyweight application with a large Flatpak runtime. 3 seconds is acceptable; \<2s is the stretch goal. 
+- Firefox has a higher target because it's a heavyweight application with a large Flatpak runtime. 3 seconds is acceptable; <2s is the stretch goal. 
 
 - LibreOffice Writer is similarly heavy. 4 seconds on SSD is acceptable for a full office suite. 
 
@@ -400,10 +365,10 @@ This is the second most critical metric after boot time. If clicking an app take
 
 | **Package type** | **Tier 1 (SSD)** | **Notes** |
 | :-: | :-: | :-: |
-| Flatpak (pre-seeded runtime) | \< 3s | Runtime already on disk |
+| Flatpak (pre-seeded runtime) | < 3s | Runtime already on disk |
 | Flatpak (runtime download) | N/A | First install only, not measured |
-| apt package | \< 2s | No container overhead |
-| System app (KDE) | \< 1.5s | Already in memory (shared libs) |
+| apt package | < 2s | No container overhead |
+| System app (KDE) | < 1.5s | Already in memory (shared libs) |
 
 Pre-seeded Flatpak runtimes exist specifically to make first-launch of Flatpak apps competitive with system packages. Without pre-seeding, first Flatpak launch requires runtime extraction (5-15 seconds on SSD).
 
@@ -411,14 +376,14 @@ Pre-seeded Flatpak runtimes exist specifically to make first-launch of Flatpak a
 
 | **Operation** | **Spike Standard (no animations)** | **Spike Plus (with animations)** |
 | :-: | :-: | :-: |
-| Window open | \< 100ms (instant) | \< 250ms (150ms animation) |
-| Window close | \< 100ms (instant) | \< 250ms (150ms animation) |
-| Workspace switch | \< 100ms (instant) | \< 300ms (200ms animation) |
-| Panel show/hide | \< 50ms (instant) | \< 250ms (200ms animation) |
-| Launcher open | \< 100ms (instant) | \< 250ms (150ms animation) |
-| Notification popup | \< 100ms (instant) | \< 250ms (200ms animation) |
-| Drag window | \< 16ms frame time | \< 16ms frame time |
-| Resize window | \< 16ms frame time | \< 16ms frame time |
+| Window open | < 100ms (instant) | < 250ms (150ms animation) |
+| Window close | < 100ms (instant) | < 250ms (150ms animation) |
+| Workspace switch | < 100ms (instant) | < 300ms (200ms animation) |
+| Panel show/hide | < 50ms (instant) | < 250ms (200ms animation) |
+| Launcher open | < 100ms (instant) | < 250ms (150ms animation) |
+| Notification popup | < 100ms (instant) | < 250ms (200ms animation) |
+| Drag window | < 16ms frame time | < 16ms frame time |
+| Resize window | < 16ms frame time | < 16ms frame time |
 | Frame budget | 60fps (16.67ms) | 60fps (16.67ms) |
 
 On Spike Standard, window operations are instantaneous (no animation overhead). On Spike Plus, animations add visual polish but must complete within their animation duration. The frame budget target is 60fps for drag/resize on both variants — if the compositor can't maintain 60fps during window manipulation, the user perceives jankiness.
@@ -436,11 +401,11 @@ On Spike Standard, window operations are instantaneous (no animation overhead). 
 
 ### Shutdown Time
 
-**Target:** \< 5 seconds (Tier 1, SSD)
+**Target:** < 5 seconds (Tier 1, SSD)
 
 | **Scenario** | **Tier 1 (SSD)** | **Tier 1 (HDD)** | **Tier 2 (HDD)** |
 | :-: | :-: | :-: | :-: |
-| Target | \< 5s | \< 10s | \< 15s |
+| Target | < 5s | < 10s | < 15s |
 | Estimate | ~3-5s | ~5-10s | ~8-15s |
 
 **Shutdown stage breakdown (estimated, Tier 1 SSD):**
@@ -461,36 +426,33 @@ The longest shutdown stage is application termination. If an application hangs d
 
 ### Suspend Time
 
-**Target:** \< 3 seconds (Tier 1)
+**Target:** < 3 seconds (Tier 1)
 
 | **Scenario** | **Tier 1** | **Tier 2** |
 | :-: | :-: | :-: |
-| Suspend (enter) | \< 3s | \< 5s |
-| Resume from suspend | \< 2s | \< 5s |
+| Suspend (enter) | < 3s | < 5s |
+| Resume from suspend | < 2s | < 5s |
 
 Suspend should be fast — the user closes the lid and walks away. If suspend takes 10 seconds, the user may close the laptop bag before suspend completes, risking data loss.
 
 ### Hibernate Resume Time
 
-**Target:** \< 10 seconds (Tier 1, SSD)
+**Target:** < 10 seconds (Tier 1, SSD)
 
 | **Scenario** | **Tier 1 (SSD)** | **Tier 1 (HDD)** | **Tier 2 (HDD)** |
 | :-: | :-: | :-: | :-: |
-| Hibernate (enter) | \< 10s | \< 20s | \< 30s |
-| Resume from hibernate | \< 10s | \< 25s | \< 40s |
+| Hibernate (enter) | < 10s | < 20s | < 30s |
+| Resume from hibernate | < 10s | < 25s | < 40s |
 
 Hibernate is slower than suspend because it writes RAM contents to disk. Resume reads the data back. On HDD, hibernate resume is significantly slower due to disk I/O.
 
 **Hibernate resume by RAM size (SSD, estimated):**
 
 ```
-`├── 4GB RAM: ~5-8s`
-
-`├── 8GB RAM: ~8-12s`
-
-`├── 16GB RAM: ~15-25s`
-
-`└── 32GB RAM: ~30-50s (Tier 3 only, not a target)`
+├── 4GB RAM: ~5-8s
+├── 8GB RAM: ~8-12s
+├── 16GB RAM: ~15-25s
+└── 32GB RAM: ~30-50s (Tier 3 only, not a target)
 ```
 
 
@@ -502,12 +464,12 @@ Disk I/O is the primary bottleneck on Tier 2 (HDD) hardware. These targets ensur
 
 | **Operation** | **Tier 1 (SSD)** | **Tier 1 (HDD)** | **Tier 2 (HDD)** |
 | :-: | :-: | :-: | :-: |
-| Read 100MB file | \< 1s | \< 3s | \< 5s |
-| Write 100MB file | \< 1s | \< 5s | \< 8s |
-| List directory (1000 files) | \< 0.5s | \< 2s | \< 3s |
-| Copy 500MB file | \< 5s | \< 20s | \< 30s |
-| Delete 1000 files | \< 1s | \< 5s | \< 8s |
-| fsck on clean filesystem | \< 5s | \< 30s | \< 60s |
+| Read 100MB file | < 1s | < 3s | < 5s |
+| Write 100MB file | < 1s | < 5s | < 8s |
+| List directory (1000 files) | < 0.5s | < 2s | < 3s |
+| Copy 500MB file | < 5s | < 20s | < 30s |
+| Delete 1000 files | < 1s | < 5s | < 8s |
+| fsck on clean filesystem | < 5s | < 30s | < 60s |
 
 These are not user-facing metrics — they inform design decisions about caching, batching, and I/O patterns.
 
@@ -518,8 +480,8 @@ When the system is under memory pressure (ZRAM filling, swap active), disk I/O b
 | **Scenario** | **Tier 1 (SSD)** | **Tier 1 (HDD)** | **Tier 2 (HDD)** |
 | :-: | :-: | :-: | :-: |
 | System responsive under swap pressure | ✓ | Degraded | Degraded |
-| App launch under swap pressure | \< 4s | \< 8s | \< 12s |
-| Window switch under swap pressure | \< 1s | \< 3s | \< 5s |
+| App launch under swap pressure | < 4s | < 8s | < 12s |
+| Window switch under swap pressure | < 1s | < 3s | < 5s |
 | Desktop remains usable under pressure | ✓ | Marginal | Marginal |
 
 On HDD, swap pressure causes visible latency. This is why swappiness is set to 5 on HDD systems — minimize swap usage, keep everything in RAM as long as possible.
@@ -531,13 +493,13 @@ On HDD, swap pressure causes visible latency. This is why swappiness is set to 5
 
 | **Operation** | **Tier 1** | **Tier 2** |
 | :-: | :-: | :-: |
-| Wi-Fi scan (available networks) | \< 3s | \< 5s |
-| Connect to known Wi-Fi | \< 5s | \< 8s |
-| Connect to new Wi-Fi | \< 8s | \< 12s |
-| DHCP lease acquisition | \< 3s | \< 5s |
-| DNS resolution (first query) | \< 1s | \< 2s |
-| DNS resolution (cached) | \< 10ms | \< 10ms |
-| Network icon updates (state change) | \< 1s | \< 2s |
+| Wi-Fi scan (available networks) | < 3s | < 5s |
+| Connect to known Wi-Fi | < 5s | < 8s |
+| Connect to new Wi-Fi | < 8s | < 12s |
+| DHCP lease acquisition | < 3s | < 5s |
+| DNS resolution (first query) | < 1s | < 2s |
+| DNS resolution (cached) | < 10ms | < 10ms |
+| Network icon updates (state change) | < 1s | < 2s |
 
 Network performance is largely hardware-dependent (Wi-Fi adapter quality, router proximity, signal strength). Spike's role is to connect promptly when the hardware cooperates.
 
@@ -546,9 +508,9 @@ Network performance is largely hardware-dependent (Wi-Fi adapter quality, router
 | **Operation** | **Spike Standard** | **Spike Plus** |
 | :-: | :-: | :-: |
 | Signal strength update | Every 10s | Every 5s |
-| Connection state change | \< 1s (event-driven) | \< 1s (event-driven) |
-| Icon update on connect | \< 1s | \< 1s |
-| Applet open (click) | \< 200ms | \< 200ms |
+| Connection state change | < 1s (event-driven) | < 1s (event-driven) |
+| Icon update on connect | < 1s | < 1s |
+| Applet open (click) | < 200ms | < 200ms |
 
 Event-driven updates (connection state changes) are identical between variants. Only the periodic signal strength polling interval differs. See `VARIANT-DIFFERENCES.md`.
 
@@ -561,25 +523,25 @@ The notification daemon's disk-before-display invariant requires a disk write be
 
 | **Metric** | **Target** | **Estimate** |
 | :-: | :-: | :-: |
-| Notification receive to display | \< 50ms | ~5-15ms |
-| Atomic write to history.json | \< 20ms | ~2-5ms (SSD) / ~10-30ms (HDD) |
-| Popup animation (Plus only) | \< 200ms | ~200ms |
-| Tray badge update | \< 50ms | ~5-10ms |
-| History viewer open | \< 500ms | ~100-300ms |
-| History search (500 entries) | \< 500ms | ~50-200ms |
+| Notification receive to display | < 50ms | ~5-15ms |
+| Atomic write to history.json | < 20ms | ~2-5ms (SSD) / ~10-30ms (HDD) |
+| Popup animation (Plus only) | < 200ms | ~200ms |
+| Tray badge update | < 50ms | ~5-10ms |
+| History viewer open | < 500ms | ~100-300ms |
+| History search (500 entries) | < 500ms | ~50-200ms |
 
-On HDD, the disk write for atomic notification persistence may take 10-30ms. This is within the \< 50ms target. If disk I/O is under heavy load, the write may take longer — but the notification is still displayed after the write completes. The invariant is maintained.
+On HDD, the disk write for atomic notification persistence may take 10-30ms. This is within the < 50ms target. If disk I/O is under heavy load, the write may take longer — but the notification is still displayed after the write completes. The invariant is maintained.
 
 ### Notification History Performance
 
 | **Metric** | **Target** | **Notes** |
 | :-: | :-: | :-: |
-| Load history.json at startup | \< 100ms | Single JSON parse |
-| Write notification to history | \< 20ms | Atomic write + fsync |
-| Search 500 entries | \< 500ms | Simple substring search |
-| Search 1000 entries | \< 1s | Max count is 1000 |
+| Load history.json at startup | < 100ms | Single JSON parse |
+| Write notification to history | < 20ms | Atomic write + fsync |
+| Search 500 entries | < 500ms | Simple substring search |
+| Search 1000 entries | < 1s | Max count is 1000 |
 | History viewer scroll | 60fps | Smooth scrolling |
-| Badge count update | \< 50ms | In-memory, no disk I/O |
+| Badge count update | < 50ms | In-memory, no disk I/O |
 
 
 ## Audio Performance
@@ -588,21 +550,21 @@ On HDD, the disk write for atomic notification persistence may take 10-30ms. Thi
 
 | **Metric** | **Target** | **Notes** |
 | :-: | :-: | :-: |
-| Round-trip latency (mic → speaker) | \< 50ms | Acceptable for video calls |
+| Round-trip latency (mic → speaker) | < 50ms | Acceptable for video calls |
 | Buffer underruns at idle | 0 | No audio glitches at idle |
-| Buffer underruns under load | \< 5/min | Occasional under load is acceptable |
-| PipeWire daemon CPU at idle | \< 1% | ~0.1-0.5% |
-| PipeWire daemon CPU (audio playback) | \< 3% | ~1-2% |
-| PipeWire daemon CPU (BT audio) | \< 5% (SBC) / \< 8% (AAC, Plus) | ~2-3% SBC / ~5-7% AAC encode |
+| Buffer underruns under load | < 5/min | Occasional under load is acceptable |
+| PipeWire daemon CPU at idle | < 1% | ~0.1-0.5% |
+| PipeWire daemon CPU (audio playback) | < 3% | ~1-2% |
+| PipeWire daemon CPU (BT audio) | < 5% (SBC) / < 8% (AAC, Plus) | ~2-3% SBC / ~5-7% AAC encode |
 
 ### Bluetooth Audio Pairing
 
 | **Operation** | **Target** | **Notes** |
 | :-: | :-: | :-: |
-| Pair new Bluetooth device | \< 10s | Discovery + pairing |
-| Reconnect paired device | \< 5s | Auto-reconnect |
-| Audio routing switch (A2DP → HFP) | \< 1s | When mic needed for call |
-| Audio routing switch (HFP → A2DP) | \< 1s | When call ends |
+| Pair new Bluetooth device | < 10s | Discovery + pairing |
+| Reconnect paired device | < 5s | Auto-reconnect |
+| Audio routing switch (A2DP → HFP) | < 1s | When mic needed for call |
+| Audio routing switch (HFP → A2DP) | < 1s | When call ends |
 
 
 ## GPU Performance
@@ -611,9 +573,9 @@ On HDD, the disk write for atomic notification persistence may take 10-30ms. Thi
 
 | **Metric** | **Tier 1 (N4020)** | **Tier 2 (AMD A4)** |
 | :-: | :-: | :-: |
-| 1080p H.264 decode CPU usage | \< 15% | \< 25% |
-| 1080p VP9 decode CPU usage | \< 15% | \< 25% |
-| 1080p H.265 decode CPU usage | \< 15% | \< 25% |
+| 1080p H.264 decode CPU usage | < 15% | < 25% |
+| 1080p VP9 decode CPU usage | < 15% | < 25% |
+| 1080p H.265 decode CPU usage | < 15% | < 25% |
 | 1080p AV1 decode | N/A (disabled) | Varies |
 | CPU usage with VA-API (1080p60) | ~5-15% | ~10-20% |
 | CPU usage without VA-API (1080p60) | ~60-90% | ~80-100% |
@@ -629,9 +591,9 @@ VA-API is the difference between smooth 1080p video and an unwatchable slideshow
 | Frame rate (idle desktop) | 60fps | 60fps |
 | Frame rate (window drag) | 60fps | 60fps |
 | Frame rate (animation) | N/A (no anim) | 60fps target |
-| KWin CPU at idle | \< 2% | \< 3% |
-| KWin CPU (window drag) | \< 5% | \< 8% |
-| KWin CPU (animation active) | N/A | \< 10% |
+| KWin CPU at idle | < 2% | < 3% |
+| KWin CPU (window drag) | < 5% | < 8% |
+| KWin CPU (animation active) | N/A | < 10% |
 | KWin memory | ~100-150MB | ~120-180MB |
 | Rendering backend | QPainter (software) | OpenGL (GPU) |
 
@@ -646,9 +608,9 @@ On Spike Plus, KWin uses OpenGL rendering. The GPU handles compositing, freeing 
 
 | **Metric** | **Tier 1 (N4020)** | **Tier 2 (AMD A4)** |
 | :-: | :-: | :-: |
-| Idle CPU temperature | \< 50°C | \< 55°C |
-| Normal workload temperature | \< 65°C | \< 75°C |
-| Heavy workload temperature | \< 80°C | \< 85°C |
+| Idle CPU temperature | < 50°C | < 55°C |
+| Normal workload temperature | < 65°C | < 75°C |
+| Heavy workload temperature | < 80°C | < 85°C |
 | Sustained warning threshold | 80°C | 80°C |
 | Emergency shutdown | 105°C (hardware) | 105°C (hardware) |
 | Fan spin-up (if present) | Firmware-managed | Firmware-managed |
@@ -658,15 +620,11 @@ Spike does not manage fans or override thermal limits. The hardware's firmware/E
 **Settings → Advanced → Diagnostics → Temperatures:**
 
 ```
-`├── Current CPU temperature`
-
-`├── Max recorded temperature (since boot)`
-
-`├── Average temperature (last 5 minutes)`
-
-`├── Thermal headroom (distance to throttle point)`
-
-`└── Warning indicator if sustained \> 80°C`
+├── Current CPU temperature
+├── Max recorded temperature (since boot)
+├── Average temperature (last 5 minutes)
+├── Thermal headroom (distance to throttle point)
+└── Warning indicator if sustained > 80°C
 ```
 
 
@@ -676,11 +634,11 @@ Spike does not manage fans or override thermal limits. The hardware's firmware/E
 
 | **Metric** | **Target** | **Estimate** |
 | :-: | :-: | :-: |
-| ISO file size | \< 3.5GB | ~3.1GB |
-| USB write time (USB 3.0, 32GB) | \< 5 min | ~3-4 min |
+| ISO file size | < 3.5GB | ~3.1GB |
+| USB write time (USB 3.0, 32GB) | < 5 min | ~3-4 min |
 | USB write time (USB 2.0) | N/A | N/A (not supported) |
-| Live USB boot time (Tier 1 SSD) | \< 60s | ~30-45s |
-| Live USB boot time (Tier 1 HDD) | \< 90s | ~60-80s |
+| Live USB boot time (Tier 1 SSD) | < 60s | ~30-45s |
+| Live USB boot time (Tier 1 HDD) | < 90s | ~60-80s |
 
 **The ISO contains:**
 
@@ -765,75 +723,41 @@ Tier 3 regression checks ensure nothing breaks on higher-end hardware. If a regr
 **Structure:**
 
 ```
-`\{`
-
-`  "version": 1,`
-
-`  "last\_updated": "2026-XX-XX",`
-
-`  "hardware": \{`
-
-`    "tier": 1,`
-
-`    "cpu\_model": "Intel Celeron N4020",`
-
-`    "ram\_total\_mb": 4096,`
-
-`    "storage\_type": "ssd",`
-
-`    "storage\_size\_gb": 240,`
-
-`    "gpu\_vendor": "Intel",`
-
-`    "gpu\_model": "UHD Graphics 600"`
-
-`  \},`
-
-`  "variant": "standard",`
-
-`  "spike\_version": "0.1.0-alpha",`
-
-`  "metrics": \{`
-
-`    "boot\_time\_seconds": \{`
-
-`      "median": null,`
-
-`      "min": null,`
-
-`      "max": null,`
-
-`      "runs": 0,`
-
-`      "measured\_at": null`
-
-`    \},`
-
-`    "idle\_memory\_mb": \{`
-
-`      "median": null,`
-
-`      "min": null,`
-
-`      "max": null,`
-
-`      "runs": 0,`
-
-`      "measured\_at": null`
-
-`    \},`
-
-`    "app\_launch\_firefox\_seconds": \{ ... \},`
-
-`    "app\_launch\_dolphin\_seconds": \{ ... \},`
-
-`    ...`
-
-`  \},`
-
-`  "notes": "All values null until alpha hardware testing begins"`
-
-`\}`
+{
+  "version": 1,
+  "last_updated": "2026-XX-XX",
+  "hardware": {
+    "tier": 1,
+    "cpu_model": "Intel Celeron N4020",
+    "ram_total_mb": 4096,
+    "storage_type": "ssd",
+    "storage_size_gb": 240,
+    "gpu_vendor": "Intel",
+    "gpu_model": "UHD Graphics 600"
+  },
+  "variant": "standard",
+  "spike_version": "0.1.0-alpha",
+  "metrics": {
+    "boot_time_seconds": {
+      "median": null,
+      "min": null,
+      "max": null,
+      "runs": 0,
+      "measured_at": null
+    },
+    "idle_memory_mb": {
+      "median": null,
+      "min": null,
+      "max": null,
+      "runs": 0,
+      "measured_at": null
+    },
+    "app_launch_firefox_seconds": { ... },
+    "app_launch_dolphin_seconds": { ... },
+    ...
+  },
+  "notes": "All values null until alpha hardware testing begins"
+}
 ```
 
 Until real measurements are taken, all values are `null`. Estimates in this document are architectural projections, not measurements.
@@ -843,25 +767,16 @@ Until real measurements are taken, all values are `null`. Estimates in this docu
 **Settings → Advanced → Diagnostics → Performance:**
 
 ```
-`├── Current baselines (from baselines.json)`
-
-`├── Comparison to targets (green/yellow/red indicators)`
-
-`├── Historical trend (if multiple measurements recorded)`
-
-`├── \[Run performance test\] button:`
-
-`│   ├── Measures boot time (requires reboot, measures on next boot)`
-
-`│   ├── Measures idle memory (60-second observation)`
-
-`│   ├── Measures app launch times (5 apps, 5 runs each)`
-
-`│   ├── Generates report`
-
-`│   └── Optionally submits to hardware registry (anonymous, opt-in)`
-
-`└── \[Export performance report\] (for support tickets)`
+├── Current baselines (from baselines.json)
+├── Comparison to targets (green/yellow/red indicators)
+├── Historical trend (if multiple measurements recorded)
+├── [Run performance test] button:
+│   ├── Measures boot time (requires reboot, measures on next boot)
+│   ├── Measures idle memory (60-second observation)
+│   ├── Measures app launch times (5 apps, 5 runs each)
+│   ├── Generates report
+│   └── Optionally submits to hardware registry (anonymous, opt-in)
+└── [Export performance report] (for support tickets)
 ```
 
 The hardware registry submission is strictly opt-in. If the user declines, no data leaves the machine. If they opt in, only performance metrics (no personal data) are submitted to help improve Spike across hardware.
@@ -873,28 +788,28 @@ All targets in one place, for quick reference:
 
 | **Metric** | **Target** | **Variant** |
 | :-: | :-: | :-: |
-| Cold boot (Tier 1 SSD) | \< 40s | Both |
-| Cold boot (Tier 1 HDD) | \< 60s | Both |
-| Cold boot (Tier 2 HDD) | \< 90s | Both |
-| Idle memory | \< 400MB | Standard |
-| Idle memory | \< 800MB | Plus |
-| Discover launch | \< 2s | Both |
-| Firefox launch | \< 3s | Both |
-| Average app launch | \< 2s | Both |
-| Shutdown | \< 5s | Both (SSD) |
-| Suspend enter | \< 3s | Both |
-| Suspend resume | \< 2s | Both |
-| Hibernate resume | \< 10s | Both (SSD) |
+| Cold boot (Tier 1 SSD) | < 40s | Both |
+| Cold boot (Tier 1 HDD) | < 60s | Both |
+| Cold boot (Tier 2 HDD) | < 90s | Both |
+| Idle memory | < 400MB | Standard |
+| Idle memory | < 800MB | Plus |
+| Discover launch | < 2s | Both |
+| Firefox launch | < 3s | Both |
+| Average app launch | < 2s | Both |
+| Shutdown | < 5s | Both (SSD) |
+| Suspend enter | < 3s | Both |
+| Suspend resume | < 2s | Both |
+| Hibernate resume | < 10s | Both (SSD) |
 | Compositor frame rate (idle) | 60fps | Both |
 | Compositor frame rate (drag) | 60fps | Both |
-| VA-API CPU usage (1080p) | \< 15% | Standard |
-| Notification latency | \< 50ms | Both |
-| ISO size | \< 3.5GB | Both |
-| Installation time (SSD) | \< 12 min | Both |
-| Installation time (HDD) | \< 18 min | Both |
-| ZRAM compression ratio | \> 2.5:1 | Both |
+| VA-API CPU usage (1080p) | < 15% | Standard |
+| Notification latency | < 50ms | Both |
+| ISO size | < 3.5GB | Both |
+| Installation time (SSD) | < 12 min | Both |
+| Installation time (HDD) | < 18 min | Both |
+| ZRAM compression ratio | > 2.5:1 | Both |
 | Swap file usage at idle | 0MB | Both |
-| Wi-Fi connect (known network) | \< 5s | Both |
+| Wi-Fi connect (known network) | < 5s | Both |
 
 ## What This Document Does Not Cover
 

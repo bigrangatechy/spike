@@ -39,7 +39,7 @@ Spike locks to the LTS kernel series for the lifetime of the release. Point rele
 The following kernel boot parameters are applied in GRUB2's configuration at install time:
 
 ```
-`GRUB\_CMDLINE\_LINUX\_DEFAULT="quiet splash zswap.enabled=0 transparent\_hugepage=madvise i915.modeset=1 amdgpu.modeset=1 nouveau.modeset=1 loglevel=3"`
+GRUB_CMDLINE_LINUX_DEFAULT="quiet splash zswap.enabled=0 transparent_hugepage=madvise i915.modeset=1 amdgpu.modeset=1 nouveau.modeset=1 loglevel=3"
 ```
 
 ### Parameter Breakdown
@@ -49,7 +49,7 @@ The following kernel boot parameters are applied in GRUB2's configuration at ins
 | `quiet` | Suppress kernel boot messages (beginner-friendly) |
 | `splash` | Enable Plymouth boot splash (Spike-themed) |
 | `zswap.enabled=0` | Disable kernel zswap (Spike uses ZRAM instead — having both wastes memory) |
-| `transparent\_hugepage=madvise` | Allocate huge pages on demand rather than always (prevents memory fragmentation on low-RAM systems) |
+| `transparent_hugepage=madvise` | Allocate huge pages on demand rather than always (prevents memory fragmentation on low-RAM systems) |
 | `i915.modeset=1` | Enable kernel mode-setting for Intel GPUs (required for Wayland) |
 | `amdgpu.modeset=1` | Enable kernel mode-setting for AMD GPUs (required for Wayland) |
 | `nouveau.modeset=1` | Enable kernel mode-setting for NVIDIA GPUs (required for Wayland on nouveau) |
@@ -59,7 +59,7 @@ The following kernel boot parameters are applied in GRUB2's configuration at ins
 
 Spike uses ZRAM for compressed swap in memory, managed by userspace. If zswap (kernel-level compressed swap cache) were also enabled, the two would compete — compressing already-compressed pages, wasting CPU cycles, and creating unpredictable memory behavior. Disabling zswap ensures ZRAM is the sole compressed memory layer.
 
-### Why transparent\_hugepage=madvise
+### Why transparent_hugepage=madvise
 
 The default setting (`always`) aggressively allocates 2MB huge pages, which can cause memory fragmentation on 4GB systems. The `madvise` setting allows applications that explicitly request huge pages (via `madvise()`) to get them, while leaving the rest of the system on 4KB pages. This balances performance and memory efficiency on low-RAM hardware.
 
@@ -76,15 +76,11 @@ At install time, Spike generates a module blacklist based on detected hardware. 
 ### Blacklist Rules
 
 ```
-`CRITICAL RULE:`
-
-`├── Only blacklist modules for ABSENT SOLDERED hardware`
-
-`├── NEVER blacklist hot-pluggable devices`
-
-`├── NEVER blacklist USB-connected devices`
-
-`└── User may plug in a device later — the system must support it`
+CRITICAL RULE:
+├── Only blacklist modules for ABSENT SOLDERED hardware
+├── NEVER blacklist hot-pluggable devices
+├── NEVER blacklist USB-connected devices
+└── User may plug in a device later — the system must support it
 ```
 
 ### What Gets Blacklisted
@@ -94,13 +90,13 @@ Modules for hardware categories that are absent and not hot-pluggable:
 | **Category** | **Examples** | **Why** |
 | :-: | :-: | :-: |
 | Enterprise storage | `megaraid`, `mptsas`, `hpsa`, `aacraid` | Target hardware has no RAID controllers |
-| Infiniband | `ib\_core`, `ib\_uverbs`, `mlx5\_ib` | Target hardware has no Infiniband |
-| Exotic sensors | `wmi\_bmof`, `acpi\_power\_meter` | Rarely present on consumer laptops |
+| Infiniband | `ib_core`, `ib_uverbs`, `mlx5_ib` | Target hardware has no Infiniband |
+| Exotic sensors | `wmi_bmof`, `acpi_power_meter` | Rarely present on consumer laptops |
 | TV tuners | `cx88`, `saa7134`, `em28xx` | Not applicable to target hardware |
 | Amateur radio | `hamradio` | Not applicable |
 | Industrial I/O | `industrialio`, `adc1x8s102` | Not applicable |
 | Fiber Channel | `qla2xxx`, `lpfc`, `bfa` | Not applicable |
-| Old parallel/serial | `parport`, `8250\_pci` variants | Usually absent on target-era laptops |
+| Old parallel/serial | `parport`, `8250_pci` variants | Usually absent on target-era laptops |
 
 ### What Does NOT Get Blacklisted
 
@@ -109,9 +105,9 @@ Modules for hardware categories that are absent and not hot-pluggable:
 | USB subsystem (`usbcore`, `xhci`, `ehci`) | Hot-pluggable — user may connect USB devices |
 | Bluetooth (`btusb`, `btintel`, `btrtl`) | May be internal or USB dongle |
 | Wi-Fi drivers (`iwlwifi`, `ath`, `rtl`, `brcm`) | Hot-pluggable via USB adapters |
-| Sound drivers (`snd\_hda\_intel`, `snd\_soc`) | May be needed for HDMI audio |
+| Sound drivers (`snd_hda_intel`, `snd_soc`) | May be needed for HDMI audio |
 | Webcams (`uvcvideo`) | Hot-pluggable |
-| SD card readers (`rtsx\_pci`, `rtsx\_usb`) | Hot-pluggable |
+| SD card readers (`rtsx_pci`, `rtsx_usb`) | Hot-pluggable |
 | Input devices (`hid`, `usbhid`) | Hot-pluggable keyboards/mice |
 | GPU drivers (`i915`, `amdgpu`, `nouveau`) | Always needed |
 
@@ -120,58 +116,34 @@ Modules for hardware categories that are absent and not hot-pluggable:
 The blacklist is generated at install time by scanning detected hardware:
 
 ```
-`1. Run lspci -nn to enumerate present PCI devices`
-
-`2. Run lsusb to enumerate present USB devices`
-
-`3. Cross-reference with module database`
-
-`4. For each known module category:`
-
-`   ├── If matching PCI device is present → do NOT blacklist`
-
-`   ├── If matching USB device is present → do NOT blacklist`
-
-`   └── If no matching device → blacklist`
-
-`5. Write blacklist to /etc/modprobe.d/spike-blacklist.conf`
-
-`6. Update initramfs`
+1. Run lspci -nn to enumerate present PCI devices
+2. Run lsusb to enumerate present USB devices
+3. Cross-reference with module database
+4. For each known module category:
+   ├── If matching PCI device is present → do NOT blacklist
+   ├── If matching USB device is present → do NOT blacklist
+   └── If no matching device → blacklist
+5. Write blacklist to /etc/modprobe.d/spike-blacklist.conf
+6. Update initramfs
 ```
 
 The generated file looks like:
 
 ```
-*`\# /etc/modprobe.d/spike-blacklist.conf`*
-
-*`\# Generated by Spike Installer`*
-
-*`\# DO NOT EDIT — managed by Spike Settings`*
-
-*`\# To modify, use Settings → Advanced → Kernel Modules`*
-
-
-*`\# Enterprise RAID (not present)`*
-
-`blacklist megaraid\_sas`
-
-`blacklist mptsas`
-
-`blacklist hpsa`
-
-`blacklist aacraid`
-
-
-*`\# Infiniband (not present)`*
-
-`blacklist ib\_core`
-
-`blacklist ib\_uverbs`
-
-`blacklist mlx5\_ib`
-
-
-*`\# \[additional entries based on detected hardware\]`*
+# /etc/modprobe.d/spike-blacklist.conf
+# Generated by Spike Installer
+# DO NOT EDIT — managed by Spike Settings
+# To modify, use Settings → Advanced → Kernel Modules
+# Enterprise RAID (not present)
+blacklist megaraid_sas
+blacklist mptsas
+blacklist hpsa
+blacklist aacraid
+# Infiniband (not present)
+blacklist ib_core
+blacklist ib_uverbs
+blacklist mlx5_ib
+# [additional entries based on detected hardware]
 ```
 
 ### NVIDIA And The Blacklist
@@ -205,13 +177,10 @@ This page shows:
 The Celeron N4020 uses Intel UHD Graphics 600 (Gemini Lake Refresh). Driver configuration:
 
 ```
-`Kernel module:    i915 (in-tree, loaded via modeset=1)`
-
-`Userspace:        mesa (iris driver stack)`
-
-`VA-API driver:    intel-media-va-driver-non-free`
-
-`LIBVA\_DRIVER\_NAME: iHD`
+Kernel module:    i915 (in-tree, loaded via modeset=1)
+Userspace:        mesa (iris driver stack)
+VA-API driver:    intel-media-va-driver-non-free
+LIBVA_DRIVER_NAME: iHD
 ```
 
 The `iHD` driver covers Gen 8+ Intel graphics (Broadwell through Gemini Lake). The older `i965` driver is not used.
@@ -221,13 +190,10 @@ The `iHD` driver covers Gen 8+ Intel graphics (Broadwell through Gemini Lake). T
 AMD A4/A6/A9 (Jaguar architecture and newer):
 
 ```
-`Kernel module:    amdgpu (in-tree, loaded via modeset=1)`
-
-`Userspace:        mesa (radeonsi driver stack)`
-
-`VA-API driver:    mesa-va-drivers`
-
-`LIBVA\_DRIVER\_NAME: radeonsi`
+Kernel module:    amdgpu (in-tree, loaded via modeset=1)
+Userspace:        mesa (radeonsi driver stack)
+VA-API driver:    mesa-va-drivers
+LIBVA_DRIVER_NAME: radeonsi
 ```
 
 ### NVIDIA (Hybrid/Discrete GPU Support)
@@ -263,61 +229,36 @@ Spike ships the open-source `nouveau` driver by default. The proprietary NVIDIA 
 The installer detects the GPU vendor and configures the appropriate driver:
 
 ```
-`If PCI device vendor == Intel:`
-
-`    apt install intel-media-va-driver-non-free`
-
-`    echo "LIBVA\_DRIVER\_NAME=iHD" \>\> /etc/environment`
-
-
-`If PCI device vendor == AMD:`
-
-`    apt install mesa-va-drivers`
-
-`    echo "LIBVA\_DRIVER\_NAME=radeonsi" \>\> /etc/environment`
-
-
-`If PCI device vendor == NVIDIA:`
-
-`    Load nouveau by default`
-
-`    Do NOT install proprietary driver automatically`
-
-`    Create post-install notification file:`
-
-`        "NVIDIA hardware detected. The open-source driver is active.`
-
-`         If you need hardware video encoding, CUDA, or gaming`
-
-`         performance, install the NVIDIA driver from`
-
-`         Settings → Software Sources → Additional Drivers."`
+If PCI device vendor == Intel:
+    apt install intel-media-va-driver-non-free
+    echo "LIBVA_DRIVER_NAME=iHD" >> /etc/environment
+If PCI device vendor == AMD:
+    apt install mesa-va-drivers
+    echo "LIBVA_DRIVER_NAME=radeonsi" >> /etc/environment
+If PCI device vendor == NVIDIA:
+    Load nouveau by default
+    Do NOT install proprietary driver automatically
+    Create post-install notification file:
+        "NVIDIA hardware detected. The open-source driver is active.
+         If you need hardware video encoding, CUDA, or gaming
+         performance, install the NVIDIA driver from
+         Settings → Software Sources → Additional Drivers."
 ```
 
 ### Proprietary NVIDIA Driver Installation Flow
 
 ```
-`1. NVIDIA hardware detected at boot via udev`
-
-`2. nouveau loads by default — display works immediately`
-
-`3. Post-install notification informs user of optional proprietary driver`
-
-`4. User navigates to Settings → Software Sources → Additional Drivers`
-
-`5. ubuntu-drivers tool lists compatible NVIDIA driver versions`
-
-`6. User selects and installs`
-
-`7. nouveau is automatically blacklisted by ubuntu-drivers`
-
-`8. nvidia-drm is configured`
-
-`9. GRUB2 updated: nouveau.modeset=1 → nvidia-drm.modeset=1`
-
-`10. MOK enrollment prompted if Secure Boot is active`
-
-`11. Reboot required (gentle notification, never forced)`
+1. NVIDIA hardware detected at boot via udev
+2. nouveau loads by default — display works immediately
+3. Post-install notification informs user of optional proprietary driver
+4. User navigates to Settings → Software Sources → Additional Drivers
+5. ubuntu-drivers tool lists compatible NVIDIA driver versions
+6. User selects and installs
+7. nouveau is automatically blacklisted by ubuntu-drivers
+8. nvidia-drm is configured
+9. GRUB2 updated: nouveau.modeset=1 → nvidia-drm.modeset=1
+10. MOK enrollment prompted if Secure Boot is active
+11. Reboot required (gentle notification, never forced)
 ```
 
 ### Hybrid Graphics (NVIDIA Optimus)
@@ -325,13 +266,10 @@ The installer detects the GPU vendor and configures the appropriate driver:
 Laptops with both Intel/AMD integrated graphics and NVIDIA discrete GPU are supported via PRIME render offload:
 
 ```
-`Settings → Power Management → Graphics`
-
-`├── Integrated Only — Uses only Intel/AMD iGPU, discrete GPU powered down`
-
-`├── Hybrid Mode — Discrete GPU activates on-demand for intensive tasks`
-
-`└── Discrete Only — Uses NVIDIA GPU only (higher power consumption)`
+Settings → Power Management → Graphics
+├── Integrated Only — Uses only Intel/AMD iGPU, discrete GPU powered down
+├── Hybrid Mode — Discrete GPU activates on-demand for intensive tasks
+└── Discrete Only — Uses NVIDIA GPU only (higher power consumption)
 ```
 
 **Spike Standard recommendation:** Use "Integrated Only" for best battery life and lowest memory usage. Switch to Hybrid only if specific applications require the discrete GPU.
@@ -343,49 +281,26 @@ Laptops with both Intel/AMD integrated graphics and NVIDIA discrete GPU are supp
 At install time, the following logic runs to set up the post-install notification:
 
 ```
-`\#!/bin/bash`
-
-*`\# Spike Installer: GPU Detection and Notification`*
-
-
-*`\# Detect NVIDIA hardware`*
-
-`if lspci | grep -q "NVIDIA"; then`
-
-`    *\# Check if proprietary driver is available in repos`*
-
-`    if apt-cache search "^nvidia-driver-\[0-9\]" \>/dev/null 2\>&1; then`
-
-`        *\# Create notification file for Spike Shell to read on first login`*
-
-`        mkdir -p /run/spike/installer-notifications`
-
-`        cat \> /run/spike/installer-notifications/nvidia-hardware.txt \<\<EOF`
-
-`NVIDIA GPU detected on your system.`
-
-
-`The open-source nouveau driver is active and working for basic display.`
-
-`If you need hardware video encoding, CUDA applications, or gaming`
-
-`performance, you can install the NVIDIA proprietary driver.`
-
-
-`To install:`
-
-`  Settings → Software Sources → Additional Drivers → Choose NVIDIA driver`
-
-
-`Note: Installing the proprietary driver requires an internet connection`
-
-`and a system restart. Most users do not need to take action.`
-
-`EOF`
-
-`    fi`
-
-`fi`
+#!/bin/bash
+# Spike Installer: GPU Detection and Notification
+# Detect NVIDIA hardware
+if lspci | grep -q "NVIDIA"; then
+    *# Check if proprietary driver is available in repos
+    if apt-cache search "^nvidia-driver-[0-9]" >/dev/null 2>&1; then
+        *# Create notification file for Spike Shell to read on first login
+        mkdir -p /run/spike/installer-notifications
+        cat > /run/spike/installer-notifications/nvidia-hardware.txt <<EOF
+NVIDIA GPU detected on your system.
+The open-source nouveau driver is active and working for basic display.
+If you need hardware video encoding, CUDA applications, or gaming
+performance, you can install the NVIDIA proprietary driver.
+To install:
+  Settings → Software Sources → Additional Drivers → Choose NVIDIA driver
+Note: Installing the proprietary driver requires an internet connection
+and a system restart. Most users do not need to take action.
+EOF
+    fi
+fi
 ```
 
 The Spike Shell's post-install hook reads this notification file and displays it to the user after first login.
@@ -409,66 +324,39 @@ The following `sysctl` values are set at install time:
 ### Memory
 
 ```
-*`\# /etc/sysctl.d/99-spike-memory.conf`*
-
-
-*`\# Reduce swappiness (actual value set per storage type by spike-config)`*
-
-`vm.swappiness = 15          *\# Default (SSD). HDD systems override to 5.`*
-
-
-*`\# Overcommit memory — allow allocation but kill if needed`*
-
-*`\# (earlyoom handles this more gracefully than kernel OOM)`*
-
-`vm.overcommit\_memory = 1`
-
-
-*`\# Reduce vfs\_cache\_pressure to keep inode/dentry cache in memory`*
-
-*`\# (saves disk I/O on slow storage)`*
-
-`vm.vfs\_cache\_pressure = 50`
+# /etc/sysctl.d/99-spike-memory.conf
+# Reduce swappiness (actual value set per storage type by spike-config)
+vm.swappiness = 15          *# Default (SSD). HDD systems override to 5.
+# Overcommit memory — allow allocation but kill if needed
+# (earlyoom handles this more gracefully than kernel OOM)
+vm.overcommit_memory = 1
+# Reduce vfs_cache_pressure to keep inode/dentry cache in memory
+# (saves disk I/O on slow storage)
+vm.vfs_cache_pressure = 50
 ```
 
 ### Filesystem
 
 ```
-*`\# /etc/sysctl.d/99-spike-fs.conf`*
-
-
-*`\# Reduce dirty page cache writeback aggressiveness`*
-
-*`\# (prevents I/O spikes on slow HDD storage)`*
-
-`vm.dirty\_background\_ratio = 5`
-
-`vm.dirty\_ratio = 15`
+# /etc/sysctl.d/99-spike-fs.conf
+# Reduce dirty page cache writeback aggressiveness
+# (prevents I/O spikes on slow HDD storage)
+vm.dirty_background_ratio = 5
+vm.dirty_ratio = 15
 ```
 
 ### Networking
 
 ```
-*`\# /etc/sysctl.d/99-spike-network.conf`*
-
-
-*`\# IPv4 forwarding disabled (not a router)`*
-
-`net.ipv4.ip\_forward = 0`
-
-
-*`\# SYN flood protection`*
-
-`net.ipv4.tcp\_syncookies = 1`
-
-
-*`\# Disable IPv6 autoconfiguration (reduces network noise)`*
-
-*`\# Only if no IPv6 network detected at install`*
-
-`net.ipv6.conf.all.autoconf = 0`
-
-`net.ipv6.conf.default.autoconf = 0`
+# /etc/sysctl.d/99-spike-network.conf
+# IPv4 forwarding disabled (not a router)
+net.ipv4.ip_forward = 0
+# SYN flood protection
+net.ipv4.tcp_syncookies = 1
+# Disable IPv6 autoconfiguration (reduces network noise)
+# Only if no IPv6 network detected at install
+net.ipv6.conf.all.autoconf = 0
+net.ipv6.conf.default.autoconf = 0
 ```
 
 These are set by `spike-config` at install time and are adjustable through **Settings → Advanced → System Diagnostics** (read-only view) or **Settings → Network** for network-related values.
@@ -478,24 +366,15 @@ These are set by `spike-config` at install time and are adjustable through **Set
 ### Default Governor
 
 ```
-`Spike Standard:`
-
-`├── CPU governor: powersave (default for target hardware)`
-
-`└── Rationale: Celeron laptops are primarily battery-powered.`
-
-`   Powersave governor reduces heat and extends battery life.`
-
-`   Burst frequencies still available when needed.`
-
-
-`Spike Plus:`
-
-`├── CPU governor: schedutil`
-
-`└── Rationale: Modern CPUs with more headroom benefit from`
-
-`   scheduler-driven frequency scaling.`
+Spike Standard:
+├── CPU governor: powersave (default for target hardware)
+└── Rationale: Celeron laptops are primarily battery-powered.
+   Powersave governor reduces heat and extends battery life.
+   Burst frequencies still available when needed.
+Spike Plus:
+├── CPU governor: schedutil
+└── Rationale: Modern CPUs with more headroom benefit from
+   scheduler-driven frequency scaling.
 ```
 
 The governor is set at install time and can be changed in **Settings → Power**.
@@ -529,7 +408,7 @@ Ubuntu 26.04 LTS enables kernel lockdown in integrity mode when Secure Boot is a
 Kernel updates arrive through Ubuntu's standard `apt` channel:
 
 ```
-`sudo apt update && sudo apt upgrade`
+sudo apt update && sudo apt upgrade
 ```
 
 Or through Discover (GUI — the intended path for Spike users).
@@ -549,29 +428,18 @@ When a new kernel is installed:
 If a new kernel fails to boot:
 
 ```
-`1. System hangs or crashes during boot`
-
-`2. User power-cycles (hard reset)`
-
-`3. Boot failure counter increments (/boot/.spike/boot-count)`
-
-`4. After 3 failed boots:`
-
-`   ├── GRUB2 menu appears automatically`
-
-`   ├── Previous (known-good) kernel is highlighted`
-
-`   └── Recovery entry is available`
-
-`5. User boots previous kernel`
-
-`6. Notification: "Spike detected a boot failure. The previous kernel`
-
-`   is running. The problematic update has been marked for removal."`
-
-`7. Problematic kernel is held back from future updates`
-
-`   until explicitly upgraded or the user retries`
+1. System hangs or crashes during boot
+2. User power-cycles (hard reset)
+3. Boot failure counter increments (/boot/.spike/boot-count)
+4. After 3 failed boots:
+   ├── GRUB2 menu appears automatically
+   ├── Previous (known-good) kernel is highlighted
+   └── Recovery entry is available
+5. User boots previous kernel
+6. Notification: "Spike detected a boot failure. The previous kernel
+   is running. The problematic update has been marked for removal."
+7. Problematic kernel is held back from future updates
+   until explicitly upgraded or the user retries
 ```
 
 This is transparent to the user — they see a menu that says "Previous version" and "Recovery mode," not kernel version numbers or technical details.
@@ -581,29 +449,18 @@ This is transparent to the user — they see a menu that says "Previous version"
 When the kernel is updated and the NVIDIA proprietary driver is installed, the driver module must be rebuilt against the new kernel headers. Ubuntu's DKMS infrastructure handles this automatically:
 
 ```
-`Kernel update arrives via apt/Discover`
-
-`    │`
-
-`    ├── DKMS detects kernel version change`
-
-`    ├── DKMS rebuilds nvidia-drm module against new kernel headers`
-
-`    ├── If rebuild succeeds:`
-
-`    │   ├── Module ready for next boot`
-
-`    │   └── User notified of reboot needed`
-
-`    └── If rebuild fails:`
-
-`        ├── Old kernel retained as fallback`
-
-`        ├── Notification: "NVIDIA driver could not be built for the`
-
-`        │   new kernel. Booting with the previous kernel."`
-
-`        └── User directed to check for driver updates`
+Kernel update arrives via apt/Discover
+    │
+    ├── DKMS detects kernel version change
+    ├── DKMS rebuilds nvidia-drm module against new kernel headers
+    ├── If rebuild succeeds:
+    │   ├── Module ready for next boot
+    │   └── User notified of reboot needed
+    └── If rebuild fails:
+        ├── Old kernel retained as fallback
+        ├── Notification: "NVIDIA driver could not be built for the
+        │   new kernel. Booting with the previous kernel."
+        └── User directed to check for driver updates
 ```
 
 This is a known pain point with proprietary NVIDIA drivers across all Linux distributions. Spike mitigates it by retaining the previous kernel and notifying the user clearly if something goes wrong. The open-source `nouveau` driver does not have this problem — it is part of the kernel tree and updates automatically.
