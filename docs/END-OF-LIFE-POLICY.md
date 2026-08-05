@@ -770,7 +770,7 @@ Spike's support is shorter than Ubuntu LTS because:
 
 - Security vulnerability handling: See `SECURITY.md` and `GOVERNANCE.md` 
 
-- Hardware tier definitions and requirements: See `HARDWARE.md` (to be written) 
+- Hardware tier definitions and requirements: See `HARDWARE.md` 
 
 - Installer backup/restore process: See `INSTALLER.md` 
 

@@ -73,11 +73,11 @@ End of life: Minimum 5 years per release (see END-OF-LIFE-POLICY.md)
 
 ### Objective
 
-Complete all documentation before writing any code. Every architectural decision recorded with rationale. Every component specified. Every constraint documented. The codebase should be buildable by reading the documentation alone — no tribal knowledge required.
+Docs-first: record architectural decisions, specify components, and document constraints so the system can be built without tribal knowledge. **Pre-alpha is the project label until Spike is ready for a beta release** — it does not forbid starting implementation once product specs are sufficient. User-guide and most dev-guide pages are filled as the desktop and build pipeline ship.
 
 ### Duration
 
-Unknown — determined by documentation velocity. The docs-first methodology is intentional and will not be rushed. Writing documentation reveals design gaps and inconsistencies before they become expensive code rewrites.
+Unknown — determined by documentation and implementation velocity. The docs-first methodology is intentional and will not be rushed. Writing documentation reveals design gaps and inconsistencies before they become expensive code rewrites.
 
 ### Deliverables
 
@@ -85,18 +85,17 @@ Unknown — determined by documentation velocity. The docs-first methodology is 
 
 ```
 ├── Top-level docs (~33 files)
-│   ├── Completed: 16+ (philosophy, architecture, all major subsystems)
-│   ├── Remaining: ~17 (governance, branding, hardware, accessibility,
-│   │   troubleshooting, FAQ, migration, support, EOL, roadmap,
-│   │   changelog, readme, index, code of conduct, contributing,
-│   │   license)
-│   └── Status: In progress
+│   ├── Product/system specs: largely complete
+│   ├── LICENSE + LICENSE-CC-BY-SA-4.0: at repo root (copies in licences/)
+│   ├── Remaining notable gap: TRANSLATIONS.md
+│   └── Status: sufficient to begin prototyping
 ├── User guide (17 files)
-│   ├── Not started
-│   └── Prerequisite: Desktop shell spec must be finalized
+│   ├── Stubs on disk — written as the desktop ships
+│   └── Not a gate for starting code
 └── Developer guide (19 files)
-    ├── Not started
-    └── Prerequisite: Architecture docs must be finalized
+    ├── Stubs on disk — written as implementation proceeds
+    ├── Priority when coding starts: build-system / ISO construction
+    └── ISO build tooling choice still open (see agent-ops/DECISIONS.md)
 ```
 
 **Project infrastructure:**
@@ -123,39 +122,41 @@ Unknown — determined by documentation velocity. The docs-first methodology is 
 
 ### Exit Criteria
 
-Pre-alpha ends when:
+Pre-alpha as a **release label** ends when Spike is ready for **beta** (see Phase 3 / beta section). That is separate from “may we write code?”
 
-- All top-level documentation is complete and reviewed 
+**Ready to start prototyping when:**
 
-- User guide is complete (all 17 files, with screenshots planned) 
+- Core product/system specs are written (current state: yes) 
 
-- Developer guide is complete (all 19 files) 
+- BDFL is ready to begin implementation 
 
-- Repository structure matches AGENTS.md codebase layout 
+- Open tooling choices (ISO builder, installer stack) may still be undecided — choose and log them as work starts 
 
-- Infrastructure is operational (GitLab, CI, website) 
+**Still expected before beta (grow with the project, not all upfront):**
 
-- BDFL sign-off on documentation completeness 
+- User guide filled out as features ship 
 
-**Pre-alpha exit checklist:**
+- Developer guide filled out as subsystems are implemented 
 
-- All 33 top-level docs written and reviewed 
+- Infrastructure operational (GitLab, CI, website) as needed 
 
-- All 17 user guide docs written 
+- BDFL sign-off for beta readiness 
 
-- All 19 dev guide docs written 
+**Historical pre-alpha documentation checklist** (tracking completeness, not a stop-work order):
 
-- Repository scaffolded (empty source trees with CMakeLists.txt) 
+- Top-level product specs written and reviewed 
 
-- CI/CD pipeline runs (even if just "hello world") 
+- `LICENSE` / `LICENSE-CC-BY-SA-4.0` present 
 
-- Website live with documentation 
+- User guide and dev guide progress tracked in `INDEX.md` / `agent-ops/STATE.md` 
 
-- GitLab issues open for community feedback 
+- Repository scaffolded as code begins 
 
-- Hardware registry page live (survey form, not results) 
+- CI/CD pipeline grows with the build 
 
-- BDFL review and sign-off 
+- Website / hardware registry as community needs appear 
+
+- BDFL review at each public milestone 
 
 ### What The Community Can Do During Pre-Alpha
 

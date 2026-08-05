@@ -38,7 +38,7 @@ Status legend:
 
 | **Tier** | **Documents** | **Status** |
 | :-: | :-: | :-: |
-| Top-level | 34 | ✅ 32 complete + 🔲 2 pending |
+| Top-level | 34 | ✅ 33 complete + 🔲 1 pending (`TRANSLATIONS.md`); `LICENSE` at repo root |
 | User guide | 17 | 🔲 17 not started |
 | Dev guide | 19 | 🔲 19 not started |
 | **TOTAL** | **70** |  |
@@ -54,7 +54,8 @@ Status legend:
 | ✅ | `README.md` | Front door of the repository — what Spike is |
 | ✅ | `INDEX.md` | This document — master index of all docs |
 | ✅ | `AGENTS.md` | Master project reference — phases, conventions, tracking |
-| 🔲 | `LICENSE` | GPLv2+ full license text |
+| ✅ | `LICENSE` | GPLv2+ full license text (repo root; copy in `licences/`) |
+| ✅ | `LICENSE-CC-BY-SA-4.0` | CC-BY-SA 4.0 for documentation and artwork (repo root; copy in `licences/`) |
 
 ### Vision And Governance
 

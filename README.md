@@ -116,7 +116,11 @@ spike/
 ├── README.md                      → You are here
 ├── CODE_OF_CONDUCT.md             → Pointer → docs/CODE_OF_CONDUCT.md
 ├── CONTRIBUTING.md                → Stub — see docs/CONTRIBUTING.md
-├── licences/                      → GPLv2+ and CC-BY-SA 4.0 texts
+├── licences/                      → Organized copies of license texts
+│   ├── GPL-2.0-or-later.md
+│   └── CC BY-SA 4.0.md
+├── LICENSE                        → GPLv2+ (code)
+├── LICENSE-CC-BY-SA-4.0           → CC-BY-SA 4.0 (docs/artwork)
 │
 ├── docs/                          → Project specifications
 │   ├── README.md                  → Docs introduction
@@ -295,7 +299,8 @@ version 2 or later (GPLv2+).
 │   ├── Flatpak: LGPL
 │   ├── Noto Sans font: SIL Open Font License 1.1
 │   └── Breeze icons: LGPL-3.0
-└── Full license texts: licences/ (LICENSE file at root still to be written)
+└── Full license texts: LICENSE (code), LICENSE-CC-BY-SA-4.0 (docs/artwork);
+    organized copies also in licences/
 ```
 
 The "Spike" name and dog mascot are trademarks of BigRangaTech.

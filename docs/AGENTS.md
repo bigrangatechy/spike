@@ -336,27 +336,36 @@ Not counted in the 70 specification documents. These are operational reference f
 **REMAINING (top-level, pending drafting):**
 
 ```
-├── 🔲 LICENSE                   → GPLv2+ (code), CC-BY-SA 4.0 (docs/artwork)
 ├── 🔲 TRANSLATIONS.md          → i18n framework, translation contribution
-└── 🔲 USER-GUIDE.md            → Getting started, daily use, settings walkthrough
+└── 🔲 USER-GUIDE.md            → Getting started overview (sub-docs filled as desktop ships)
+```
+
+**Licenses (repo root):**
+
+```
+├── ✅ LICENSE                   → GPLv2+ (code)
+└── ✅ LICENSE-CC-BY-SA-4.0      → documentation and artwork (copies also in licences/)
 ```
 
 **REMAINING (sub-document directories):**
 
 ```
-├── 🔲 All 17 user-guide/ sub-documents
-└── 🔲 All 19 dev-guide/ sub-documents
+├── 🔲 All 17 user-guide/ sub-documents (stubs — fill as desktop ships)
+└── 🔲 All 19 dev-guide/ sub-documents (stubs — fill as implementation proceeds)
 ```
 
-**AGENT OPERATIONS (in progress):**
+**AGENT OPERATIONS:**
 
 ```
 ├── ✅ README.md               → Folder index, reading order
 ├── ✅ RULES.md                → Workflow rules, documentation-first mandate
 ├── ✅ CONSTRAINTS.md         → Hard technical constraints
 ├── ✅ GLOSSARY.md             → Project terminology
-├── 🔲 CONVENTIONS.md         → Code style, naming, commits (next)
-├── 🔲 PROTOCOLS.md           → Step-by-step procedures
+├── ✅ CONVENTIONS.md         → Code style, naming, commits
+├── ✅ PROTOCOLS.md           → Step-by-step procedures
+├── ✅ STATE.md               → Dynamic: progress tracker (initialized)
+├── ✅ DECISIONS.md           → Dynamic: decision log (initialized)
+├── ✅ SESSION_LOG.md         → Dynamic: session history (initialized)
 ├── 🔲 PATTERNS.md            → Implementation patterns
 ├── 🔲 TEMPLATES.md           → Fill-in structures
 ├── 🔲 SELF-CHECK.md          → Pre-completion checklist
@@ -368,9 +377,6 @@ Not counted in the 70 specification documents. These are operational reference f
 ├── 🔲 TROUBLESHOOTING.md    → What to try when stuck
 ├── 🔲 MISTAKES.md           → Common mistakes catalog
 ├── 🔲 CHANGELOG.md          → agent-ops changelog
-├── 🔲 STATE.md              → Dynamic (initialize at Phase 3 start)
-├── 🔲 DECISIONS.md          → Dynamic (initialize with founding decisions)
-├── 🔲 SESSION_LOG.md        → Dynamic (initialize at Phase 3 start)
 ├── 🔲 adapters/.cursorrules → Cursor adapter
 ├── 🔲 adapters/CLAUDE-CODE.md → Future
 └── 🔲 adapters/AIDER.md     → Future
@@ -1604,29 +1610,29 @@ Theme engine:
 **Phase 2 — Specification Documents** ✅ NEARLY COMPLETE
 
 ```
-├── ✅ All 34 top-level specs drafted (31 formatted, 3 pending: LICENSE, TRANSLATIONS.md, USER-GUIDE.md)
-├── ✅ INDEX.md formatted (master document index)
-├── ✅ AGENTS.md updated (master reference, 10 Golden Rules)
-├── ✅ PHILOSOPHY.md updated (10 Golden Rules with detailed explanations)
-├── ✅ agent-ops/ folder created (4 of 23 files complete: README, RULES, CONSTRAINTS, GLOSSARY)
-├── 🔲 LICENSE (full license text — GPLv2+ + CC-BY-SA 4.0)
+├── ✅ Core top-level product/system specs drafted and formatted
+├── ✅ INDEX.md, AGENTS.md, PHILOSOPHY.md current for phase tracking
+├── ✅ LICENSE + LICENSE-CC-BY-SA-4.0 at repo root (copies in licences/)
+├── ✅ agent-ops: README, RULES, CONSTRAINTS, GLOSSARY, CONVENTIONS, PROTOCOLS
+├── ✅ agent-ops dynamic files initialized: STATE, DECISIONS, SESSION_LOG
 ├── 🔲 TRANSLATIONS.md (i18n framework)
-├── 🔲 USER-GUIDE.md (top-level overview, not sub-docs)
-├── 🔲 All 17 user-guide/ sub-documents
-├── 🔲 All 19 dev-guide/ sub-documents
-└── 🔲 Remaining agent-ops/ files (19 of 23)
+├── 🔲 USER-GUIDE.md (top-level overview; sub-docs as desktop ships)
+├── 🔲 user-guide/ and dev-guide/ stubs (fill during implementation)
+└── 🔲 Remaining agent-ops static helpers (PATTERNS, GOTCHAS, etc.)
 ```
 
 **Phase 3 — Prototyping** 🔲 NOT STARTED
 
 ```
-├── Build Spike base ISO
+├── Build Spike base ISO (tooling choice still open — see agent-ops/DECISIONS.md)
 ├── Implement spike-config
 ├── Implement Spike Shell
 ├── Implement installer
 ├── Implement Spike Rescue
 └── Test on Celeron N4020, AMD A4, ThinkPad P50
 ```
+
+> **Note:** Project release label remains **pre-alpha** until beta readiness. Phase 3 prototyping may begin under that label.
 
 **Phase 4 — Alpha Release (8 months from start)** 🔲 NOT STARTED
 

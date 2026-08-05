@@ -1325,7 +1325,7 @@ REMEMBER:
 
 - Privacy policy (data collection): See `PRIVACY.md` 
 
-- License details: See `LICENSE` (to be written) 
+- License details: See `LICENSE` (GPLv2+) and `LICENSE-CC-BY-SA-4.0` (docs/artwork) 
 
 - Roadmap and project phases: See `ROADMAP.md` 
 

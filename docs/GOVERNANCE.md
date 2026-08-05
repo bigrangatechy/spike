@@ -864,9 +864,9 @@ This ensures the project's core identity (no telemetry, Golden Rules, GPLv2+, ol
 
 ## What This Document Does Not Cover
 
-- Code of conduct and community behavior standards: See **CODE_OF_CONDUCT.md** (to be written) 
+- Code of conduct and community behavior standards: See **CODE_OF_CONDUCT.md** 
 
-- Contribution workflow and technical guidelines: See **CONTRIBUTING.md** (to be written) 
+- Contribution workflow and technical guidelines: See **CONTRIBUTING.md** 
 
 - Design rationale for governance decisions: See **DESIGN-DECISIONS.md** 
 
@@ -882,7 +882,7 @@ This ensures the project's core identity (no telemetry, Golden Rules, GPLv2+, ol
 
 - Architecture and technical decisions: See **ARCHITECTURE.md** and **DESIGN-DECISIONS.md** 
 
-- License text: See **LICENSE** (to be written) 
+- License text: See **LICENSE** (GPLv2+) and **LICENSE-CC-BY-SA-4.0** (docs/artwork) 
 
 - Changelog and release history: See **CHANGELOG.md** 
 

@@ -1094,7 +1094,7 @@ Spike Linux code of conduct: GPLv2+ (same as the project).
 
 - Trademark usage policy: See `GOVERNANCE.md` 
 
-- License details: See `LICENSE` (to be written) 
+- License details: See `LICENSE` (GPLv2+) and `LICENSE-CC-BY-SA-4.0` (docs/artwork) 
 
 - Project philosophy and values: See `PHILOSOPHY.md` 
 

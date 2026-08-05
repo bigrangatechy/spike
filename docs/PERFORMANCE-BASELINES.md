@@ -823,7 +823,7 @@ All targets in one place, for quick reference:
 
 - Installer flow and timing: See `INSTALLER.md` 
 
-- Hardware tier definitions and detection: See `HARDWARE.md` (to be written) 
+- Hardware tier definitions and detection: See `HARDWARE.md` 
 
 - Variant differences (animation, effects, polling): See `VARIANT-DIFFERENCES.md` 
 
