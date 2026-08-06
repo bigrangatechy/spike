@@ -12,13 +12,19 @@ usage() {
   cat <<'EOF'
 Usage: ./scripts/build-iso.sh [option]
 
-  (default)       Build the single Spike hybrid live ISO
+  (default)       Clean old ISOs, package .debs, build hybrid live ISO
   --check-deps    Verify host tools for live-build
-  --clean-only    Full clean (chroot, stages, cache, logs, ISOs)
+  --clean-only    Full clean (chroot, caches, stages, all *.iso artifacts)
   --config-only   Run lb config (via auto/config) without building
   --help          Show this help
 
 Requires root (or passwordless sudo) for chroot/loop mounts.
+
+Old ISO/image artifacts are removed during clean and again immediately
+before lb build so generation cannot collide with leftovers.
+
+spike-config is packaged and copied to includes.chroot (dpkg -i in a hook).
+Do not put Spike .debs in packages.chroot — that triggers in-chroot gpg.
 
 Spike builds ONE ISO. There is no --variant standard|plus flag.
 Standard vs Plus is applied at install time by spike-installer + spike-config.
@@ -35,7 +41,9 @@ need_root() {
 check_deps() {
   local missing=0
   local cmd
-  for cmd in lb debootstrap mksquashfs xorriso; do
+# Spike Shell needs Qt6 — also require cmake/qt6-base-dev on the *build host*
+# for scripts/package-spike-shell.sh (see 03-build-environment.md).
+  for cmd in lb debootstrap mksquashfs xorriso gpg cmake; do
     if ! command -v "$cmd" >/dev/null 2>&1; then
       echo "missing: $cmd" >&2
       missing=1
@@ -63,7 +71,7 @@ check_deps() {
   if [[ "$missing" -ne 0 ]]; then
     echo "Install host packages — see docs/dev-guide/03-build-environment.md" >&2
     echo "  sudo apt install live-build debootstrap squashfs-tools xorriso isolinux syslinux-common syslinux-utils \\" >&2
-    echo "    grub-pc-bin grub-efi-amd64-bin grub-efi-amd64-signed shim-signed mtools dosfstools rsync ca-certificates" >&2
+    echo "    grub-pc-bin grub-efi-amd64-bin grub-efi-amd64-signed shim-signed mtools dosfstools rsync ca-certificates gnupg" >&2
     return 1
   fi
   if [[ ! -x "${RECIPE}/auto/config" ]]; then
@@ -100,6 +108,44 @@ umount_chroot() {
   done
 }
 
+remove_iso_artifacts() {
+  # Wipe prior ISO/image outputs under the recipe.
+  # Reasons:
+  # 1. live-build / xorriso / isohybrid can conflict or reuse stale names
+  #    when an old binary*.iso or spike-live.iso is still present.
+  # 2. Post-build discovery must not pick up yesterday's artifact.
+  local reason="${1:-cleanup}"
+  echo "Removing old ISO/image artifacts (${reason})..."
+  local artifact
+  local removed=0
+  while IFS= read -r -d '' artifact; do
+    echo "  rm ${artifact#"${RECIPE}/"}"
+    rm -f "$artifact"
+    removed=1
+  done < <(
+    find "$RECIPE" -maxdepth 3 \( \
+      -name '*.iso' -o \
+      -name '*.img' -o \
+      -name '*.zsync' -o \
+      -name '*.zsync.gz' \
+    \) -type f -print0 2>/dev/null
+  )
+  # Named leftovers (in case find maxdepth misses a path)
+  rm -f \
+    "${RECIPE}"/binary*.iso \
+    "${RECIPE}"/binary*.img \
+    "${RECIPE}"/binary*.tar.gz \
+    "${RECIPE}"/binary*.zsync* \
+    "${RECIPE}"/live-image*.iso \
+    "${RECIPE}"/*.hybrid.iso \
+    "${RECIPE}"/spike-live.iso \
+    "${RECIPE}"/chroot/*.iso \
+    "${RECIPE}"/chroot/*.hybrid.iso
+  if [[ "$removed" -eq 0 ]]; then
+    echo "  (none found)"
+  fi
+}
+
 spike_clean() {
   # Ubuntu live-build: plain `lb clean` → --all only (keeps cache + .build stages).
   # After a failed bootstrap that is not enough — next build restores a dirty cache.
@@ -113,6 +159,12 @@ spike_clean() {
   lb clean noauto --stage || true
 
   umount_chroot
+
+  remove_iso_artifacts "clean"
+
+  # Never leave local debs in packages.chroot — triggers in-chroot gpg signing.
+  find "${RECIPE}/config/packages.chroot" -maxdepth 1 -type f -name '*.deb' -delete 2>/dev/null || true
+
   rm -rf \
     chroot chroot.tmp \
     binary binary.tmp \
@@ -123,11 +175,10 @@ spike_clean() {
     source
   rm -f \
     build.log \
+    spike-build-console.log \
     .lock \
     chroot.packages.live chroot.packages.install chroot.headers \
-    binary*.iso binary*.img binary*.tar.gz binary*.zsync* \
-    binary.sh binary.contents binary.packages md5sum.txt \
-    live-image*.iso *.hybrid.iso spike-live.iso
+    binary.sh binary.contents binary.packages md5sum.txt
 
   # Keep versioned recipe: auto/, config/package-lists|hooks|includes*, READMEs, .recipe-ready
   echo "Clean finished. Remaining top-level:"
@@ -153,6 +204,49 @@ run_config() {
   fi
 }
 
+inject_local_debs() {
+  # Build Spike .debs and stage via includes.chroot + hook (dpkg -i).
+  # Do NOT use config/packages.chroot/: live-build signs that local repo with
+  # gpg inside the bootstrap chroot (fails with env: 'gpg': No such file).
+  local pkg_dir="${ROOT}/build/packages"
+  local inc_dir="${RECIPE}/config/includes.chroot/var/cache/spike-local"
+  local pkg_chroot="${RECIPE}/config/packages.chroot"
+  mkdir -p "$pkg_dir" "$inc_dir"
+
+  echo "Packaging spike-config ..."
+  "${ROOT}/scripts/package-spike-config.sh" --out "$pkg_dir"
+  echo "Packaging spike-shell ..."
+  "${ROOT}/scripts/package-spike-shell.sh" --out "$pkg_dir"
+
+  # Clear any prior packages.chroot debs so archives won't invoke gpg.
+  if [[ -d "$pkg_chroot" ]]; then
+    find "$pkg_chroot" -maxdepth 1 -type f -name '*.deb' -delete 2>/dev/null || true
+  fi
+
+  find "$inc_dir" -maxdepth 1 -type f -name 'spike-*.deb' -delete 2>/dev/null || true
+
+  stage_newest() {
+    local pattern="$1"
+    local newest=""
+    newest="$(ls -1 "${pkg_dir}"/${pattern} 2>/dev/null | sort -V | tail -n1 || true)"
+    if [[ -n "$newest" && -f "$newest" ]]; then
+      cp -f "$newest" "$inc_dir/"
+      echo "Staged $(basename "$newest") → includes.chroot/var/cache/spike-local/"
+      return 0
+    fi
+    return 1
+  }
+
+  if ! stage_newest 'spike-config_*.deb'; then
+    echo "error: spike-config .deb missing after package step" >&2
+    exit 4
+  fi
+  if ! stage_newest 'spike-shell_*.deb'; then
+    echo "error: spike-shell .deb missing after package step" >&2
+    exit 4
+  fi
+}
+
 build_iso() {
   need_root "$@"
   check_deps
@@ -160,6 +254,7 @@ build_iso() {
 
   echo "Building Spike ISO (single artifact) in ${RECIPE} ..."
   spike_clean
+  inject_local_debs
 
   cd "$RECIPE"
   if [[ -x ./auto/config ]]; then
@@ -167,9 +262,18 @@ build_iso() {
   else
     lb config
   fi
-  lb build
 
-  echo "Build finished. Looking for ISO artifacts..."
+  # Extra guard: no stale ISOs right before generation (avoids lb/xorriso clashes).
+  remove_iso_artifacts "pre-lb-build"
+
+  # live-build sometimes cleans up and exits 0 after a mid-chroot failure
+  # (e.g. missing gpg in bootstrap). Treat a missing binary image as hard fail.
+  set +e
+  lb build 2>&1 | tee -a "${RECIPE}/spike-build-console.log"
+  local lb_rc=${PIPESTATUS[0]}
+  set -e
+
+  echo "Looking for ISO artifacts (lb exit=${lb_rc})..."
   # live-build may leave the ISO under chroot/ if a post-genisoimage step fails
   # (e.g. missing isohybrid). Promote those to the recipe root.
   local stuck
@@ -187,10 +291,29 @@ build_iso() {
     raw="$(find "$RECIPE" -maxdepth 1 -type f -name '*.iso' ! -name 'spike-live.iso' | head -n1 || true)"
   fi
   if [[ -z "$raw" || ! -f "$raw" ]]; then
-    echo "warning: no .iso found in ${RECIPE}; check build.log / lb output" >&2
+    echo "error: no .iso produced (lb exit=${lb_rc})." >&2
+    echo "Last errors from build.log:" >&2
+    if command -v rg >/dev/null 2>&1; then
+      rg -n "^(E:|error:|env:)" "${RECIPE}/build.log" 2>/dev/null | tail -n 20 >&2 || true
+    else
+      grep -nE '^(E:|error:|env:)' "${RECIPE}/build.log" 2>/dev/null | tail -n 20 >&2 || true
+    fi
+    if [[ ! -s "${RECIPE}/build.log" ]] || ! grep -qE '^(E:|error:|env:)' "${RECIPE}/build.log" 2>/dev/null; then
+      tail -n 40 "${RECIPE}/build.log" >&2 || true
+    fi
+    if grep -q "env: 'gpg': No such file" "${RECIPE}/build.log" 2>/dev/null; then
+      echo "hint: local packages.chroot .debs make live-build run gpg in chroot." >&2
+      echo "      Spike now installs spike-config via includes.chroot + dpkg -i." >&2
+      echo "      Remove any *.deb under config/packages.chroot/ and rebuild clean." >&2
+    fi
     exit 3
   fi
+  if [[ "$lb_rc" -ne 0 ]]; then
+    echo "warning: lb build exited ${lb_rc} but an ISO was found; continuing remaster" >&2
+  fi
 
+  # Drop previous ship artifact so remaster cannot collide with an old spike-live.iso.
+  rm -f "${RECIPE}/spike-live.iso"
   echo "Remastering USB-bootable BIOS+UEFI hybrid → spike-live.iso"
   "${ROOT}/scripts/spike-iso-hybridize.sh" "$raw" "${RECIPE}/spike-live.iso"
   ls -lh "${RECIPE}/spike-live.iso"

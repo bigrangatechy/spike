@@ -1,8 +1,8 @@
 # Spike Agent Ops — Current State
 
 **Last updated:** 2026-08-06  
-**Phase label:** Pre-alpha (Stage 1 done; Stage 2 skeleton in progress)  
-**Note:** “Pre-alpha” remains the project label until Spike is ready for a beta release. Early implementation stages (1–2+) stay under that label for now — **Phase 2 (Alpha)** in `ROADMAP.md` is not declared open yet.
+**Phase label:** Pre-alpha (Stage 2 detect OK; shell/installer still pre-alpha)  
+**Note:** “Pre-alpha” stays until BDFL opens Alpha **by feel** — target cue: installer works end-to-end. Shell and further stack work remain under pre-alpha for now.
 
 ## Summary
 
@@ -14,41 +14,42 @@
 | `USER-GUIDE.md` + `user-guide/` | 🔲 Stubs — fill as the desktop ships |
 | `dev-guide/` | 📝 03/04/07 drafted; 04 updated for Stage 1 |
 | agent-ops core | ✅ Written |
-| ISO / build tooling | ✅ live-build; **Stage 1 recipe ready** (`build/iso-build/.recipe-ready`) |
-| Installer stack | ✅ Custom Qt (not built yet) |
-| `scripts/build-iso.sh` | ✅ Implements lb clean/config/build |
-| Stage 1 live ISO artifact | ✅ Tier 1 firmware ISO: devices detected + login on hardware |
-| Stage 2 (`spike-config`) — still pre-alpha | 📝 Skeleton: CLI + templates + modules (not packaged into ISO yet) |
-| Stage 3+ (shell, installer) | 🔲 Not started |
+| ISO / build tooling | ✅ live-build; hybrid remaster + debug capture |
+| Installer stack | ✅ Custom Qt (not built yet) — Alpha cue when this works |
+| `scripts/build-iso.sh` | ✅ Packages spike-config + spike-shell + lb build |
+| Stage 1 live ISO | ✅ Hardware boot + login |
+| Stage 2 (`spike-config`) | ✅ Target detect OK (N4020 / ~4GB) |
+| Stage 3 (Spike Shell) | 📝 Skeleton packaged for ISO; white-on-dark theme; layer-shell later |
+| Stage 4 (installer) | 🔲 Later — still **pre-alpha** until BDFL opens Alpha |
 
 ## In Progress
 
 | Item | Notes |
 | :-: | :-: |
-| Stage 2 — `src/spike-config/` | Working Python engine: state, templates, generate (memory/boot/network/multimedia/security), CLI, tests |
+| Stage 3 — Spike Shell | On ISO path; deepen layer-shell / app scan after live smoke |
 
 ## Blocked / Waiting On Decision
 
-_None._
+_None._ Alpha timing is intentional “by feel,” not blocked.
 
 ## Recently Completed
 
 | Date | Item |
 | :-: | :-: |
-| 2026-08-06 | Stage 2 skeleton: `src/spike-config/` (CLI, templates, modules, tests) |
-| 2026-08-06 | Stage 2 kept under **pre-alpha** for now (Alpha phase not opened yet) |
-| 2026-08-06 | Boot tagline: "Let's make tech repairable again" |
-| 2026-08-05 | Stage 1 recipe: auto/config (resolute), package list, strip hook, `.recipe-ready` |
-| 2026-08-05 | `build-iso.sh` real lb clean/config/build path |
-| 2026-08-05 | Confirmed base pin: Ubuntu Server **26.04 LTS** (stripped) |
-| 2026-08-05 | Locked live-build + one ISO + custom Qt installer |
+| 2026-08-06 | spike-shell white-on-dark QSS + `.deb` wired into live ISO |
+| 2026-08-06 | Stage 3 Spike Shell skeleton (`src/spike-shell/`, builds) |
+| 2026-08-06 | Pre-alpha kept through shell/installer; Alpha by feel (installer cue) |
+| 2026-08-06 | Target detect confirmed: Celeron N4020 / ~4GB |
+| 2026-08-06 | Detect no longer baked from build host; capture + debug GRUB |
+| 2026-08-06 | spike-config packaged into live ISO |
+| 2026-08-05 | Stage 1 live ISO path (firmware, UEFI hybrid) |
 
 ## Next Suggested Work
 
-1. Stage 2 deepen: UFW/sudo templates, real detect hooks, Debian package + ISO install.  
-2. Stage 3: minimal Spike Shell.  
-3. Stage 4: installer unpack squashfs → ext4.  
-4. Declare **Phase 2 (Alpha)** later when core stack is far enough — not gated on Stage 2 alone.
+1. Rebuild ISO + smoke `spike-shell` on live (white panel text; optional `spike-session` / KWin).  
+2. Stage 3 deepen: layer-shell panel, `.desktop` scanning.  
+3. Stage 4 (pre-alpha): installer squashfs → ext4.  
+4. Open **Alpha** only when installer feels ready (BDFL).
 
 ## How To Update This File
 

@@ -89,13 +89,15 @@ UEFI boot path:
 
 ```
 ├── Spike does NOT enroll custom keys
+├── Pre-alpha: Secure Boot may be disabled for testing (not a release gate)
+│   └── Decision: docs/agent-ops/DECISIONS.md
 ├── If Secure Boot is enabled in firmware:
 │   ├── Ubuntu's signed GRUB2 shim is used (ubuntu-shim)
 │   ├── Kernel is signed by Ubuntu's build key
-│   ├── Boot proceeds normally
+│   ├── Boot proceeds normally on firmware that trusts Canonical/Microsoft
 │   └── Third-party kernel modules (Broadcom bcmwl) may require MOK enrollment
 └── If Secure Boot is disabled:
-    └── Boot proceeds normally without shim
+    └── Boot proceeds normally (shim still present on media; unused)
 ```
 
 **Fast Boot:**

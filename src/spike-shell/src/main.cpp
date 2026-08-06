@@ -1,0 +1,69 @@
+#include "panel/Panel.hpp"
+
+#include <QApplication>
+#include <QFile>
+#include <QPalette>
+#include <QScreen>
+
+namespace {
+
+void loadStyleSheet(QApplication &app)
+{
+  QFile file(QStringLiteral(":/styles/spike.qss"));
+  if (file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+    app.setStyleSheet(QString::fromUtf8(file.readAll()));
+  }
+}
+
+void applyDarkPalette(QApplication &app)
+{
+  // Fallback when stylesheets don't cover a widget (menus, etc.).
+  QPalette pal = app.palette();
+  const QColor bg(0x1a, 0x1a, 0x2e);
+  const QColor panel(0x22, 0x22, 0x36);
+  const QColor text(0xff, 0xff, 0xff);
+  const QColor disabled(0xa0, 0xa0, 0xb8);
+  const QColor accent(0x6d, 0x4a, 0xff);
+
+  pal.setColor(QPalette::Window, bg);
+  pal.setColor(QPalette::WindowText, text);
+  pal.setColor(QPalette::Base, panel);
+  pal.setColor(QPalette::AlternateBase, bg);
+  pal.setColor(QPalette::Text, text);
+  pal.setColor(QPalette::Button, panel);
+  pal.setColor(QPalette::ButtonText, text);
+  pal.setColor(QPalette::BrightText, text);
+  pal.setColor(QPalette::ToolTipBase, panel);
+  pal.setColor(QPalette::ToolTipText, text);
+  pal.setColor(QPalette::PlaceholderText, disabled);
+  pal.setColor(QPalette::Highlight, accent);
+  pal.setColor(QPalette::HighlightedText, text);
+  pal.setColor(QPalette::Disabled, QPalette::Text, disabled);
+  pal.setColor(QPalette::Disabled, QPalette::ButtonText, disabled);
+  pal.setColor(QPalette::Disabled, QPalette::WindowText, disabled);
+  app.setPalette(pal);
+}
+
+} // namespace
+
+int main(int argc, char *argv[])
+{
+  QApplication app(argc, argv);
+  QApplication::setApplicationName(QStringLiteral("spike-shell"));
+  QApplication::setApplicationVersion(QStringLiteral("0.0.1"));
+  QApplication::setOrganizationName(QStringLiteral("BigRangaTech"));
+
+  applyDarkPalette(app);
+  loadStyleSheet(app);
+
+  spike::Panel panel;
+  // Stage 3 stub: normal window. Later: wlr-layer-shell bottom layer (DESKTOP.md).
+  if (QScreen *screen = app.primaryScreen()) {
+    const QRect geo = screen->availableGeometry();
+    panel.setGeometry(geo.left(), geo.bottom() - panel.height() + 1, geo.width(),
+                      panel.height());
+  }
+  panel.show();
+
+  return app.exec();
+}

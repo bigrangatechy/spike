@@ -19,6 +19,11 @@ def _build_parser() -> argparse.ArgumentParser:
 
     g = p.add_mutually_exclusive_group(required=True)
     g.add_argument("--init-state", action="store_true", help="Seed default state store")
+    p.add_argument(
+        "--force",
+        action="store_true",
+        help="With --init-state: overwrite existing state.json",
+    )
     g.add_argument("--generate-all", action="store_true", help="Regenerate all modules")
     g.add_argument("--generate", metavar="MODULE", help="Regenerate one module")
     g.add_argument("--detect", action="store_true", help="Run hardware detection")
@@ -78,7 +83,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     try:
         if args.init_state:
-            st = state.init_state()
+            st = state.init_state(force=bool(args.force))
             print(f"state initialized: {paths.state_path()}")
             print(f"variant={st.get('variant')}")
             return 0

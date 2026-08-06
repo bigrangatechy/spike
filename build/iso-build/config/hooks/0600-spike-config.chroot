@@ -1,0 +1,46 @@
+# Spike chroot hook: install local Spike .debs (config + shell).
+# Debs are staged under /var/cache/spike-local/ via includes.chroot (not
+# packages.chroot — that path forces live-build to run gpg in the chroot).
+#
+# Do NOT run spike-config --detect here: the chroot is the *build host*.
+# Hardware detection runs on first boot via spike-detect.service.
+set -e
+
+echo "I: spike local packages: install from /var/cache/spike-local/"
+
+install_newest() {
+  pattern="$1"
+  deb="$(ls /var/cache/spike-local/${pattern} 2>/dev/null | sort -V | tail -n1 || true)"
+  if [ -n "$deb" ] && [ -f "$deb" ]; then
+    echo "I: dpkg -i $deb"
+    dpkg -i "$deb" || apt-get -y -f install
+  else
+    echo "W: no package matching ${pattern}" >&2
+  fi
+}
+
+install_newest 'spike-config_*.deb'
+install_newest 'spike-shell_*.deb'
+
+if command -v spike-config >/dev/null 2>&1; then
+  spike-config --version || true
+  mkdir -p /var/lib/spike/config
+  spike-config --init-state --force 2>/dev/null || {
+    rm -f /var/lib/spike/config/state.json
+    spike-config --init-state
+  }
+  if grep -q 'Xeon\|bogomips_per_core": [1-9]' /var/lib/spike/config/state.json 2>/dev/null; then
+    echo "W: state.json looks like build-host detect leaked; resetting" >&2
+    rm -f /var/lib/spike/config/state.json
+    spike-config --init-state
+  fi
+  echo "I: spike-config default state ready (detect deferred to first boot)"
+else
+  echo "W: spike-config still missing after install attempt" >&2
+fi
+
+if [ -x /usr/bin/spike-shell ]; then
+  echo "I: spike-shell installed: /usr/bin/spike-shell"
+else
+  echo "W: spike-shell still missing after install attempt" >&2
+fi

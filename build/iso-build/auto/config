@@ -10,6 +10,11 @@ set -e
 MIRROR="${SPIKE_UBUNTU_MIRROR:-http://au.archive.ubuntu.com/ubuntu/}"
 SEC_MIRROR="${SPIKE_UBUNTU_SECURITY_MIRROR:-http://security.ubuntu.com/ubuntu/}"
 
+# Prefer gnupg in bootstrap if we ever use packages.chroot again.
+# Ubuntu live-build 3.0~a57: no --bootstrap-include CLI; env can be wiped when
+# lb config re-reads an existing empty config/bootstrap — force it after.
+export LB_BOOTSTRAP_INCLUDE="${LB_BOOTSTRAP_INCLUDE:-apt-utils,ca-certificates,gnupg}"
+
 lb config noauto \
 	--mode ubuntu \
 	--distribution resolute \
@@ -51,3 +56,8 @@ lb config noauto \
 	--iso-volume "Spike 26.04" \
 	--bootappend-live "boot=casper hostname=spike-live quiet splash" \
 	"${@}"
+
+# Re-apply after lb config (re-read of config/bootstrap clears the export).
+if [ -f config/bootstrap ]; then
+	sed -i 's|^LB_BOOTSTRAP_INCLUDE=.*|LB_BOOTSTRAP_INCLUDE="apt-utils,ca-certificates,gnupg"|' config/bootstrap
+fi

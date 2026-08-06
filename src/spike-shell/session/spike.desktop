@@ -1,0 +1,6 @@
+[Desktop Entry]
+Name=Spike
+Comment=Spike Shell on standalone KWin Wayland
+Exec=spike-session
+Type=Application
+DesktopNames=Spike

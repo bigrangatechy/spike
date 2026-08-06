@@ -1,0 +1,15 @@
+[Unit]
+Description=Spike live debug log capture
+Documentation=file:///usr/share/doc/spike-config/README
+After=multi-user.target network-online.target spike-detect.service
+Wants=network-online.target spike-detect.service
+ConditionKernelCommandLine=|debug
+ConditionKernelCommandLine=|spike.capture
+
+[Service]
+Type=oneshot
+ExecStart=/usr/sbin/spike-capture-logs
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

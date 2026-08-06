@@ -6,6 +6,26 @@ Operational decisions that affect how work proceeds. Product/architecture ration
 
 ---
 
+## 2026-08-06 — Pre-alpha stays open through shell/installer; Alpha by feel
+
+**Decision:** Keep implementing **Spike Shell** and other early stack pieces under the **pre-alpha** label. Do **not** open **Phase 2 (Alpha)** on a calendar or Stage counter. Consider Alpha only once the **installer** is working end-to-end (and BDFL judges readiness by feel). Roadmap phase names (pre-alpha / alpha / pre-beta / beta) remain labels, not hard gates for writing code.
+
+**Why:** Earlier Alpha milestone wording was optimistic vs actual velocity. Pre-alpha already allows implementation; forcing an Alpha declaration mid-stack creates false expectations.
+
+**Refs:** `ROADMAP.md` (phases), `STATE.md`, prior “Stage 2 stays under pre-alpha” entry.
+
+---
+
+## 2026-08-06 — Secure Boot optional in pre-alpha
+
+**Decision:** During **pre-alpha**, Secure Boot is **not required**. Testers may disable Secure Boot in firmware. Spike still ships Ubuntu-style **shim → grub** on the hybrid ISO when available (works with SB on machines that trust Canonical/Microsoft keys), but we do **not** enroll custom MOK keys, sign Spike packages, or treat SB-on as a release gate until later.
+
+**Why:** Pre-alpha focus is boot + `spike-config` + desktop path. Custom SB signing is Alpha/Beta polish. Disabling SB is an acceptable workaround for firmware that rejects unsigned/third-party bits.
+
+**Refs:** `BOOT-PROCESS.md` (Secure Boot section), `04-building-spike.md`, Stage 2 packaging.
+
+---
+
 ## 2026-08-06 — Stage 2 stays under pre-alpha
 
 **Decision:** **Stage 2** (`spike-config` skeleton and related early work) remains part of **pre-alpha**. Do **not** open **Phase 2 (Alpha)** in `ROADMAP.md` just because Stage 1 closed or Stage 2 starts.

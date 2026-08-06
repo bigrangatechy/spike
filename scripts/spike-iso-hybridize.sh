@@ -86,12 +86,17 @@ cp -a /usr/lib/grub/i386-pc/. "${TREE}/boot/grub/i386-pc/"
 
 cat > "${TREE}/boot/grub/grub.cfg" <<EOF
 set default=0
-set timeout=5
+set timeout=8
 set color_normal=white/black
 set color_highlight=black/light-gray
 
 menuentry "Spike Live" {
 	linux	/casper/${KERNEL} boot=casper hostname=spike-live quiet splash ---
+	initrd	/casper/${INITRD}
+}
+
+menuentry "Spike Live (debug logging)" {
+	linux	/casper/${KERNEL} boot=casper hostname=spike-live debug ---
 	initrd	/casper/${INITRD}
 }
 
@@ -104,12 +109,17 @@ EOF
 # Early config for EFI: lives next to grubx64.efi on the ESP so shim→grub
 # never drops to a bare console when prefix search fails.
 cat > "${WORK}/esp-grub.cfg" <<EOF
-set timeout=5
+set timeout=8
 search --no-floppy --set=root --file /casper/filesystem.squashfs
 set prefix=(\$root)/boot/grub
 
 menuentry "Spike Live" {
 	linux	/casper/${KERNEL} boot=casper hostname=spike-live quiet splash ---
+	initrd	/casper/${INITRD}
+}
+
+menuentry "Spike Live (debug logging)" {
+	linux	/casper/${KERNEL} boot=casper hostname=spike-live debug ---
 	initrd	/casper/${INITRD}
 }
 

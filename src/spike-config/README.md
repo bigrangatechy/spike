@@ -31,6 +31,27 @@ src/spike-config/
 └── tests/
 ```
 
+## Packaging (live ISO)
+
+```bash
+./scripts/package-spike-config.sh
+# → build/packages/spike-config_0.0.1-1_all.deb
+
+sudo ./scripts/build-iso.sh
+# rebuilds the .deb, stages under includes.chroot/var/cache/spike-local/,
+# hook runs dpkg -i (not packages.chroot — that path needs gpg in chroot)
+```
+
+Install paths in the `.deb`:
+
+| Path | Role |
+|------|------|
+| `/usr/bin/spike-config` | CLI |
+| `/usr/lib/python3/dist-packages/spike_config/` | Python package |
+| `/usr/lib/spike/config/templates/` | Templates |
+| `/usr/lib/spike/config/default-state.json` | Seed state |
+| `/var/lib/spike/config/state.json` | Runtime state (created by postinst / hook) |
+
 ## Developer usage
 
 ```bash
@@ -55,18 +76,10 @@ python3 -m spike_config --state
 | `--state` / `--state-get` / `--state-set` | ✅ |
 | `--changelog` | ✅ |
 | `--validate` | ✅ leftover `{{}}` + required keys |
-| `--detect` | ⬜ stub (writes placeholder hardware; real detect later with installer) |
+| `--detect` | 📝 best-effort `/proc` stub (installer detectors later) |
 | `--rollback` | ✅ basic (revert one changelog entry) |
 | `--boot-count` | ✅ get / reset / increment |
-| DBus API | ⬜ not in Stage 2 |
-
-## Install paths (product)
-
-| Path | Role |
-|------|------|
-| `/usr/bin/spike-config` | CLI entry (packaging TBD) |
-| `/usr/lib/spike/config/templates/` | Templates |
-| `/var/lib/spike/config/state.json` | State store |
-| `/var/lib/spike/config/changelog.json` | Change log |
+| `.deb` + ISO inject | ✅ `package-spike-config.sh` / `packages.chroot` |
+| DBus API | ⬜ later |
 
 License: GPLv2+ (code). Docs/branding remain CC-BY-SA 4.0.

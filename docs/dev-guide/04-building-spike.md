@@ -74,19 +74,29 @@ sudo ./scripts/build-iso.sh
 tail -f build/iso-build/chroot/debootstrap/debootstrap.log
 ```
 
-## Stage 1 contents
+## Stage 1–2 contents
 
-Current recipe aims for a **bootable stripped live image**:
+Current recipe aims for a **bootable stripped live image** plus `spike-config`:
 
 ```
 ├── Ubuntu 26.04 bootstrap (Server-oriented archive)
 ├── casper live boot + linux-generic
 ├── NetworkManager + basic admin tools
 ├── Strip hook: snapd / cloud-init / telemetry packages if present
-└── Not yet: Spike Shell, installer, Flatpak seed, full branding
+├── Local package: spike-config (.deb via packages.chroot)
+└── Not yet: Spike Shell, installer GUI, Flatpak seed, full branding
 ```
 
 Full product ISO contents (shell, Flatpak, firmware set) land in later stages; see `ARCHITECTURE.md` for the long-term size sketch.
+
+### Local Spike packages
+
+```
+./scripts/package-spike-config.sh          # → build/packages/*.deb
+sudo ./scripts/build-iso.sh                # stages deb via includes.chroot + dpkg -i hook
+```
+
+`build-iso.sh` rebuilds `spike-config` and copies it to `config/includes.chroot/var/cache/spike-local/`. It deliberately does **not** use `packages.chroot/` (that path makes live-build run `gpg` in the bootstrap chroot and fails).
 
 ## Smoke-test (prefer real hardware)
 
@@ -97,8 +107,9 @@ Only keep/use **`build/iso-build/spike-live.iso`**.
 Compared to **Kubuntu 26.04** (local reference ISO), Spike’s hybrid GPT layout is now the same shape (protective MBR + ISO9660 + trailing EFI System partition + El Torito BIOS/UEFI). Remaining differences that matter on real laptops:
 
 1. **Secure Boot chain** — Kubuntu ships **shim → grubx64** (Canonical-signed). Unsigned `BOOTX64.EFI` (raw GRUB) is often rejected; some firmwares hide the stick entirely. Spike now uses the host’s `shim-signed` + `grub-efi-amd64-signed` like Ubuntu.
-2. **Writer method** — Prefer **raw `dd`**, or the FAT32 extract method below. GUI writers sometimes rewrite partitions and drop the hybrid GPT/ESP.
-3. **Control test** — On the **same laptop + same USB**, write Kubuntu with the same method. If Kubuntu appears and Spike does not, it’s still an image issue. If **neither** appears, it’s firmware/USB-boot settings (or a dead stick/port).
+2. **Pre-alpha:** Secure Boot may be **disabled** in firmware for testing (see `agent-ops/DECISIONS.md`). Shim is still embedded when available.
+3. **Writer method** — Prefer **raw `dd`**, or the FAT32 extract method below. GUI writers sometimes rewrite partitions and drop the hybrid GPT/ESP.
+4. **Control test** — On the **same laptop + same USB**, write Kubuntu with the same method. If Kubuntu appears and Spike does not, it’s still an image issue. If **neither** appears, it’s firmware/USB-boot settings (or a dead stick/port).
 
 ### Method A — KDE ISO Image Writer (same as Kubuntu)
 
@@ -112,7 +123,24 @@ Single FAT32 partition with `\EFI\BOOT\BOOTX64.EFI` — what many firmwares look
 sudo ./scripts/spike-usb-fat32.sh /dev/sdX build/iso-build/spike-live.iso
 ```
 
-Boot tips: firmware boot menu → **UEFI USB**; if Secure Boot blocks, enroll MOK or disable Secure Boot; try a USB 2.0 port.
+Boot tips: firmware boot menu → **UEFI USB**; **pre-alpha: disable Secure Boot if the stick is rejected**; try a USB 2.0 port.
+
+GRUB entries on the remastered ISO:
+
+| Entry | Notes |
+| :-: | :-: |
+| Spike Live | Normal (`quiet splash`) |
+| Spike Live (debug logging) | No splash; kernel `debug`; auto-runs `spike-capture-logs` onto USB `writable` |
+| Spike Live (safe graphics) | `nomodeset` |
+
+After a debug boot, on the build host with the stick remounted:
+
+```
+sudo ./scripts/spike-collect-usb-logs.sh
+# → build/iso-build/debug-logs/spike-capture-* and install-logs-*
+```
+
+Or manually: `spike-config --state` on the live console.
 
 Remaster ISO only: `./scripts/spike-iso-hybridize.sh`
 

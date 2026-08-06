@@ -1,0 +1,21 @@
+#!/bin/sh
+# Spike session stub — starts standalone KWin Wayland then Spike Shell.
+# Spec: docs/BOOT-PROCESS.md / docs/DESKTOP.md
+# Not yet installed on the live ISO (Stage 3 skeleton).
+set -eu
+
+export XDG_CURRENT_DESKTOP="${XDG_CURRENT_DESKTOP:-Spike}"
+export XDG_SESSION_TYPE="${XDG_SESSION_TYPE:-wayland}"
+
+if ! command -v kwin_wayland >/dev/null 2>&1; then
+  echo "spike-session: kwin_wayland not found" >&2
+  exit 1
+fi
+
+if ! command -v spike-shell >/dev/null 2>&1; then
+  echo "spike-session: spike-shell not found in PATH" >&2
+  exit 1
+fi
+
+# KWin owns the Wayland display; shell runs as a client on that socket.
+exec kwin_wayland --exit-with-session=spike-shell

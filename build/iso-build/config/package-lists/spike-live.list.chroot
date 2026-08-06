@@ -36,6 +36,15 @@ systemd
 systemd-sysv
 dbus
 
+# Spike Shell runtime (Qt6 Widgets; session uses kwin later)
+libqt6widgets6
+libqt6gui6
+libqt6core6t64
+qt6-wayland
+# Standalone compositor for spike-session (no Plasma)
+kwin-wayland
+xwayland
+
 # Hardware helpers used later by installer detection (lightweight)
 pciutils
 usbutils
@@ -45,6 +54,9 @@ dmidecode
 # Prefer minimal firmware meta (linux-image-generic Depends: linux-firmware | linux-firmware-minimal).
 # Full linux-firmware meta also pulls datacenter blobs (Mellanox/Prestera/…) — keep those out.
 linux-firmware-minimal
+
+# Ensure full gnupg in chroot (bootstrap-include also pulls this; listed for clarity).
+gnupg
 
 # Tier 1 laptop firmware (Celeron N4020-class and similar old notebooks).
 # Split packages from Ubuntu 26.04 — expand later if a device class is still missing.

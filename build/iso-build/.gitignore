@@ -24,3 +24,5 @@ config/binary
 config/source
 config/bootstrap
 archives/
+config/packages.chroot/*.deb
+debug-logs/

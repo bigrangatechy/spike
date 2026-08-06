@@ -1,0 +1,76 @@
+#!/bin/sh
+# Spike live debug capture — dump boot + spike-config evidence for agents/devs.
+# Spec: pre-alpha live ISO diagnostics (casper writable / USB LABEL=writable).
+set -eu
+
+TS="$(date -u +%Y%m%dT%H%M%SZ)"
+HOST="$(hostname 2>/dev/null || echo spike-live)"
+
+# Prefer casper log-persistence / USB writable so captures survive reboot.
+# Fall back to /var/log (casper often copies that into install-logs-* on the stick).
+OUT=""
+for candidate in \
+  /log-persistence \
+  /cdrom \
+  /media/writable \
+  /mnt/writable
+do
+  if [ -d "$candidate" ] && [ -w "$candidate" ]; then
+    OUT="${candidate}/spike-capture-${TS}"
+    break
+  fi
+done
+
+if [ -z "$OUT" ] && command -v findmnt >/dev/null 2>&1; then
+  W="$(findmnt -n -o TARGET -S LABEL=writable 2>/dev/null || true)"
+  if [ -n "$W" ] && [ -w "$W" ]; then
+    OUT="${W}/spike-capture-${TS}"
+  fi
+fi
+
+# Last resort: /var/log (still recovered via casper install-logs on the USB).
+if [ -z "$OUT" ]; then
+  OUT="/var/log/spike-capture-${TS}"
+fi
+
+mkdir -p "$OUT"
+{
+  echo "spike-capture ${TS} host=${HOST}"
+  echo "cmdline: $(cat /proc/cmdline 2>/dev/null || true)"
+  echo "uname: $(uname -a 2>/dev/null || true)"
+} >"$OUT/meta.txt"
+
+# spike-config evidence
+{
+  echo "=== which ==="
+  command -v spike-config || echo "MISSING"
+  echo "=== version ==="
+  spike-config --version 2>&1 || true
+  echo "=== state ==="
+  spike-config --state 2>&1 || true
+  echo "=== changelog (tail) ==="
+  spike-config --changelog 2>&1 | tail -n 80 || true
+} >"$OUT/spike-config.txt" 2>&1 || true
+
+# Package / files
+{
+  dpkg -l spike-config 2>&1 || true
+  ls -la /usr/bin/spike-config /usr/lib/spike/config 2>&1 || true
+  ls -la /var/lib/spike/config 2>&1 || true
+} >"$OUT/spike-config-files.txt" 2>&1 || true
+
+# System journals / logs (best effort)
+journalctl -b -n 500 --no-pager >"$OUT/journal-boot.txt" 2>&1 || true
+dmesg >"$OUT/dmesg.txt" 2>&1 || true
+cp -a /var/log/casper.log "$OUT/casper.log" 2>/dev/null || true
+cp -a /var/log/syslog "$OUT/syslog" 2>/dev/null || true
+ip -br a >"$OUT/network.txt" 2>&1 || true
+nmcli -t device status >"$OUT/nmcli-devices.txt" 2>&1 || true
+lsmod >"$OUT/lsmod.txt" 2>&1 || true
+free -h >"$OUT/memory.txt" 2>&1 || true
+df -h >"$OUT/disk.txt" 2>&1 || true
+
+# Marker for host-side collector
+echo "$OUT" >"$OUT/CAPTURE_PATH.txt"
+echo "I: spike-capture wrote $OUT"
+ls -la "$OUT" || true

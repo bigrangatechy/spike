@@ -1,0 +1,105 @@
+/* Spike Shell — Stage 3 stub stylesheet (docs/BRANDING.md) */
+/* Dark Base #1a1a2e | Spike Purple #6d4aff | Spike Cyan #00bcd4 */
+/* Panel/launcher text is white for contrast on dark surfaces. */
+
+* {
+  color: #ffffff;
+}
+
+QWidget#SpikePanel {
+  background-color: #222236;
+  color: #ffffff;
+  border-top: 1px solid #33335a;
+}
+
+QPushButton#SpikeButton {
+  background-color: #6d4aff;
+  color: #ffffff;
+  border: none;
+  border-radius: 4px;
+  padding: 2px 10px;
+  font-weight: 600;
+}
+
+QPushButton#SpikeButton:hover {
+  background-color: #7e63ff;
+  color: #ffffff;
+}
+
+QPushButton#SpikeButton:pressed {
+  background-color: #5a3ad9;
+  color: #ffffff;
+}
+
+QLabel#ClockLabel {
+  color: #ffffff;
+  padding: 0 8px;
+  font-size: 12px;
+}
+
+QPushButton#SessionButton {
+  background: transparent;
+  color: #ffffff;
+  border: none;
+  padding: 2px 10px;
+}
+
+QPushButton#SessionButton:hover {
+  color: #00bcd4;
+}
+
+QMenu {
+  background-color: #2a2a4a;
+  color: #ffffff;
+  border: 1px solid #33335a;
+}
+
+QMenu::item {
+  color: #ffffff;
+  padding: 6px 24px 6px 12px;
+}
+
+QMenu::item:selected {
+  background-color: #6d4aff;
+  color: #ffffff;
+}
+
+QWidget#SpikeLauncher {
+  background-color: #2a2a4a;
+  color: #ffffff;
+  border: 1px solid #33335a;
+  border-radius: 8px;
+}
+
+QLineEdit#LauncherSearch {
+  background-color: #1a1a2e;
+  color: #ffffff;
+  border: 1px solid #33335a;
+  border-radius: 4px;
+  padding: 6px 8px;
+  selection-background-color: #6d4aff;
+  selection-color: #ffffff;
+}
+
+QLineEdit#LauncherSearch::placeholder {
+  color: #c0c0d0;
+}
+
+QListWidget#LauncherList {
+  background-color: transparent;
+  color: #ffffff;
+  border: none;
+  outline: none;
+}
+
+QListWidget#LauncherList::item {
+  color: #ffffff;
+  padding: 8px;
+  border-radius: 4px;
+}
+
+QListWidget#LauncherList::item:selected,
+QListWidget#LauncherList::item:hover {
+  background-color: #6d4aff;
+  color: #ffffff;
+}

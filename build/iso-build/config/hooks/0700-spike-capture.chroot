@@ -1,0 +1,14 @@
+# Enable spike-detect (target hardware) and spike-capture-logs (debug boots).
+set -e
+
+chmod 755 /usr/sbin/spike-capture-logs 2>/dev/null || true
+
+if [ -f /etc/systemd/system/spike-detect.service ]; then
+  systemctl enable spike-detect.service || true
+  echo "I: enabled spike-detect.service (runs on target boot, not build host)"
+fi
+
+if [ -f /etc/systemd/system/spike-capture-logs.service ]; then
+  systemctl enable spike-capture-logs.service || true
+  echo "I: enabled spike-capture-logs.service"
+fi

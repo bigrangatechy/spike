@@ -1,0 +1,16 @@
+[Unit]
+Description=Spike hardware detection (first boot / live)
+Documentation=file:///usr/share/doc/spike-config/README
+DefaultDependencies=no
+After=local-fs.target
+Before=multi-user.target spike-capture-logs.service
+
+[Service]
+Type=oneshot
+# Always refresh hardware from this machine (live or installed).
+# Image build must never bake build-host detect into the squashfs.
+ExecStart=/usr/bin/spike-config --detect
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

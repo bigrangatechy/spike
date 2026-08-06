@@ -4,6 +4,115 @@ Append-only. Newest sessions at the **top**.
 
 ---
 
+## 2026-08-06 — Spike Shell white text + ISO packaging
+
+**Done:** Panel/launcher/menus use **white text on dark** (`spike.qss` + `applyDarkPalette` in `main.cpp`). New `scripts/package-spike-shell.sh` → `spike-shell_0.0.1-1_amd64.deb`. `build-iso.sh` packages + stages both config and shell; hook installs both; package list adds Qt6 Widgets, `qt6-wayland`, `kwin-wayland`, `xwayland`. Host needs `cmake` + `qt6-base-dev`.
+
+**Try:** `sudo ./scripts/build-iso.sh` → USB → live: `spike-shell` (panel text must be readable). Optional: `spike-session` under KWin.
+
+**Next:** live smoke; then layer-shell anchoring / app scan.
+
+---
+
+## 2026-08-06 — Stage 3 Spike Shell skeleton
+
+**Done:** Created `src/spike-shell/` — Qt6 Widgets panel (32px), Spike launcher stub, clock, session menu (`loginctl`/`systemctl`), `spike.qss`, session stub (`spike-session` + `spike.desktop`). CMake build succeeds (`./build/spike-shell`). Still pre-alpha; no layer-shell / ISO packaging yet.
+
+**Try:** `cd src/spike-shell && cmake -S . -B build && cmake --build build && ./build/spike-shell`
+
+**Next:** layer-shell anchoring, real app scan, package into live ISO.
+
+---
+
+## 2026-08-06 — Pre-alpha through shell/installer; Alpha by feel
+
+**Decision:** Spike Shell (+ more stack) stays **pre-alpha**. Open Alpha later by BDFL feel — practical cue: installer works end-to-end. Phase names are labels, not code gates.
+
+---
+
+## 2026-08-06 — Detect on target confirmed (Celeron N4020 / ~4GB)
+
+**Finding:** After rebuild, debug capture `spike-capture-20260806T061802Z` shows correct hardware: **Celeron N4020**, **2 cores**, **~3.7GB RAM** (`total_kb: 3818872`), zram ~3729MB. No longer the build-host Xeon.
+
+**Note:** Deb on image still reported `0.0.1-1` (hook/service fix was enough); bump to 0.0.2 on next package if desired. User also ran `sudo spike-config --generate memory` on live.
+
+**Artifacts:** `build/iso-build/debug-logs/spike-capture-20260806T061802Z/`
+
+---
+
+## 2026-08-06 — Detect baked build-host hardware into live ISO (bug)
+
+**Finding:** Capture showed Xeon E3-1505M / 16GB because `0600-spike-config.chroot` ran `spike-config --detect` inside the **build chroot**. User’s target is dual-core / 4GB.
+
+**Fix:** Hook only seeds default state. New `spike-detect.service` runs `--detect` on the target at boot (before capture). Package bumped to 0.0.2.
+
+**Retry:** `sudo ./scripts/build-iso.sh` → debug boot → confirm capture CPU/RAM match the laptop.
+
+---
+
+## 2026-08-06 — Stage 2 live debug boot: spike-config OK
+
+**Finding:** Rebuilt ISO with debug GRUB entry. Boot cmdline had `debug`; `spike-capture-logs.service` succeeded. Capture landed under casper `install-logs-…/log/spike-capture-…` (wrote to `/var/log` first; recovered via log-persistence).
+
+**Verified:** `spike-config 0.0.1-1` installed; state seeded (`variant=standard`); detect filled CPU/RAM (Xeon E3-1505M, ~16GB). Multi-user/getty reached. Wi‑Fi iface present (`wlan0` down/unmanaged in capture — expected if not connected yet).
+
+**Artifacts:** `build/iso-build/debug-logs/spike-capture-20260806T055843Z/`
+
+**Next:** Stage 2 deepen (better network detect, UFW templates) or Stage 3 Spike Shell.
+
+---
+
+## 2026-08-06 — Live debug logging (rebuild ISO)
+
+**Done:** GRUB entry **Spike Live (debug logging)** (`debug`, no quiet/splash). On that cmdline, `spike-capture-logs.service` dumps journal/dmesg/`spike-config --state` onto casper `writable` / LABEL=writable. Host collector: `sudo ./scripts/spike-collect-usb-logs.sh`.
+
+**Also:** Copied today's `install-logs-2026-08-06.0` into `build/iso-build/debug-logs/` — boot reached multi-user + graphical; iwlwifi firmware loaded; no spike-config errors in casper syslog (noise: DNS during live hooks, GPT size mismatch on oversized stick).
+
+**Retry:** `sudo ./scripts/build-iso.sh` → write USB → boot **debug logging** entry → remount stick → collect logs.
+
+---
+
+## 2026-08-06 — gpg failure was packages.chroot local-repo signing
+
+**Finding:** `env: 'gpg': No such file` comes from `lb_chroot_archives` signing **local packages.chroot** debs — not from apt mirrors. `LB_BOOTSTRAP_INCLUDE` was also wiped to `""` when `lb config` re-read existing `config/bootstrap`.
+
+**Fix:**
+- Stage `spike-config_*.deb` under `includes.chroot/var/cache/spike-local/` and install with hook `0600` (`dpkg -i`).
+- Clear any `packages.chroot/*.deb` before build.
+- Force `LB_BOOTSTRAP_INCLUDE=…,gnupg` in `config/bootstrap` after `lb config`.
+
+**Retry:** `sudo ./scripts/build-iso.sh`
+
+---
+
+## 2026-08-06 — lb config: no --bootstrap-include on Ubuntu live-build 3.0
+
+**Finding:** `lb config: unrecognized option '--bootstrap-include'` on live-build `3.0~a57`. Variable `LB_BOOTSTRAP_INCLUDE` is still honored via `config/bootstrap`.
+
+**Fix:** `auto/config` exports `LB_BOOTSTRAP_INCLUDE=apt-utils,ca-certificates,gnupg` instead of the CLI flag.
+
+---
+
+## 2026-08-06 — ISO build abort: missing gpg in bootstrap chroot
+
+**Finding:** `lb build` stopped during `lb_chroot_archives` with `env: 'gpg': No such file or directory` / `E: GPG exited with error status 127`. No ISO was produced. live-build still exited in a way that looked “finished” to the wrapper.
+
+**Fix:** `auto/config` now `--bootstrap-include apt-utils,ca-certificates,gnupg`. `build-iso.sh` fails hard when no `.iso` exists and prints matching `build.log` errors.
+
+**Retry:** `sudo ./scripts/build-iso.sh` (full clean + rebuild).
+
+---
+
+## 2026-08-06 — spike-config packaged into live ISO
+
+**Done:** `scripts/package-spike-config.sh` builds `spike-config_0.0.1-1_all.deb`; `build-iso.sh` stages it into `config/packages.chroot/` before `lb build`; hook `0600-spike-config.chroot` seeds state + `--detect`.
+
+**Also:** Pre-alpha Secure Boot is optional (disable in firmware OK). Remaster still prefers shim when present.
+
+**Try:** `./scripts/package-spike-config.sh` then `sudo ./scripts/build-iso.sh`
+
+---
+
 ## 2026-08-06 — Stage 2 spike-config skeleton
 
 **Done:** Created `src/spike-config/` — Python engine with state store, `{{var}}` templates, modules (memory, boot, network, multimedia, security/blacklist), developer CLI, and unit tests (`SPIKE_ROOT` sandbox). Spec: `CONFIGURATION.md`. Still pre-alpha; not packaged into the live ISO yet.
