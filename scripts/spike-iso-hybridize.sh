@@ -91,17 +91,17 @@ set color_normal=white/black
 set color_highlight=black/light-gray
 
 menuentry "Spike Live" {
-	linux	/casper/${KERNEL} boot=casper hostname=spike-live quiet splash ---
+	linux	/casper/${KERNEL} boot=casper hostname=spike-live username=spike quiet splash ---
 	initrd	/casper/${INITRD}
 }
 
 menuentry "Spike Live (debug logging)" {
-	linux	/casper/${KERNEL} boot=casper hostname=spike-live debug ---
+	linux	/casper/${KERNEL} boot=casper hostname=spike-live username=spike debug ---
 	initrd	/casper/${INITRD}
 }
 
 menuentry "Spike Live (safe graphics)" {
-	linux	/casper/${KERNEL} boot=casper hostname=spike-live nomodeset quiet splash ---
+	linux	/casper/${KERNEL} boot=casper hostname=spike-live username=spike nomodeset quiet splash ---
 	initrd	/casper/${INITRD}
 }
 EOF
@@ -114,17 +114,17 @@ search --no-floppy --set=root --file /casper/filesystem.squashfs
 set prefix=(\$root)/boot/grub
 
 menuentry "Spike Live" {
-	linux	/casper/${KERNEL} boot=casper hostname=spike-live quiet splash ---
+	linux	/casper/${KERNEL} boot=casper hostname=spike-live username=spike quiet splash ---
 	initrd	/casper/${INITRD}
 }
 
 menuentry "Spike Live (debug logging)" {
-	linux	/casper/${KERNEL} boot=casper hostname=spike-live debug ---
+	linux	/casper/${KERNEL} boot=casper hostname=spike-live username=spike debug ---
 	initrd	/casper/${INITRD}
 }
 
 menuentry "Spike Live (safe graphics)" {
-	linux	/casper/${KERNEL} boot=casper hostname=spike-live nomodeset quiet splash ---
+	linux	/casper/${KERNEL} boot=casper hostname=spike-live username=spike nomodeset quiet splash ---
 	initrd	/casper/${INITRD}
 }
 EOF

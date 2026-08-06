@@ -138,8 +138,10 @@ Debug capture (Stage 3) keeps **spike-config**, **shell/session/seat**, filtered
 To log **spike-session startup** (finalize optional — hard power-off is OK):
 
 ```
+# Live boots: autologin as **spike** on tty1 and starts spike-session.
+# Optional debug capture before/during session (Ctrl+Alt+F2):
 sudo spike-capture-logs --follow
-# as the live user, NOT sudo:
+# Manual session if needed (as spike, not sudo):
 spike-session
 # if input dies: power off; stick keeps journal-follow + spike-session-latest.log
 # optional if you can switch VT: sudo spike-capture-logs --finalize

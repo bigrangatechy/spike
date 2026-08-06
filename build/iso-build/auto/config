@@ -54,7 +54,7 @@ lb config noauto \
 	--iso-application "Spike Linux" \
 	--iso-publisher "BigRangaTech; https://spike.bigrangatech.com" \
 	--iso-volume "Spike 26.04" \
-	--bootappend-live "boot=casper hostname=spike-live quiet splash" \
+	--bootappend-live "boot=casper hostname=spike-live username=spike quiet splash" \
 	"${@}"
 
 # Re-apply after lb config (re-read of config/bootstrap clears the export).

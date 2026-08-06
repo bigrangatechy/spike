@@ -28,6 +28,25 @@ check /etc/xdg/kdeglobals 50
 check /etc/xdg/menus/applications.menu 500
 check /usr/share/icons/spike-icons/index.theme 50
 check /etc/pipewire/pipewire.conf.d/99-spike.conf 50
+check /usr/share/alsa/ucm2/Intel/sof-essx8336/HiFi.conf 500
+check /etc/casper.conf 50
+check /etc/profile.d/99-spike-autostart-session.sh 50
+
+# sof-essx8336 HiFi must NOT pull HDMI (causes ASoC -5 spam + auto_null only).
+if grep -q 'Include.hdmi' /usr/share/alsa/ucm2/Intel/sof-essx8336/HiFi.conf 2>/dev/null; then
+  echo "E: sof-essx8336 HiFi.conf still includes HDMI — remove Include.hdmi" >&2
+  fail=1
+else
+  echo "I: sof-essx8336 HiFi.conf has no HDMI include"
+fi
+
+# Live user must be spike (not ubuntu).
+if ! grep -q 'USERNAME="spike"' /etc/casper.conf 2>/dev/null; then
+  echo "E: /etc/casper.conf USERNAME is not spike" >&2
+  fail=1
+else
+  echo "I: casper USERNAME=spike"
+fi
 
 # SVG icon engine required for Breeze panel icons.
 if [ ! -e /usr/lib/x86_64-linux-gnu/qt6/plugins/iconengines/libqsvgicon.so ] &&

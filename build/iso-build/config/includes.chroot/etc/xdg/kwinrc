@@ -5,3 +5,7 @@ theme=Breeze
 
 [Windows]
 BorderlessMaximizedWindows=false
+
+# Overview effect needs milou / kwin private QML we do not ship — disable noise.
+[Plugins]
+overviewEnabled=false

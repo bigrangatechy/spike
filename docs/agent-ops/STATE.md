@@ -1,6 +1,6 @@
 # Spike Agent Ops — Current State
 
-**Last updated:** 2026-08-06  
+**Last updated:** 2026-08-07  
 **Phase label:** Pre-alpha (implementation underway; Alpha gate not met yet)  
 **Note:** Stay in **pre-alpha** until the **installer works end-to-end** (live → install → reboot to installed desktop). That is the BDFL gate to open **Alpha** — not a calendar date, not “shell boots,” not Stage counter. See `DECISIONS.md`.
 
@@ -19,14 +19,14 @@
 | `scripts/build-iso.sh` | ✅ Packages spike-config + spike-shell + lb build |
 | Stage 1 live ISO | ✅ Hardware boot + login |
 | Stage 2 (`spike-config`) | ✅ Target detect OK (N4020 / ~4GB) |
-| Stage 3 (Spike Shell) | 📝 0.0.17: portals Spike:KDE, audio groups, WP/SOF tighten, volume retry, launcher icons; pending ISO rebuild |
+| Stage 3 (Spike Shell) | 📝 0.0.18: autologin as spike → spike-session; no portal block; sof UCM without HDMI; pending rebuild |
 | Stage 4 (installer) | 🔲 Pre-alpha until installer E2E — that gate opens **Alpha** |
 
 ## In Progress
 
 | Item | Notes |
 | :-: | :-: |
-| Stage 3 — desktop smoke | Rebuild ISO with 0.0.17; verify icons, Volume, portals, SOF quiet, Mouse Apply, clock→Date&Time |
+| Stage 3 — desktop smoke | Rebuild ISO with 0.0.18; boot→desktop as spike; Speakers sink; quiet SOF; portals after Wayland |
 
 ## Blocked / Waiting On Decision
 
@@ -41,6 +41,7 @@
 
 | Date | Item |
 | :-: | :-: |
+| 2026-08-07 | spike-shell 0.0.18: live user spike + tty1 autologin → spike-session; drop sof HDMI UCM; non-blocking portals |
 | 2026-08-06 | spike-shell 0.0.17: portals Spike:KDE, audio/pipewire groups, BT SPA, PW 44100 live drop-in, SOF scoped, volume/wpctl, launcher icons, verify-includes hook |
 | 2026-08-06 | spike-shell 0.0.16: Libinput kcminputrc + honest Mouse/Keyboard Apply |
 | 2026-08-06 | spike-shell 0.0.15: non-empty WP/SpikeDark, qt6-svg-plugins, pulse wait |
@@ -68,7 +69,7 @@
 
 ## Next Suggested Work
 
-1. Rebuild ISO + smoke: SVG icons, Volume sound, SOF quieter, portals OK, Mouse Apply, clock→Date&Time, launcher icons.  
+1. Rebuild ISO + smoke: boots to desktop as **spike** (no manual login/session); Speakers not auto_null; quieter SOF; portals after desktop.  
 2. Next Settings pass: Users / Language / Accessibility stubs → real pages.  
 3. Stage 4 (still pre-alpha): custom installer until it works E2E.  
 4. Open **Alpha** when installer E2E is confirmed (BDFL gate).

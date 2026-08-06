@@ -100,7 +100,7 @@ int main(int argc, char *argv[])
 {
   QApplication app(argc, argv);
   QApplication::setApplicationName(QStringLiteral("spike-shell"));
-  QApplication::setApplicationVersion(QStringLiteral("0.0.17"));
+  QApplication::setApplicationVersion(QStringLiteral("0.0.18"));
   QApplication::setOrganizationName(QStringLiteral("BigRangaTech"));
 
   // Breeze SVG icons need qt6-svg-plugins on the live image.
@@ -130,12 +130,14 @@ int main(int argc, char *argv[])
   }
   panel.show();
 
-  // Portals need WAYLAND_DISPLAY (set by KWin for --exit-with-session). Best-effort.
-  QTimer::singleShot(1500, []() {
-    QProcess::startDetached(QStringLiteral("systemctl"),
-                            {QStringLiteral("--user"), QStringLiteral("start"),
-                             QStringLiteral("xdg-desktop-portal.service"),
-                             QStringLiteral("plasma-xdg-desktop-portal-kde.service")});
+  // Portals need WAYLAND_DISPLAY (set by KWin for --exit-with-session).
+  // Never start these from spike-session before KWin — that blocks ~90s then ABRTs.
+  QTimer::singleShot(2000, []() {
+    QProcess::startDetached(
+        QStringLiteral("systemctl"),
+        {QStringLiteral("--user"), QStringLiteral("start"), QStringLiteral("--no-block"),
+         QStringLiteral("xdg-desktop-portal.service"),
+         QStringLiteral("plasma-xdg-desktop-portal-kde.service")});
   });
 
   return app.exec();

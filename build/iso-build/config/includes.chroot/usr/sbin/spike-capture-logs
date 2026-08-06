@@ -108,13 +108,20 @@ write_snapshot_into() {
       'plasma-pa' 'firmware-sof-signed' 'breeze' 'breeze-icon-theme' \
       'kf6-breeze-icon-theme' 'qt6-svg-plugins' 'libqt6svg6' 'pulseaudio-utils' \
       'upower' 'alsa-utils' 'rtkit' 'xdg-desktop-portal' 'xdg-desktop-portal-kde' \
+      'libspa-0.2-bluetooth' \
       2>&1 || true
     ls -la /usr/bin/spike-config /usr/bin/spike-shell /usr/bin/spike-session 2>&1 || true
     ls -la /usr/share/icons/spike-icons/index.theme \
       /usr/share/wireplumber/wireplumber.conf.d/51-spike-sof-hdmi-disable.conf \
-      /usr/share/color-schemes/SpikeDark.colors 2>&1 || true
+      /usr/share/color-schemes/SpikeDark.colors \
+      /etc/pipewire/pipewire.conf.d/99-spike.conf \
+      /usr/share/alsa/ucm2/Intel/sof-essx8336/HiFi.conf 2>&1 || true
     wc -c /usr/share/wireplumber/wireplumber.conf.d/51-spike-sof-hdmi-disable.conf \
-      /usr/share/color-schemes/SpikeDark.colors 2>&1 || true
+      /usr/share/color-schemes/SpikeDark.colors \
+      /etc/pipewire/pipewire.conf.d/99-spike.conf \
+      /usr/share/alsa/ucm2/Intel/sof-essx8336/HiFi.conf 2>&1 || true
+    echo "=== sof-essx8336 HiFi HDMI include? ==="
+    grep -n 'Include.hdmi\|HDMI\|hdmi' /usr/share/alsa/ucm2/Intel/sof-essx8336/HiFi.conf 2>&1 || echo "(none — good)"
     ls -la /usr/lib/*/qt6/plugins/iconengines/ 2>&1 || true
     ls -la /var/lib/spike/config 2>&1 || true
   } >"$cap/packages.txt" 2>&1 || true
@@ -289,7 +296,7 @@ case "$MODE" in
 
     echo "I: follow armed → $OUT"
     echo "I: journal → $OUT/journal-follow.txt (survives reboot; finalize optional)"
-    echo "I: next: log in, run spike-session as live user (not sudo), then power off or --finalize"
+    echo "I: next: live autologin should start spike-session; or Ctrl+Alt+F2 and run it as user spike"
     ;;
 
   finalize)

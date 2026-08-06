@@ -4,6 +4,24 @@ Append-only. Newest sessions at the **top**.
 
 ---
 
+## 2026-08-07 — Fix portal hang + sof HDMI UCM + live autologin (0.0.18)
+
+**Smoke (`spike-capture-20260806T135426Z`, 0.0.17):** Session “failed a lot” then started — `spike-session` blocked ~76s on `systemctl --user start` portals *before* Wayland (KDE portal ABRT, parent portal timeout). Pulse only `auto_null`; ~80 SOF ASoC −5 on HDMI pcm6/7. Packages/SVG/groups OK.
+
+**Root causes:**
+1. Portal start before KWin (blocking).
+2. UCM `HiFi.conf` `Include.hdmi` → ACP probes broken HDMI devices → spam + no analog sink.
+
+**Fix:** Drop HDMI include from shipped sof-essx8336 HiFi; broaden WP disable OR-rules; portals only from shell after Wayland (`--no-block`); wait/log for `alsa_output` sink; disable KWin overview plugin; verify-hook guards UCM.
+
+**Live login:** casper user **`spike`** (not ubuntu); getty@tty1 autologin; `profile.d` execs `spike-session` on tty1. Ctrl+Alt+F2 for a text console.
+
+**Package:** `spike-shell_0.0.18-1`.
+
+**Try:** rebuild → boot should land on desktop as spike; Speakers sink (not null); quiet SOF; no ~76s hang.
+
+---
+
 ## 2026-08-06 — Pre-rebuild hardening (0.0.17)
 
 More before ISO rebuild (beyond 0.0.15/0.0.16 smoke fixes):

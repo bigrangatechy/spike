@@ -6,7 +6,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SRC="${ROOT}/src/spike-shell"
 OUT_DIR="${ROOT}/build/packages"
-VERSION="${SPIKE_SHELL_VERSION:-0.0.17}"
+VERSION="${SPIKE_SHELL_VERSION:-0.0.18}"
 REVISION="${SPIKE_SHELL_REVISION:-1}"
 PKG_VER="${VERSION}-${REVISION}"
 ARCH=amd64

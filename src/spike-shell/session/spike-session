@@ -2,7 +2,7 @@
 # Spike session — standalone KWin Wayland + Spike Shell.
 # Spec: docs/BOOT-PROCESS.md / docs/DESKTOP.md
 #
-# Live ISO has no display manager yet, so we start from a text VT.
+# Live ISO: getty@tty1 autologins as "spike", then profile.d starts this script.
 # Prefer the system seatd socket when present; only use seatd-launch
 # when nothing is listening (seatd-launch fails if /run/seatd.sock exists).
 set -euo pipefail
@@ -111,6 +111,12 @@ if ! id -nG | tr ' ' '\n' | grep -qx video; then
   echo "spike-session: WARNING: user not in 'video' group — seatd may deny the seat. Log out/in after spike-live-groups, or rebuild." >&2
 fi
 
+# Live image: drop stale WirePlumber profile state so UCM/HDMI policy changes apply.
+if grep -Eqw 'boot=casper|spike.live' /proc/cmdline 2>/dev/null; then
+  rm -rf "${XDG_STATE_HOME:-${HOME}/.local/state}/wireplumber" 2>/dev/null || true
+  echo "spike-session: cleared live WirePlumber state"
+fi
+
 # PipeWire is deferred on live TTY login (SOF HDMI probe spam). Start it here.
 start_audio() {
   if ! command -v systemctl >/dev/null 2>&1; then
@@ -120,15 +126,23 @@ start_audio() {
   systemctl --user start pipewire.socket pipewire.service wireplumber.service \
     pipewire-pulse.socket pipewire-pulse.service 2>&1 || true
 
-  # Wait briefly for the Pulse socket so Volume applet / pactl work immediately.
-  local i
-  for i in 1 2 3 4 5 6 7 8 9 10; do
-    if systemctl --user is-active --quiet pipewire-pulse.service 2>/dev/null; then
-      if [[ -n "${XDG_RUNTIME_DIR:-}" && -S "${XDG_RUNTIME_DIR}/pulse/native" ]] ||
-         command -v pactl >/dev/null 2>&1 && pactl info >/dev/null 2>&1; then
-        echo "spike-session: pipewire-pulse ready (attempt ${i})"
+  # Wait for Pulse + a real sink (not only auto_null) — UCM/WP need a moment.
+  local i sinks
+  for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
+    if ! systemctl --user is-active --quiet pipewire-pulse.service 2>/dev/null; then
+      sleep 0.3
+      continue
+    fi
+    if command -v pactl >/dev/null 2>&1; then
+      sinks="$(pactl list short sinks 2>/dev/null || true)"
+      if echo "$sinks" | grep -Eiq 'alsa_output|bluez_output'; then
+        echo "spike-session: pipewire-pulse ready with hardware sink (attempt ${i})"
         break
       fi
+    fi
+    if [[ -n "${XDG_RUNTIME_DIR:-}" && -S "${XDG_RUNTIME_DIR}/pulse/native" ]] && [[ "$i" -ge 8 ]]; then
+      echo "spike-session: pipewire-pulse socket ready (attempt ${i}; waiting ended)"
+      break
     fi
     sleep 0.3
   done
@@ -143,24 +157,16 @@ start_audio() {
   else
     echo "spike-session: WARNING: pactl not found (install pulseaudio-utils)" >&2
   fi
+  if command -v wpctl >/dev/null 2>&1; then
+    echo "spike-session: --- wpctl status ---"
+    wpctl status 2>&1 | head -n 80 || true
+  fi
 }
 start_audio
 sync || true
 
-# Portals need a session bus + XDG_CURRENT_DESKTOP containing KDE (kde.portal UseIn=KDE).
-start_portals() {
-  if ! command -v systemctl >/dev/null 2>&1; then
-    return 0
-  fi
-  ensure_session_bus || true
-  echo "spike-session: XDG_CURRENT_DESKTOP=${XDG_CURRENT_DESKTOP}"
-  echo "spike-session: starting xdg-desktop-portal (user units)"
-  systemctl --user start xdg-desktop-portal.service \
-    plasma-xdg-desktop-portal-kde.service 2>&1 || true
-  systemctl --user --no-pager --full status xdg-desktop-portal.service \
-    plasma-xdg-desktop-portal-kde.service 2>&1 | head -n 40 || true
-}
-
+# Portals need WAYLAND_DISPLAY — do NOT start them here (blocks ~90s then ABRTs).
+# spike-shell starts them after KWin is up. Log desktop id only.
 ensure_session_bus() {
   if [[ -n "${DBUS_SESSION_BUS_ADDRESS:-}" ]]; then
     return 0
@@ -172,7 +178,7 @@ ensure_session_bus() {
   return 1
 }
 
-start_portals
+echo "spike-session: XDG_CURRENT_DESKTOP=${XDG_CURRENT_DESKTOP} (portals start after Wayland)"
 
 run_kwin_direct() {
   if ensure_session_bus; then

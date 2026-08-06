@@ -31,7 +31,7 @@ bool runDetached(const QString &program, const QStringList &args)
 
 void runPowerAction(const QString &logindMethod, const QString &systemctlVerb)
 {
-  // 1) Passwordless sudo (Ubuntu live user) — most reliable without a greeter/polkit agent.
+  // 1) Passwordless sudo (Spike live user) — most reliable without a greeter/polkit agent.
   if (runWait(QStringLiteral("sudo"),
               {QStringLiteral("-n"), QStringLiteral("systemctl"), systemctlVerb})) {
     return;
