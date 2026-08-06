@@ -54,8 +54,20 @@ seatd
 libseat1
 # Visible pointer (without this KWin logs "Unable to load any cursor theme")
 breeze-cursor-theme
+# Breeze window decorations + Qt platform theme (no plasma-workspace / plasmashell).
+# Verified: breeze / plasma-integration / xdg-desktop-portal-kde do not Depends on
+# plasma-desktop or plasma-workspace. Do NOT add those packages — they fight Spike Shell.
+breeze
+# Explicit icon meta (also pulled by breeze → kf6-breeze-icon-theme). Spike-icons inherits it.
+breeze-icon-theme
+plasma-integration
+xdg-desktop-portal
+xdg-desktop-portal-kde
 # Power actions from Spike Shell (logind asks polkit; without this → Access denied)
 polkitd
+# Volume applet (pactl) + Battery applet (UPower)
+pulseaudio-utils
+upower
 
 # Stage-3 live apps — KDE standalone set from CONSTRAINTS.md / DESIGN-DECISIONS.md.
 # Spike Shell owns the shell; these are the application layer (not full Plasma).

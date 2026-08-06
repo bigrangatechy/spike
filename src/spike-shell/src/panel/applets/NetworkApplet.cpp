@@ -4,6 +4,7 @@
 #include "network/NmClient.hpp"
 
 #include <QApplication>
+#include <QIcon>
 #include <QScreen>
 #include <QVBoxLayout>
 #include <QWidget>
@@ -63,6 +64,7 @@ void NetworkApplet::refresh()
 {
   if (!m_nm) {
     setText(QStringLiteral("Net"));
+    setIcon(QIcon::fromTheme(QStringLiteral("network-offline")));
     setToolTip(QStringLiteral("NetworkManager unavailable"));
     return;
   }
@@ -71,14 +73,29 @@ void NetworkApplet::refresh()
   const QString label = m_nm->statusLabel(&err);
   setToolTip(label);
 
+  QString iconName = QStringLiteral("network-wired");
+  QString text;
   if (kind == QLatin1String("ethernet")) {
-    setText(QStringLiteral("Eth"));
+    iconName = QStringLiteral("network-wired");
+    text = QStringLiteral("Eth");
   } else if (kind == QLatin1String("wifi")) {
-    setText(barsForStrength(m_nm->wifiStrength()));
+    iconName = QStringLiteral("network-wireless");
+    text = barsForStrength(m_nm->wifiStrength());
   } else if (kind == QLatin1String("disabled")) {
-    setText(QStringLiteral("WiFi ✕"));
+    iconName = QStringLiteral("network-wireless-disconnected");
+    text = QStringLiteral("WiFi ✕");
   } else {
-    setText(QStringLiteral("Net"));
+    iconName = QStringLiteral("network-offline");
+    text = QStringLiteral("Net");
+  }
+  const QIcon icon = QIcon::fromTheme(iconName);
+  if (!icon.isNull()) {
+    setIcon(icon);
+    setIconSize(QSize(20, 20));
+    setText(QString());
+  } else {
+    setIcon(QIcon());
+    setText(text);
   }
 }
 

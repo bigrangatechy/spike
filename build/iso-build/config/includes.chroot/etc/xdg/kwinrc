@@ -1,0 +1,7 @@
+# Spike live defaults — Breeze decorations without plasma-workspace (BRANDING.md).
+[org.kde.kdecoration2]
+library=org.kde.breeze
+theme=Breeze
+
+[Windows]
+BorderlessMaximizedWindows=false

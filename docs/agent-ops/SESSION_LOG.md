@@ -4,6 +4,38 @@ Append-only. Newest sessions at the **top**.
 
 ---
 
+## 2026-08-06 — Settings pages + Volume/Battery applets + spike-icons (0.0.14)
+
+**Done:**
+- `spike-icons` inherit theme (`breeze-dark` → Breeze) + `QIcon::fromTheme` on panel/Settings nav
+- Live: `breeze-icon-theme`, `pulseaudio-utils`, `upower`; polkit `timedate1` for live timezone/NTP
+- Settings (real, not stubs): Date & Time (`timedatectl`), Keyboard / Mouse (`kcminputrc`), Keyboard Layout (XKB/`localectl`)
+- Tray: Volume (pactl + scroll/mute) → Sound KCM; Battery (UPower, hidden if none) → Power KCM
+- Still stubs: Language, Users, Accessibility, Notifications, VPN, …
+
+**Package:** `spike-shell_0.0.14-1`.
+
+**Try:** rebuild ISO → panel icons + volume/battery → Settings pages above → Session Shut down.
+
+---
+
+## 2026-08-06 — Pre-rebuild desktop polish (Breeze / menu / portal / SOF HDMI)
+
+**Prior smoke (capture `spike-capture-20260806T115605Z`):** Login quiet (PipeWire deferred); `spike-session` OK; Wi‑Fi DHCP; Settings KCMs; **graceful shutdown**. Gaps: missing Breeze decorations, `applications.menu`, xdg-desktop-portal, SOF HDMI journal spam in-session.
+
+**Landed (config + live packages, no plasma-workspace):**
+- Packages: `breeze`, `plasma-integration`, `xdg-desktop-portal`, `xdg-desktop-portal-kde`
+- `/etc/xdg/menus/applications.menu` (Spike-owned; no `plasma-workspace-data`)
+- SpikeDark color scheme + `/etc/xdg/kwinrc` / `kdeglobals` (Breeze decorations, Spike purple/cyan tint)
+- WirePlumber `51-spike-sof-hdmi-disable.conf` (sof-essx8336 HDMI only)
+- `QT_QPA_PLATFORMTHEME=kde` via environment.d / profile.d / `spike-session`
+
+**Out of scope this ISO:** custom Aurorae titlebars; printer KCM QML noise; Sound KCM Kirigami binding loops.
+
+**Try:** rebuild → **Spike Live (debug logging)** → `spike-session` → check titlebars / menu / portal / quieter journal → Session menu Shut down → USB `spike-capture-*`.
+
+---
+
 ## 2026-08-06 — Alpha gate locked: installer E2E
 
 **BDFL:** Leave pre-alpha / enter Alpha only when the custom installer works end-to-end (live → install → reboot). Logged in `DECISIONS.md`; `STATE.md` / `ROADMAP.md` / `README.md` updated.

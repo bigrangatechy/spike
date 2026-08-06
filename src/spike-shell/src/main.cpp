@@ -4,6 +4,7 @@
 
 #include <QApplication>
 #include <QFile>
+#include <QIcon>
 #include <QPalette>
 #include <QScreen>
 #include <QWindow>
@@ -96,8 +97,14 @@ int main(int argc, char *argv[])
 {
   QApplication app(argc, argv);
   QApplication::setApplicationName(QStringLiteral("spike-shell"));
-  QApplication::setApplicationVersion(QStringLiteral("0.0.13"));
+  QApplication::setApplicationVersion(QStringLiteral("0.0.14"));
   QApplication::setOrganizationName(QStringLiteral("BigRangaTech"));
+
+  // BRANDING.md: spike-icons inherits Breeze Dark (shipped on live ISO).
+  QIcon::setThemeName(QStringLiteral("spike-icons"));
+  if (QIcon::themeName().isEmpty() || QIcon::fromTheme(QStringLiteral("audio-volume-high")).isNull()) {
+    QIcon::setThemeName(QStringLiteral("breeze-dark"));
+  }
 
   applyDarkPalette(app);
   loadStyleSheet(app);

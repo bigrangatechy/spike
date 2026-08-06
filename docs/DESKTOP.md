@@ -1016,7 +1016,7 @@ The settings panel is a hybrid: custom Spike pages for Spike-specific settings a
 ```
 ├── Appearance (custom) — theme, panel, fonts, icons
 ├── Notifications (custom) — history, DND, sound
-├── Keyboard Layout (custom) — layouts, switching
+├── Keyboard Layout (custom) — XKB layout via setxkbmap / localectl / kxkbrc
 └── Language (custom) — system language / region
     └── Note: upstream kcm_regionandlang lives in plasma-workspace; Spike does not ship plasmashell
 ```
@@ -1027,9 +1027,9 @@ The settings panel is a hybrid: custom Spike pages for Spike-specific settings a
 ├── Display (KCM) — kscreen / kcm_kscreen (standalone package)
 ├── Sound (KCM) — plasma-pa / kcm_pulseaudio (standalone; needs PipeWire)
 ├── Power (KCM) — powerdevil / kcm_powerdevilprofilesconfig (standalone)
-├── Keyboard (custom) — repeat rate, shortcuts
+├── Keyboard (custom) — repeat rate via ~/.config/kcminputrc (KWin); shortcuts later
 │   └── Note: upstream kcm_keyboard lives in plasma-desktop; not shipped
-├── Mouse/Touchpad (custom) — speed, acceleration, tapping
+├── Mouse/Touchpad (custom) — speed / tap-to-click via kcminputrc
 │   └── Note: upstream kcm_touchpad lives in plasma-desktop; not shipped
 ├── Bluetooth (KCM) — bluedevil / kcm_bluetooth (standalone)
 └── Printer (KCM) — print-manager / kcm_printer_manager (standalone)
@@ -1049,7 +1049,7 @@ The settings panel is a hybrid: custom Spike pages for Spike-specific settings a
 ```
 ├── Users (custom) — account management
 │   └── Note: upstream kcm_users lives in plasma-workspace; not shipped
-├── Date & Time (custom) — timezone, NTP
+├── Date & Time (custom) — timezone, NTP via timedatectl / systemd-timedated
 │   └── Note: upstream kcm_clock lives in plasma-desktop; not shipped
 ├── Accessibility (custom) — magnifier, sticky keys, etc.
 │   └── Note: upstream kcm_access lives in plasma-desktop; not shipped
@@ -1323,9 +1323,9 @@ The theme engine applies Spike's visual identity consistently across all shell c
 │   ├── Button styling (close, minimize, maximize)
 │   └── Spike theme config applied via kwalletrc or KWin config
 ├── Icon Theme
-│   ├── Breeze (KDE default) as base
-│   ├── Spike-specific overrides for panel icons
-│   └── Custom Spike button logo
+│   ├── spike-icons on live ISO (`/usr/share/icons/spike-icons`, Inherits=breeze-dark,breeze,hicolor)
+│   ├── Breeze Dark as the glyph source (no custom SVGs yet)
+│   └── Panel / Settings nav use QIcon::fromTheme
 ├── Fonts
 │   ├── Default: Noto Sans
 │   ├── Monospace: Noto Sans Mono (for Konsole)

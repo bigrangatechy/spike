@@ -1,0 +1,12 @@
+[Icon Theme]
+Name=Spike
+Comment=Spike icons — inherits Breeze Dark (docs/BRANDING.md). Custom glyphs land later.
+Inherits=breeze-dark,breeze,hicolor
+# Inheritance-only theme: no local icons yet.
+Directories=scalable
+
+[scalable]
+Size=48
+Type=Scalable
+MinSize=1
+MaxSize=256

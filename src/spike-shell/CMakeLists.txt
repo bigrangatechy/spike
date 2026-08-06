@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(spike-shell VERSION 0.0.13 LANGUAGES CXX)
+project(spike-shell VERSION 0.0.14 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -43,6 +43,14 @@ add_executable(spike-shell
   src/panel/applets/NetworkApplet.hpp
   src/panel/applets/SessionMenuApplet.cpp
   src/panel/applets/SessionMenuApplet.hpp
+  src/panel/applets/VolumeApplet.cpp
+  src/panel/applets/VolumeApplet.hpp
+  src/panel/applets/BatteryApplet.cpp
+  src/panel/applets/BatteryApplet.hpp
+  src/audio/VolumeClient.cpp
+  src/audio/VolumeClient.hpp
+  src/power/BatteryClient.cpp
+  src/power/BatteryClient.hpp
   src/network/NmClient.cpp
   src/network/NmClient.hpp
   src/network/NetworkPanelWidget.cpp
@@ -55,6 +63,14 @@ add_executable(spike-shell
   src/settings/KcmHost.hpp
   src/settings/SettingsWindow.cpp
   src/settings/SettingsWindow.hpp
+  src/settings/DateTimePage.cpp
+  src/settings/DateTimePage.hpp
+  src/settings/KeyboardPage.cpp
+  src/settings/KeyboardPage.hpp
+  src/settings/MousePage.cpp
+  src/settings/MousePage.hpp
+  src/settings/KeyboardLayoutPage.cpp
+  src/settings/KeyboardLayoutPage.hpp
   resources/spike-shell.qrc
 )
 

@@ -1,4 +1,9 @@
+#include "settings/ConfigClient.hpp"
+#include "settings/DateTimePage.hpp"
+#include "settings/KeyboardLayoutPage.hpp"
+#include "settings/KeyboardPage.hpp"
 #include "settings/KcmHost.hpp"
+#include "settings/MousePage.hpp"
 #include "settings/SettingsWindow.hpp"
 
 #include "network/NetworkPanelWidget.hpp"
@@ -9,6 +14,7 @@
 #include <QComboBox>
 #include <QFormLayout>
 #include <QHBoxLayout>
+#include <QIcon>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QLabel>
@@ -120,9 +126,8 @@ void SettingsWindow::buildPages()
        QStringLiteral("privacy")},
       {QStringLiteral("keyboard-layout"), QStringLiteral("Keyboard Layout"), QStringLiteral("PERSONAL"),
        QStringLiteral("layout switching"), false, false, {},
-       QStringLiteral("Layouts and switching — Spike custom (not kcm_keyboard). "
-                      "Installer default lives in installer.keyboard_layout."),
-       QStringLiteral("installer")},
+       QStringLiteral("Layouts and switching — Spike custom (not kcm_keyboard)."),
+       {}},
       {QStringLiteral("language"), QStringLiteral("Language"), QStringLiteral("PERSONAL"),
        QStringLiteral("locale language region"), false, false, {},
        QStringLiteral("System language / region. Upstream KCM (kcm_regionandlang) lives in "
@@ -140,13 +145,11 @@ void SettingsWindow::buildPages()
        QStringLiteral("kcm_powerdevilprofilesconfig"), {}, {}},
       {QStringLiteral("keyboard"), QStringLiteral("Keyboard"), QStringLiteral("HARDWARE"),
        QStringLiteral("repeat shortcuts"), false, false, {},
-       QStringLiteral("Repeat rate and shortcuts. Upstream KCM (kcm_keyboard) lives in "
-                      "plasma-desktop — Spike stub (no plasmashell on Spike)."),
+       QStringLiteral("Repeat rate via kcminputrc (KWin)."),
        {}},
       {QStringLiteral("mouse"), QStringLiteral("Mouse/Touchpad"), QStringLiteral("HARDWARE"),
        QStringLiteral("pointer touchpad tapping"), false, false, {},
-       QStringLiteral("Pointer / touchpad. Upstream KCM (kcm_touchpad) lives in "
-                      "plasma-desktop — Spike stub."),
+       QStringLiteral("Pointer / touchpad via kcminputrc."),
        {}},
       {QStringLiteral("bluetooth"), QStringLiteral("Bluetooth"), QStringLiteral("HARDWARE"),
        QStringLiteral("bt devices pairing"), false, true, QStringLiteral("kcm_bluetooth"), {}, {}},
@@ -170,9 +173,8 @@ void SettingsWindow::buildPages()
        {}},
       {QStringLiteral("datetime"), QStringLiteral("Date & Time"), QStringLiteral("SYSTEM"),
        QStringLiteral("timezone ntp clock"), false, false, {},
-       QStringLiteral("Timezone / NTP. Upstream KCM (kcm_clock) lives in plasma-desktop — "
-                      "Spike stub. Installer timezone is under installer.timezone."),
-       QStringLiteral("installer")},
+       QStringLiteral("Timezone / NTP via timedatectl."),
+       {}},
       {QStringLiteral("accessibility"), QStringLiteral("Accessibility"), QStringLiteral("SYSTEM"),
        QStringLiteral("magnifier sticky keys"), false, false, {},
        QStringLiteral("Magnifier, sticky keys, etc. Upstream KCM (kcm_access) lives in "
@@ -220,6 +222,14 @@ void SettingsWindow::buildPages()
       w = makeAppearancePage();
     } else if (page.id == QLatin1String("network")) {
       w = makeNetworkPage();
+    } else if (page.id == QLatin1String("datetime")) {
+      w = makeDateTimePage(this, m_status);
+    } else if (page.id == QLatin1String("keyboard")) {
+      w = makeKeyboardPage(this, m_status);
+    } else if (page.id == QLatin1String("mouse")) {
+      w = makeMousePage(this, m_status);
+    } else if (page.id == QLatin1String("keyboard-layout")) {
+      w = makeKeyboardLayoutPage(this, m_status);
     } else if (page.id == QLatin1String("diagnostics")) {
       auto *diag = new QWidget(this);
       auto *lay = new QVBoxLayout(diag);
@@ -537,6 +547,44 @@ void SettingsWindow::rebuildNav()
     }
     auto *item = new QListWidgetItem(p.title);
     item->setData(Qt::UserRole, p.id);
+    QString iconName;
+    if (p.id == QLatin1String("appearance")) {
+      iconName = QStringLiteral("preferences-desktop-theme");
+    } else if (p.id == QLatin1String("notifications")) {
+      iconName = QStringLiteral("preferences-desktop-notification");
+    } else if (p.id == QLatin1String("keyboard-layout") || p.id == QLatin1String("keyboard")) {
+      iconName = QStringLiteral("input-keyboard");
+    } else if (p.id == QLatin1String("language")) {
+      iconName = QStringLiteral("preferences-desktop-locale");
+    } else if (p.id == QLatin1String("display")) {
+      iconName = QStringLiteral("preferences-desktop-display");
+    } else if (p.id == QLatin1String("sound")) {
+      iconName = QStringLiteral("audio-volume-high");
+    } else if (p.id == QLatin1String("power")) {
+      iconName = QStringLiteral("preferences-system-power-management");
+    } else if (p.id == QLatin1String("mouse")) {
+      iconName = QStringLiteral("input-mouse");
+    } else if (p.id == QLatin1String("bluetooth")) {
+      iconName = QStringLiteral("preferences-system-bluetooth");
+    } else if (p.id == QLatin1String("printer")) {
+      iconName = QStringLiteral("printer");
+    } else if (p.id == QLatin1String("network") || p.id == QLatin1String("vpn")) {
+      iconName = QStringLiteral("network-wired");
+    } else if (p.id == QLatin1String("users")) {
+      iconName = QStringLiteral("system-users");
+    } else if (p.id == QLatin1String("datetime")) {
+      iconName = QStringLiteral("preferences-system-time");
+    } else if (p.id == QLatin1String("accessibility")) {
+      iconName = QStringLiteral("preferences-desktop-accessibility");
+    } else if (p.id == QLatin1String("about")) {
+      iconName = QStringLiteral("help-about");
+    } else {
+      iconName = QStringLiteral("preferences-system");
+    }
+    const QIcon ic = QIcon::fromTheme(iconName);
+    if (!ic.isNull()) {
+      item->setIcon(ic);
+    }
     item->setData(Qt::UserRole + 1, i);
     m_nav->addItem(item);
     if (p.id == currentId || (selectRow < 0 && needle.isEmpty() && !p.advanced)) {

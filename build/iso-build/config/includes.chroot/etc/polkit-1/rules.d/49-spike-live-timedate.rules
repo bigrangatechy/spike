@@ -1,0 +1,16 @@
+// Spike live: allow local active seats to change timezone / NTP without a polkit agent.
+polkit.addRule(function (action, subject) {
+    if (!subject.local || !subject.active) {
+        return polkit.Result.NOT_HANDLED;
+    }
+    var ids = [
+        "org.freedesktop.timedate1.set-time",
+        "org.freedesktop.timedate1.set-timezone",
+        "org.freedesktop.timedate1.set-local-rtc",
+        "org.freedesktop.timedate1.set-ntp"
+    ];
+    if (ids.indexOf(action.id) >= 0) {
+        return polkit.Result.YES;
+    }
+    return polkit.Result.NOT_HANDLED;
+});

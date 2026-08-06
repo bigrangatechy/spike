@@ -1,13 +1,16 @@
 #include "panel/Panel.hpp"
 
 #include "launcher/Launcher.hpp"
+#include "panel/applets/BatteryApplet.hpp"
 #include "panel/applets/ClockApplet.hpp"
 #include "panel/applets/NetworkApplet.hpp"
 #include "panel/applets/SessionMenuApplet.hpp"
+#include "panel/applets/VolumeApplet.hpp"
 #include "settings/ConfigClient.hpp"
 #include "settings/SettingsWindow.hpp"
 
 #include <QHBoxLayout>
+#include <QIcon>
 #include <QProcess>
 #include <QPushButton>
 
@@ -65,6 +68,11 @@ Panel::Panel(QWidget *parent)
   spikeBtn->setObjectName(QStringLiteral("SpikeButton"));
   spikeBtn->setFixedHeight(26);
   spikeBtn->setToolTip(QStringLiteral("Open start menu"));
+  const QIcon spikeIcon = QIcon::fromTheme(QStringLiteral("start-here-kde"),
+                                           QIcon::fromTheme(QStringLiteral("application-menu")));
+  if (!spikeIcon.isNull()) {
+    spikeBtn->setIcon(spikeIcon);
+  }
   connect(spikeBtn, &QPushButton::clicked, this, &Panel::toggleLauncher);
   layout->addWidget(spikeBtn);
 
@@ -72,6 +80,15 @@ Panel::Panel(QWidget *parent)
 
   auto *network = new NetworkApplet(this);
   layout->addWidget(network);
+
+  auto *volume = new VolumeApplet(this);
+  layout->addWidget(volume);
+
+  auto *battery = new BatteryApplet(this);
+  layout->addWidget(battery);
+  if (!battery->hasBattery()) {
+    battery->hide();
+  }
 
   auto *clock = new ClockApplet(this);
   layout->addWidget(clock);

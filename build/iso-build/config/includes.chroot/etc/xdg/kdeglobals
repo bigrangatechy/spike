@@ -1,0 +1,14 @@
+# Spike live KDE defaults — SpikeDark tint over Breeze widgets (no plasma-workspace).
+[General]
+ColorScheme=SpikeDark
+
+[KDE]
+LookAndFeelPackage=
+widgetStyle=Breeze
+
+[Icons]
+Theme=spike-icons
+
+[CursorTheme]
+ThemeName=breeze_cursors
+Size=24

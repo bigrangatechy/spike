@@ -19,26 +19,31 @@
 | `scripts/build-iso.sh` | ✅ Packages spike-config + spike-shell + lb build |
 | Stage 1 live ISO | ✅ Hardware boot + login |
 | Stage 2 (`spike-config`) | ✅ Target detect OK (N4020 / ~4GB) |
-| Stage 3 (Spike Shell) | 📝 0.0.13: defer PipeWire to session; full debug capture |
+| Stage 3 (Spike Shell) | 📝 0.0.14: Volume/Battery applets; Date/Time Keyboard Mouse Layout Settings; spike-icons |
 | Stage 4 (installer) | 🔲 Pre-alpha until installer E2E — that gate opens **Alpha** |
 
 ## In Progress
 
 | Item | Notes |
 | :-: | :-: |
-| Stage 3 — Spike Shell | Rebuild; smoke TTY login (no audio spam) + spike-session + Network |
+| Stage 3 — desktop smoke | Rebuild ISO; verify icons, Volume/Battery, new Settings pages, prior Breeze/portal/SOF polish |
 
 ## Blocked / Waiting On Decision
 
 | Item | Notes |
 | :-: | :-: |
-| Language / Keyboard / Mouse / Users / Date & Time / Accessibility | Spike custom pages (Plasma KCMs not shipped) — flesh UI next |
-| SOF HDMI pcm7 probe errors | WirePlumber may still retry in-session; tune monitor later if spam returns |
+| Language / Users / Accessibility / Notifications | Still stubs — next Settings passes |
+| Custom Spike SVG icons | Inherit-only `spike-icons` for now (BRANDING overrides later) |
+| Custom Spike Aurorae decorations | After Breeze works; BRANDING.md pixel match is follow-up |
+| Printer KCM QML / Sound Kirigami spam | Upstream noise; note only unless one-line fix |
 
 ## Recently Completed
 
 | Date | Item |
 | :-: | :-: |
+| 2026-08-06 | spike-shell 0.0.14: Date/Time, Keyboard, Mouse, Layout pages; Volume + Battery applets; spike-icons |
+| 2026-08-06 | Pre-rebuild polish: breeze + plasma-integration + portal-kde + applications.menu + SpikeDark + SOF HDMI WP rule |
+| 2026-08-06 | Smoke: session + Network/Settings + **graceful shutdown** (capture 20260806T115605Z) |
 | 2026-08-06 | BDFL: pre-alpha → Alpha only when installer works E2E |
 | 2026-08-06 | Full debug capture follow + defer PipeWire until spike-session (SOF spam) |
 | 2026-08-06 | Docs updated for Network custom UI + Settings KCM allowlist |
@@ -60,11 +65,10 @@
 
 ## Next Suggested Work
 
-1. Rebuild ISO + smoke Network tray (scan/connect/disconnect) and Settings → Network.  
-2. Smoke Display/Sound/Power/Bluetooth/Printer KCMs.  
-3. Flesh Plasma-coupled stubs (Language, Keyboard, Mouse, Users, Date & Time, Accessibility).  
-4. Stage 4 (still pre-alpha): custom installer until it works E2E.  
-5. Open **Alpha** when installer E2E is confirmed (BDFL gate).
+1. Rebuild ISO + smoke: Breeze decorations, spike-icons, Volume/Battery, Date & Time / Keyboard / Mouse / Layout, SOF HDMI quiet, Session Shut down.  
+2. Next Settings pass: Users / Language / Accessibility stubs → real pages.  
+3. Stage 4 (still pre-alpha): custom installer until it works E2E.  
+4. Open **Alpha** when installer E2E is confirmed (BDFL gate).
 
 ## How To Update This File
 

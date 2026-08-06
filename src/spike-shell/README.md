@@ -13,15 +13,20 @@ MVP for this skeleton:
 | Bottom panel (32px) | ✅ |
 | Spike button → Kickoff-style launcher | ✅ favorites + categories + power footer |
 | Clock applet | ✅ |
+| Network tray applet | ✅ |
+| Volume tray applet | ✅ PipeWire-Pulse via pactl |
+| Battery tray applet | ✅ UPower (hidden if no battery) |
 | Session menu (Settings / logout / reboot / poweroff) | ✅ |
 | Settings window (categories + About/Memory via D-Bus) | ✅ |
+| Date & Time / Keyboard / Mouse / Layout pages | ✅ Spike-native |
 | KCM pages | ✅ in-window host (`KcmHost` + Apply/Reset); packages added as pages flesh out |
 | Theme (`spike.qss`) — white text on dark | ✅ |
+| Icons (`spike-icons` inherits Breeze Dark) | ✅ |
 | ISO / `.deb` packaging | ✅ via `scripts/package-spike-shell.sh` |
 | `wlr-layer-shell` panel anchoring | ✅ via LayerShellQt (bottom edge) |
 | Session start (seatd + cursor) | ✅ live smoke |
 | `.desktop` app scanning + `Terminal=true` | ✅ |
-| Notification daemon / tray applets | ⬜ later |
+| Notification daemon / remaining tray applets | ⬜ later |
 
 ## Build (host smoke)
 

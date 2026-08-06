@@ -1,5 +1,6 @@
 #include "panel/applets/SessionMenuApplet.hpp"
 
+#include <QIcon>
 #include <QMenu>
 #include <QProcess>
 #include <QStringList>
@@ -52,10 +53,20 @@ void runPowerAction(const QString &logindMethod, const QString &systemctlVerb)
 } // namespace
 
 SessionMenuApplet::SessionMenuApplet(QWidget *parent)
-  : QPushButton(QStringLiteral("Session"), parent)
+  : QPushButton(parent)
 {
   setObjectName(QStringLiteral("SessionButton"));
   setFlat(true);
+  setFixedHeight(26);
+  const QIcon icon = QIcon::fromTheme(QStringLiteral("system-shutdown"));
+  if (!icon.isNull()) {
+    setIcon(icon);
+    setIconSize(QSize(20, 20));
+    setText(QString());
+  } else {
+    setText(QStringLiteral("Session"));
+  }
+  setToolTip(QStringLiteral("Session"));
   connect(this, &QPushButton::clicked, this, &SessionMenuApplet::showMenu);
 }
 

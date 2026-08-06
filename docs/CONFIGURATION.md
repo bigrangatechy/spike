@@ -674,7 +674,9 @@ If any step fails:
 ├── /etc/sddm.conf                              → Display manager configuration
 ├── /etc/xdg/spike-shell/spike-shell.conf      → Spike Shell global config
 ├── /usr/share/spike/themes/qt-stylesheet.qss  → Qt styling (theme overrides)
-├── /usr/share/spike/branding/kwin-decoration.rc → KWin window decoration
+├── /etc/xdg/kwinrc                             → KWin Breeze decorations (live; custom Aurorae later)
+├── /etc/xdg/kdeglobals                         → SpikeDark color scheme + Breeze widget style
+├── /usr/share/color-schemes/SpikeDark.colors   → Spike-tinted BreezeDark
 └── /etc/dconf/db/local.d/spike                 → GTK app settings (if any GTK apps)
 ```
 

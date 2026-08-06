@@ -12,6 +12,8 @@ export XDG_SESSION_TYPE=wayland
 # KWin needs a real xcursor theme or the pointer is invisible (looks like "no input").
 export XCURSOR_THEME="${XCURSOR_THEME:-breeze_cursors}"
 export XCURSOR_SIZE="${XCURSOR_SIZE:-24}"
+# plasma-integration platform theme (Breeze widgets / file dialogs)
+export QT_QPA_PLATFORMTHEME="${QT_QPA_PLATFORMTHEME:-kde}"
 
 # If started with sudo, bounce back to the invoking user (keeps their seat).
 if [[ "$(id -u)" -eq 0 ]]; then
@@ -146,6 +148,7 @@ run_kwin_direct() {
       XDG_SESSION_TYPE=wayland \
       XCURSOR_THEME="${XCURSOR_THEME}" \
       XCURSOR_SIZE="${XCURSOR_SIZE}" \
+      QT_QPA_PLATFORMTHEME="${QT_QPA_PLATFORMTHEME}" \
       kwin_wayland --drm --xwayland --exit-with-session=spike-shell
   fi
   exec kwin_wayland --drm --xwayland --exit-with-session=spike-shell
@@ -173,6 +176,7 @@ start_kwin() {
       exec dbus-run-session -- env LIBSEAT_BACKEND=seatd \
         XDG_CURRENT_DESKTOP=Spike XDG_SESSION_TYPE=wayland \
         XCURSOR_THEME="${XCURSOR_THEME}" XCURSOR_SIZE="${XCURSOR_SIZE}" \
+        QT_QPA_PLATFORMTHEME="${QT_QPA_PLATFORMTHEME}" \
         seatd-launch -- kwin_wayland --drm --xwayland --exit-with-session=spike-shell
     fi
     exec seatd-launch -- kwin_wayland --drm --xwayland --exit-with-session=spike-shell
