@@ -4,6 +4,12 @@ Append-only. Newest sessions at the **top**.
 
 ---
 
+## 2026-08-06 — Alpha gate locked: installer E2E
+
+**BDFL:** Leave pre-alpha / enter Alpha only when the custom installer works end-to-end (live → install → reboot). Logged in `DECISIONS.md`; `STATE.md` / `ROADMAP.md` / `README.md` updated.
+
+---
+
 ## 2026-08-06 — Login audio spam (SOF HDMI) + full debug capture
 
 **Finding:** After login, PipeWire/WirePlumber auto-started and looped on broken SOF HDMI (`sof-essx8336` pcm7 / `ASoC error (-5)`), flooding the console (worse with `debug` cmdline). No `spike-session` log — desktop never started. Hard power-off was manual.

@@ -1634,7 +1634,7 @@ Theme engine:
 └── Test on Celeron N4020, AMD A4, ThinkPad P50
 ```
 
-> **Note:** Project release label remains **pre-alpha** until beta readiness. Phase 3 prototyping may begin under that label.
+> **Note:** Project release label remains **pre-alpha** until the **installer works end-to-end** (then **Alpha**). Prototyping (ISO, shell, spike-config, installer) continues under pre-alpha until that gate. See `docs/agent-ops/DECISIONS.md`.
 
 **Phase 4 — Alpha Release (8 months from start)** 🔲 NOT STARTED
 

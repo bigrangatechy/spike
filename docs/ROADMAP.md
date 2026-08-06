@@ -73,7 +73,9 @@ End of life: Minimum 5 years per release (see END-OF-LIFE-POLICY.md)
 
 ### Objective
 
-Docs-first: record architectural decisions, specify components, and document constraints so the system can be built without tribal knowledge. **Pre-alpha is the project label until Spike is ready for a beta release** — it does not forbid starting implementation once product specs are sufficient. User-guide and most dev-guide pages are filled as the desktop and build pipeline ship.
+Docs-first: record architectural decisions, specify components, and document constraints so the system can be built without tribal knowledge. **Pre-alpha allows implementation** once specs are sufficient. User-guide and most dev-guide pages are filled as the desktop and build pipeline ship.
+
+**Exit (enter Alpha):** The custom **installer works end-to-end** (live USB → install to disk → reboot into installed Spike). Confirmed by BDFL. Shell/ISO progress alone does not flip the phase label. See `docs/agent-ops/DECISIONS.md`.
 
 ### Duration
 
@@ -122,7 +124,9 @@ Unknown — determined by documentation and implementation velocity. The docs-fi
 
 ### Exit Criteria
 
-Pre-alpha as a **release label** ends when Spike is ready for **beta** (see Phase 3 / beta section). That is separate from “may we write code?”
+**Pre-alpha ends → Alpha begins** when the **custom installer works end-to-end** (live → install → reboot to installed desktop), confirmed by BDFL. See `docs/agent-ops/DECISIONS.md`.
+
+That is separate from “may we write code?” (yes, already) and from later **Alpha → Beta** exit criteria in Phase 3.
 
 **Ready to start prototyping when:**
 
@@ -172,15 +176,19 @@ Pre-alpha as a **release label** ends when Spike is ready for **beta** (see Phas
 | Fork the repository | ✓ (but no merges accepted) |
 
 
-## Phase 2: Alpha (Months 1–8)
+## Phase 2: Alpha
 
 ### Objective
 
-Build the core system. Spike Shell boots to a usable desktop. The installer works end-to-end. Core functionality is operational on Tier 1 hardware. Basic hardware testing confirms the architecture works on real machines.
+Build and harden the core system under the **Alpha** label. Spike Shell is usable; the **installer already works E2E** (that was the gate out of pre-alpha). Expand Tier 1 coverage, finish core shell features, and broaden testing.
+
+### Entry criteria
+
+Custom installer works end-to-end (see Phase 1 exit / `DECISIONS.md`). Until then, work continues under **pre-alpha**.
 
 ### Duration
 
-8 months from alpha start.
+~8 months from alpha start (target; not a hard calendar).
 
 ### Version Target
 

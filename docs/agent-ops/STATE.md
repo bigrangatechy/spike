@@ -1,8 +1,8 @@
 # Spike Agent Ops — Current State
 
 **Last updated:** 2026-08-06  
-**Phase label:** Pre-alpha (Stage 2 detect OK; shell/installer still pre-alpha)  
-**Note:** “Pre-alpha” stays until BDFL opens Alpha **by feel** — target cue: installer works end-to-end. Shell and further stack work remain under pre-alpha for now.
+**Phase label:** Pre-alpha (implementation underway; Alpha gate not met yet)  
+**Note:** Stay in **pre-alpha** until the **installer works end-to-end** (live → install → reboot to installed desktop). That is the BDFL gate to open **Alpha** — not a calendar date, not “shell boots,” not Stage counter. See `DECISIONS.md`.
 
 ## Summary
 
@@ -20,7 +20,7 @@
 | Stage 1 live ISO | ✅ Hardware boot + login |
 | Stage 2 (`spike-config`) | ✅ Target detect OK (N4020 / ~4GB) |
 | Stage 3 (Spike Shell) | 📝 0.0.13: defer PipeWire to session; full debug capture |
-| Stage 4 (installer) | 🔲 Later — still **pre-alpha** until BDFL opens Alpha |
+| Stage 4 (installer) | 🔲 Pre-alpha until installer E2E — that gate opens **Alpha** |
 
 ## In Progress
 
@@ -39,6 +39,7 @@
 
 | Date | Item |
 | :-: | :-: |
+| 2026-08-06 | BDFL: pre-alpha → Alpha only when installer works E2E |
 | 2026-08-06 | Full debug capture follow + defer PipeWire until spike-session (SOF spam) |
 | 2026-08-06 | Docs updated for Network custom UI + Settings KCM allowlist |
 | 2026-08-06 | NetworkManager tray applet + Settings Network page (D-Bus + nmcli, no plasma-nm) |
@@ -62,8 +63,8 @@
 1. Rebuild ISO + smoke Network tray (scan/connect/disconnect) and Settings → Network.  
 2. Smoke Display/Sound/Power/Bluetooth/Printer KCMs.  
 3. Flesh Plasma-coupled stubs (Language, Keyboard, Mouse, Users, Date & Time, Accessibility).  
-4. Stage 4 (pre-alpha): installer squashfs → ext4.  
-5. Open **Alpha** only when installer feels ready (BDFL).
+4. Stage 4 (still pre-alpha): custom installer until it works E2E.  
+5. Open **Alpha** when installer E2E is confirmed (BDFL gate).
 
 ## How To Update This File
 

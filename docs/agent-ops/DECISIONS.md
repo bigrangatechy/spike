@@ -6,6 +6,24 @@ Operational decisions that affect how work proceeds. Product/architecture ration
 
 ---
 
+## 2026-08-06 — Pre-alpha ends when the installer works (enter Alpha)
+
+**Decision (BDFL):** Leave **pre-alpha** and open **Alpha** only when the **custom Spike installer works end-to-end** (live USB → install to disk → reboot into an installed Spike desktop). Until that gate is met, keep the **pre-alpha** label even while shell, ISO, and other stack work continues.
+
+**What “installer works” means (minimum):**
+- Installer runs from the live session
+- Partitions / copies the system as specified in `INSTALLER.md`
+- Reboot reaches an installed session (not only live)
+- BDFL confirms the gate is met (no calendar date)
+
+**Does not mean:** Alpha starts when the shell boots, when Stage N finishes, or when docs are “100%”. Shell/ISO work stays under pre-alpha until this gate.
+
+**Supersedes:** Soft “Alpha by feel” wording (installer was already the cue). Clarifies vs the older “pre-alpha until beta” note — that referred to the long docs-first era; the **phase label flip** is now **pre-alpha → Alpha** at installer E2E.
+
+**Refs:** `STATE.md`, `ROADMAP.md` (Phase 1 exit / Phase 2 entry), `INSTALLER.md`, prior “Pre-alpha stays open through shell/installer” entry.
+
+---
+
 ## 2026-08-06 — Settings Network is Spike custom; KCM allowlist only
 
 **Decision:**
@@ -22,11 +40,11 @@ Operational decisions that affect how work proceeds. Product/architecture ration
 
 ## 2026-08-06 — Pre-alpha stays open through shell/installer; Alpha by feel
 
-**Decision:** Keep implementing **Spike Shell** and other early stack pieces under the **pre-alpha** label. Do **not** open **Phase 2 (Alpha)** on a calendar or Stage counter. Consider Alpha only once the **installer** is working end-to-end (and BDFL judges readiness by feel). Roadmap phase names (pre-alpha / alpha / pre-beta / beta) remain labels, not hard gates for writing code.
+**Decision:** Keep implementing **Spike Shell** and other early stack pieces under the **pre-alpha** label. Do **not** open **Phase 2 (Alpha)** on a calendar or Stage counter.
 
-**Why:** Earlier Alpha milestone wording was optimistic vs actual velocity. Pre-alpha already allows implementation; forcing an Alpha declaration mid-stack creates false expectations.
+**Status:** Superseded 2026-08-06 by “Pre-alpha ends when the installer works (enter Alpha)” — installer E2E is now the explicit gate (not vague “feel” alone).
 
-**Refs:** `ROADMAP.md` (phases), `STATE.md`, prior “Stage 2 stays under pre-alpha” entry.
+**Refs:** Newer entry above; `STATE.md`, `ROADMAP.md`.
 
 ---
 
@@ -131,11 +149,9 @@ Operational decisions that affect how work proceeds. Product/architecture ration
 
 **Decision:** The project stays labeled **pre-alpha** until it is ready for a **beta** release. Pre-alpha is the release label, not a hard gate that forbids starting implementation once specs are sufficient.
 
-**Why:** Clarified by BDFL. User/dev guide stubs are filled as the desktop is built.
+**Status:** Partially superseded 2026-08-06. **Phase label** flip is now **pre-alpha → Alpha** when the **installer works E2E** (see top entry). Pre-alpha still does not forbid writing code. “Until beta” was the old docs-era shorthand and must not be read as skipping Alpha.
 
-**Implication:** Formal “all 70 docs before any code” checklist in `ROADMAP.md` should be treated as aspirational structure, not a stop-work order; update ROADMAP when BDFL wants the written exit criteria to match this.
-
-**Refs:** `docs/ROADMAP.md`, `docs/AGENTS.md`, this file
+**Refs:** `docs/ROADMAP.md`, newer installer-gate entry, `docs/AGENTS.md`
 
 ---
 

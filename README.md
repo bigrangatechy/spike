@@ -83,24 +83,22 @@ detection logic, and tier classification.
 
 ## Project Status
 
-**CURRENT PHASE: Pre-alpha (documentation)**
+**CURRENT PHASE: Pre-alpha** (implementation underway)
 
-Spike follows a "docs-first" methodology. The entire system is
-specified in documentation before any code is written. This means:
+Spike remains **pre-alpha** until the **installer works end-to-end**. Live ISO / shell work continues under that label. Opening **Alpha** is a BDFL gate when install → reboot to installed desktop succeeds.
 
 ```
-├── You cannot download or install Spike yet
-├── There is no ISO image yet
-├── There is no working desktop yet
-├── What exists: a complete specification of what Spike will be
-└── When code begins, it will follow these specifications
+├── Live ISO and Spike Shell are in active pre-alpha development
+├── No public “download Spike Alpha” yet
+├── Specs in docs/ guide the build
+└── Phase flip: pre-alpha → Alpha when installer E2E works (DECISIONS.md)
 ```
 
 Timeline:
 
 ```
-├── Pre-alpha (current): documentation, architecture, design
-├── Alpha: first bootable ISO, basic desktop, installer
+├── Pre-alpha (current): docs + early ISO/shell; ends at installer E2E
+├── Alpha: installer works; expand desktop, hardware testing
 ├── Beta: feature-complete, hardware testing, bug fixing
 ├── Release Candidate: final testing, polish, documentation review
 └── 1.0: first stable release (~18 months from alpha start)
