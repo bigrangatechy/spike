@@ -1,5 +1,7 @@
 #include "settings/MousePage.hpp"
 
+#include "settings/InputConfig.hpp"
+
 #include <QCheckBox>
 #include <QFormLayout>
 #include <QHBoxLayout>
@@ -11,9 +13,6 @@
 #include <QVBoxLayout>
 #include <QWidget>
 
-#include <QDir>
-#include <QFile>
-
 namespace spike {
 
 namespace {
@@ -24,24 +23,6 @@ QString kcminputPath()
          QStringLiteral("/kcminputrc");
 }
 
-bool touchpadLikelyPresent()
-{
-  const QDir dir(QStringLiteral("/sys/class/input"));
-  const QStringList entries = dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
-  for (const QString &e : entries) {
-    QFile name(dir.filePath(e + QStringLiteral("/device/name")));
-    if (!name.open(QIODevice::ReadOnly | QIODevice::Text)) {
-      continue;
-    }
-    const QString n = QString::fromUtf8(name.readAll()).toLower();
-    if (n.contains(QLatin1String("touchpad")) || n.contains(QLatin1String("synaptics")) ||
-        n.contains(QLatin1String("trackpad")) || n.contains(QLatin1String("clickpad"))) {
-      return true;
-    }
-  }
-  return false;
-}
-
 } // namespace
 
 QWidget *makeMousePage(QWidget *parent, QLabel *statusBar)
@@ -50,11 +31,26 @@ QWidget *makeMousePage(QWidget *parent, QLabel *statusBar)
   auto *lay = new QVBoxLayout(w);
   lay->addWidget(new QLabel(QStringLiteral("<h2>Mouse / Touchpad</h2>"), w));
   auto *hint = new QLabel(
-      QStringLiteral("Pointer acceleration and touchpad tap-to-click "
-                     "(~/.config/kcminputrc for KWin / libinput)."),
+      QStringLiteral("Pointer speed and tap-to-click. Settings are written for KWin "
+                     "(device-specific Libinput sections). Live apply is best-effort — "
+                     "if feel does not change, restart spike-session."),
       w);
   hint->setWordWrap(true);
   lay->addWidget(hint);
+
+  const QVector<PointerDevice> devices = listPointerDevices();
+  bool hasPad = false;
+  for (const PointerDevice &d : devices) {
+    if (d.touchpad) {
+      hasPad = true;
+      break;
+    }
+  }
+  // Laptop from smoke had HTIX5288 without "touchpad" in the name — treat any
+  // discovered pointer as eligible for tap when only one device exists.
+  if (!hasPad && !devices.isEmpty()) {
+    hasPad = true;
+  }
 
   auto *form = new QFormLayout();
   auto *accel = new QSlider(Qt::Horizontal, w);
@@ -71,11 +67,27 @@ QWidget *makeMousePage(QWidget *parent, QLabel *statusBar)
   form->addRow(QString(), tap);
   lay->addLayout(form);
 
-  const bool hasPad = touchpadLikelyPresent();
   tap->setEnabled(hasPad);
   if (!hasPad) {
-    tap->setToolTip(QStringLiteral("No touchpad detected"));
+    tap->setToolTip(QStringLiteral("No pointer/touchpad detected under /sys/class/input"));
   }
+
+  auto *devs = new QLabel(w);
+  devs->setWordWrap(true);
+  if (devices.isEmpty()) {
+    devs->setText(QStringLiteral("No pointer devices discovered yet."));
+  } else {
+    QStringList lines;
+    for (const PointerDevice &d : devices) {
+      lines << QStringLiteral("• %1 (vid=%2 pid=%3%4)")
+                   .arg(d.name)
+                   .arg(d.vendorId)
+                   .arg(d.productId)
+                   .arg(d.touchpad ? QStringLiteral(", touchpad") : QString());
+    }
+    devs->setText(lines.join(QLatin1Char('\n')));
+  }
+  lay->addWidget(devs);
 
   auto *status = new QLabel(w);
   status->setWordWrap(true);
@@ -91,8 +103,7 @@ QWidget *makeMousePage(QWidget *parent, QLabel *statusBar)
   lay->addStretch(1);
 
   auto syncAccelLabel = [accel, accelVal]() {
-    const double v = accel->value() / 100.0;
-    accelVal->setText(QString::number(v, 'f', 2));
+    accelVal->setText(QString::number(accel->value() / 100.0, 'f', 2));
   };
   QObject::connect(accel, &QSlider::valueChanged, w, syncAccelLabel);
 
@@ -103,11 +114,10 @@ QWidget *makeMousePage(QWidget *parent, QLabel *statusBar)
     accel->setValue(qRound(a * 100.0));
     s.endGroup();
     s.beginGroup(QStringLiteral("Libinput"));
-    // Flat key used when device-specific sections are unknown at apply time.
     tap->setChecked(s.value(QStringLiteral("TapToClick"), true).toBool());
     s.endGroup();
     syncAccelLabel();
-    status->setText(QStringLiteral("Loaded %1").arg(kcminputPath()));
+    status->setText(QStringLiteral("Loaded from %1").arg(kcminputPath()));
     if (statusBar) {
       statusBar->setText(QStringLiteral("Mouse settings loaded"));
     }
@@ -115,17 +125,13 @@ QWidget *makeMousePage(QWidget *parent, QLabel *statusBar)
 
   QObject::connect(reload, &QPushButton::clicked, w, load);
   QObject::connect(apply, &QPushButton::clicked, w, [accel, tap, status, statusBar]() {
-    QSettings s(kcminputPath(), QSettings::IniFormat);
-    s.beginGroup(QStringLiteral("Mouse"));
-    s.setValue(QStringLiteral("PointerAcceleration"), accel->value() / 100.0);
-    s.endGroup();
-    s.beginGroup(QStringLiteral("Libinput"));
-    s.setValue(QStringLiteral("TapToClick"), tap->isChecked());
-    s.endGroup();
-    s.sync();
-    status->setText(QStringLiteral("Saved. Pointer settings apply for new KWin sessions."));
+    bool live = false;
+    const QString msg =
+        applyPointerSettings(accel->value() / 100.0, tap->isChecked(), &live);
+    status->setText(msg);
     if (statusBar) {
-      statusBar->setText(QStringLiteral("Mouse settings saved"));
+      statusBar->setText(live ? QStringLiteral("Mouse: saved + KWin reconfigure sent")
+                              : QStringLiteral("Mouse: saved (restart session to feel change)"));
     }
   });
 

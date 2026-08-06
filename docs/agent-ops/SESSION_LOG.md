@@ -4,6 +4,18 @@ Append-only. Newest sessions at the **top**.
 
 ---
 
+## 2026-08-06 — Honest input Apply + scorecard from previous smoke
+
+**Previous ISO (`spike-capture-20260806T130212Z`, before 099c3c1 rebuild):**
+- Worked: Breeze titlebars; session start; PipeWire units start; graceful path available.
+- Looked OK but broken: panel “icons” were text (no `qt6-svg-plugins`); Mouse/Keyboard Apply only wrote flat `kcminputrc` keys KWin ignores → no live feel change.
+- Broken: SOF HDMI mute file was empty → pcm6/7 spam; Sound/Volume testing unreliable on that image.
+- Already fixed for next ISO: non-empty WP/SpikeDark, `qt6-svg-plugins`, pulse wait (0.0.15 / `099c3c1`).
+
+**Now (0.0.16):** Mouse/Keyboard write Plasma-style `[Libinput][vid][pid]` sections, call KWin `reconfigure`, and status text says restart-session when live apply is uncertain.
+
+---
+
 ## 2026-08-06 — Fix empty WP/SpikeDark includes; icons need qt6-svg-plugins (0.0.15)
 
 **Smoke (`spike-capture-20260806T130212Z`):** Breeze titlebars OK. Panel stayed text (no Wi‑Fi/etc icons). Audio felt broken; journal still flooded with sof-essx8336 HDMI pcm6/7 ASoC -5.

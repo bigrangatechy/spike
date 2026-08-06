@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(spike-shell VERSION 0.0.15 LANGUAGES CXX)
+project(spike-shell VERSION 0.0.16 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -71,6 +71,8 @@ add_executable(spike-shell
   src/settings/MousePage.hpp
   src/settings/KeyboardLayoutPage.cpp
   src/settings/KeyboardLayoutPage.hpp
+  src/settings/InputConfig.cpp
+  src/settings/InputConfig.hpp
   resources/spike-shell.qrc
 )
 

@@ -1,5 +1,7 @@
 #include "settings/KeyboardPage.hpp"
 
+#include "settings/InputConfig.hpp"
+
 #include <QFormLayout>
 #include <QHBoxLayout>
 #include <QLabel>
@@ -28,8 +30,8 @@ QWidget *makeKeyboardPage(QWidget *parent, QLabel *statusBar)
   auto *lay = new QVBoxLayout(w);
   lay->addWidget(new QLabel(QStringLiteral("<h2>Keyboard</h2>"), w));
   auto *hint = new QLabel(
-      QStringLiteral("Key repeat delay and rate (written to ~/.config/kcminputrc for KWin). "
-                     "Shortcuts editor comes later."),
+      QStringLiteral("Key repeat delay and rate. Saved for KWin; live apply is best-effort "
+                     "(XWayland via xset + KWin reconfigure). Shortcuts editor comes later."),
       w);
   hint->setWordWrap(true);
   lay->addWidget(hint);
@@ -66,7 +68,7 @@ QWidget *makeKeyboardPage(QWidget *parent, QLabel *statusBar)
     delay->setValue(s.value(QStringLiteral("RepeatDelay"), 600).toInt());
     rate->setValue(s.value(QStringLiteral("RepeatRate"), 25).toInt());
     s.endGroup();
-    status->setText(QStringLiteral("Loaded %1").arg(kcminputPath()));
+    status->setText(QStringLiteral("Loaded from %1").arg(kcminputPath()));
     if (statusBar) {
       statusBar->setText(QStringLiteral("Keyboard settings loaded"));
     }
@@ -74,16 +76,12 @@ QWidget *makeKeyboardPage(QWidget *parent, QLabel *statusBar)
 
   QObject::connect(reload, &QPushButton::clicked, w, load);
   QObject::connect(apply, &QPushButton::clicked, w, [delay, rate, status, statusBar]() {
-    QSettings s(kcminputPath(), QSettings::IniFormat);
-    s.beginGroup(QStringLiteral("Keyboard"));
-    s.setValue(QStringLiteral("RepeatDelay"), delay->value());
-    s.setValue(QStringLiteral("RepeatRate"), rate->value());
-    s.endGroup();
-    s.sync();
-    status->setText(
-        QStringLiteral("Saved. New sessions / KWin pick this up from kcminputrc."));
+    bool live = false;
+    const QString msg = applyKeyboardRepeat(delay->value(), rate->value(), &live);
+    status->setText(msg);
     if (statusBar) {
-      statusBar->setText(QStringLiteral("Keyboard settings saved"));
+      statusBar->setText(live ? QStringLiteral("Keyboard: saved + KWin reconfigure sent")
+                              : QStringLiteral("Keyboard: saved (restart session if unchanged)"));
     }
   });
 
