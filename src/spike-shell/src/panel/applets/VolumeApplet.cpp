@@ -98,13 +98,14 @@ void VolumeApplet::updateIcon()
     }
   }
   const QIcon icon = QIcon::fromTheme(name);
-  if (!icon.isNull()) {
+  if (QIcon::hasThemeIcon(name) || (!icon.isNull() && !icon.availableSizes().isEmpty())) {
     setIcon(icon);
     setText(QString());
   } else {
     setIcon(QIcon());
-    setText(m_client && m_client->muted() ? QStringLiteral("Mute")
-                                          : QStringLiteral("%1%").arg(m_client ? m_client->volumePercent() : 0));
+    setText(m_client && m_client->muted()
+                ? QStringLiteral("Mute")
+                : QStringLiteral("%1%").arg(m_client ? m_client->volumePercent() : 0));
   }
 }
 

@@ -4,6 +4,20 @@ Append-only. Newest sessions at the **top**.
 
 ---
 
+## 2026-08-06 — Fix empty WP/SpikeDark includes; icons need qt6-svg-plugins (0.0.15)
+
+**Smoke (`spike-capture-20260806T130212Z`):** Breeze titlebars OK. Panel stayed text (no Wi‑Fi/etc icons). Audio felt broken; journal still flooded with sof-essx8336 HDMI pcm6/7 ASoC -5.
+
+**Root causes:**
+1. `51-spike-sof-hdmi-disable.conf` and `SpikeDark.colors` were **0-byte** on the ISO — WirePlumber logged `Ignoring empty configuration file`.
+2. Breeze icons are SVG; live image lacked **`qt6-svg-plugins`** (`libqsvgicon.so`), so `QIcon::fromTheme` could not paint.
+
+**Fix:** Rewrite those includes; add `qt6-svg-plugins` (+ `alsa-utils`); shell 0.0.15 uses `breeze-dark` + SVG-aware theme setup; `spike-session` waits/logs `pipewire-pulse` + `pactl`.
+
+**Try:** rebuild → icons on panel; quieter SOF HDMI; Volume/`pactl` works after session start.
+
+---
+
 ## 2026-08-06 — Settings pages + Volume/Battery applets + spike-icons (0.0.14)
 
 **Done:**

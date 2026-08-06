@@ -19,7 +19,7 @@
 | `scripts/build-iso.sh` | ✅ Packages spike-config + spike-shell + lb build |
 | Stage 1 live ISO | ✅ Hardware boot + login |
 | Stage 2 (`spike-config`) | ✅ Target detect OK (N4020 / ~4GB) |
-| Stage 3 (Spike Shell) | 📝 0.0.14: Volume/Battery applets; Date/Time Keyboard Mouse Layout Settings; spike-icons |
+| Stage 3 (Spike Shell) | 📝 0.0.15: fix empty WP/SpikeDark; qt6-svg-plugins for panel icons; pulse wait |
 | Stage 4 (installer) | 🔲 Pre-alpha until installer E2E — that gate opens **Alpha** |
 
 ## In Progress

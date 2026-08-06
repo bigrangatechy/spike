@@ -7,6 +7,7 @@
 #include <QIcon>
 #include <QPalette>
 #include <QScreen>
+#include <QStandardPaths>
 #include <QWindow>
 
 namespace {
@@ -97,13 +98,24 @@ int main(int argc, char *argv[])
 {
   QApplication app(argc, argv);
   QApplication::setApplicationName(QStringLiteral("spike-shell"));
-  QApplication::setApplicationVersion(QStringLiteral("0.0.14"));
+  QApplication::setApplicationVersion(QStringLiteral("0.0.15"));
   QApplication::setOrganizationName(QStringLiteral("BigRangaTech"));
 
-  // BRANDING.md: spike-icons inherits Breeze Dark (shipped on live ISO).
-  QIcon::setThemeName(QStringLiteral("spike-icons"));
-  if (QIcon::themeName().isEmpty() || QIcon::fromTheme(QStringLiteral("audio-volume-high")).isNull()) {
-    QIcon::setThemeName(QStringLiteral("breeze-dark"));
+  // Breeze SVG icons need qt6-svg-plugins on the live image.
+  // Prefer breeze-dark directly; spike-icons inherits it for future overrides.
+  QStringList iconPaths = QIcon::themeSearchPaths();
+  iconPaths.prepend(QStringLiteral("/usr/share/icons"));
+  const QString localIcons =
+      QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) +
+      QStringLiteral("/icons");
+  if (!localIcons.isEmpty()) {
+    iconPaths.prepend(localIcons);
+  }
+  QIcon::setThemeSearchPaths(iconPaths);
+  QIcon::setThemeName(QStringLiteral("breeze-dark"));
+  QIcon::setFallbackThemeName(QStringLiteral("breeze"));
+  if (!QIcon::hasThemeIcon(QStringLiteral("network-wireless"))) {
+    QIcon::setThemeName(QStringLiteral("breeze"));
   }
 
   applyDarkPalette(app);

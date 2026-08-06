@@ -60,6 +60,8 @@ breeze-cursor-theme
 breeze
 # Explicit icon meta (also pulled by breeze → kf6-breeze-icon-theme). Spike-icons inherits it.
 breeze-icon-theme
+# Qt SVG icon engine — without this, Breeze SVG icons are null and the panel stays text-only.
+qt6-svg-plugins
 plasma-integration
 xdg-desktop-portal
 xdg-desktop-portal-kde
@@ -68,6 +70,7 @@ polkitd
 # Volume applet (pactl) + Battery applet (UPower)
 pulseaudio-utils
 upower
+alsa-utils
 
 # Stage-3 live apps — KDE standalone set from CONSTRAINTS.md / DESIGN-DECISIONS.md.
 # Spike Shell owns the shell; these are the application layer (not full Plasma).

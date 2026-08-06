@@ -7,7 +7,7 @@ LookAndFeelPackage=
 widgetStyle=Breeze
 
 [Icons]
-Theme=spike-icons
+Theme=breeze-dark
 
 [CursorTheme]
 ThemeName=breeze_cursors

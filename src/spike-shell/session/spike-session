@@ -116,10 +116,33 @@ start_audio() {
   if ! command -v systemctl >/dev/null 2>&1; then
     return 0
   fi
-  echo "spike-session: starting PipeWire / WirePlumber (user units)"
+  echo "spike-session: starting PipeWire / WirePlumber / pipewire-pulse (user units)"
   systemctl --user start pipewire.socket pipewire.service wireplumber.service \
     pipewire-pulse.socket pipewire-pulse.service 2>&1 || true
-  systemctl --user --no-pager --full status pipewire.service wireplumber.service 2>&1 | head -n 40 || true
+
+  # Wait briefly for the Pulse socket so Volume applet / pactl work immediately.
+  local i
+  for i in 1 2 3 4 5 6 7 8 9 10; do
+    if systemctl --user is-active --quiet pipewire-pulse.service 2>/dev/null; then
+      if [[ -n "${XDG_RUNTIME_DIR:-}" && -S "${XDG_RUNTIME_DIR}/pulse/native" ]] ||
+         command -v pactl >/dev/null 2>&1 && pactl info >/dev/null 2>&1; then
+        echo "spike-session: pipewire-pulse ready (attempt ${i})"
+        break
+      fi
+    fi
+    sleep 0.3
+  done
+
+  systemctl --user --no-pager --full status pipewire.service wireplumber.service \
+    pipewire-pulse.service 2>&1 | head -n 60 || true
+  if command -v pactl >/dev/null 2>&1; then
+    echo "spike-session: --- pactl info ---"
+    pactl info 2>&1 | head -n 25 || true
+    echo "spike-session: --- pactl sinks ---"
+    pactl list short sinks 2>&1 || true
+  else
+    echo "spike-session: WARNING: pactl not found (install pulseaudio-utils)" >&2
+  fi
 }
 start_audio
 sync || true

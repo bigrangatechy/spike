@@ -89,7 +89,11 @@ void NetworkApplet::refresh()
     text = QStringLiteral("Net");
   }
   const QIcon icon = QIcon::fromTheme(iconName);
-  if (!icon.isNull()) {
+  if (!icon.isNull() && QIcon::hasThemeIcon(iconName)) {
+    setIcon(icon);
+    setIconSize(QSize(20, 20));
+    setText(QString());
+  } else if (!icon.isNull() && !icon.availableSizes().isEmpty()) {
     setIcon(icon);
     setIconSize(QSize(20, 20));
     setText(QString());
