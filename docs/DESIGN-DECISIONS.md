@@ -299,11 +299,29 @@ Each decision includes the context that led to it, the alternatives considered, 
 
 ### Custom Network Applet (Not plasma-nm, Not nm-tray)
 
-**Decision:** Build a custom network applet as part of Spike Shell.
+**Decision:** Build a custom network applet **and** Settings → Network page as part of Spike Shell.
 
-**Context:** plasma-nm may pull Plasma dependencies. nm-tray is visually inconsistent with Spike's design language. A custom applet talks directly to NetworkManager via DBus and renders in Spike's theme.
+**Context:** `plasma-nm` depends on QtWebEngine (~200MB installed) and is too heavy for Tier-1 4GB targets; it also pulls Plasma QML stack pieces. `nm-tray` is visually inconsistent with Spike's design language. A custom UI talks to NetworkManager via D-Bus (with `nmcli` as a connect/scan helper when variant marshaling is fragile) and renders in Spike's theme.
+
+**Scope:**
+
+```
+├── Panel tray applet — status icon, popup (SSID list, scan, connect, disconnect, Wi-Fi toggle)
+├── Settings → Network — same NetworkPanelWidget in the Settings window
+└── VPN page — NetworkManager-backed Spike UI (later); not plasma-nm
+```
 
 **This decision cascaded:** Once the custom network applet was decided, it became clear that all tray applets should be custom for visual consistency. This led to the full 14-applet Spike Shell tray architecture.
+
+### Settings KCMs Without plasmashell
+
+**Decision:** Load selected KDE KCMs in-window via KF6 `KCModuleLoader`, but only from packages that do **not** Depend on `plasma-desktop` / `plasma-workspace`.
+
+**Allowed KCM providers (live ISO):** `kscreen`, `plasma-pa`, `powerdevil`, `bluedevil`, `print-manager` (plus PipeWire for Sound).
+
+**Not allowed:** `plasma-desktop`, `plasma-workspace`, `plasma-nm` — plasmashell autostart / QtWebEngine / shell fight.
+
+**Consequence:** Language, Hardware Keyboard, Mouse/Touchpad, Users, Date & Time, and Accessibility are Spike custom pages (upstream KCMs for those live inside Plasma Desktop/Workspace).
 
 ### All Firmware On ISO
 
@@ -358,20 +376,21 @@ Each decision includes the context that led to it, the alternatives considered, 
 
 ### KDE KCM Modules Inside Custom Settings
 
-**Decision:** Load KDE System Settings modules (KCM) inside Spike's custom Settings window.
+**Decision:** Load selected KDE System Settings modules (KCM) inside Spike's custom Settings window — only from packages that do not Depend on `plasma-desktop` / `plasma-workspace`.
 
-**Context:** KDE's KCM modules (display, sound, power, keyboard, mouse, network, etc.) are well-built and maintained. Rebuilding all of them from scratch would be wasteful. Loading them inside Spike's themed window gives users a unified settings experience while leveraging proven KDE components.
+**Context:** Many KDE KCMs are well-built, but a large set only ships inside Plasma Desktop/Workspace (which brings plasmashell). Spike loads standalone KCMs (display, sound, power, bluetooth, printer) in-window via KF6 `KCModuleLoader`. Network and Plasma-coupled pages are Spike custom UIs instead (`plasma-nm` rejected for QtWebEngine weight).
 
-**Custom Spike settings pages handle Spike-specific configuration that KDE doesn't cover:**
+**Custom Spike settings pages handle Spike-specific configuration and Plasma-free alternatives:**
 
 ```
+├── Appearance, Notifications, Keyboard Layout
+├── Network (NetworkManager) + VPN (later)
+├── Language, Hardware Keyboard, Mouse/Touchpad, Users, Date & Time, Accessibility
 ├── Memory management status
 ├── Boot behavior
-├── Notification settings
 ├── Update preferences
-├── Storage diagnostics
-├── System diagnostics
-└── NVIDIA driver management (Additional Drivers, accessed via Software Sources section)
+├── Storage / system diagnostics
+└── NVIDIA driver management (Additional Drivers, via Software Sources)
 ```
 
 ## Boot

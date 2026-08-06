@@ -242,7 +242,7 @@ Build the core system. Spike Shell boots to a usable desktop. The installer work
 │   └── No telemetry (verified)
 └── Settings panel (minimal)
     ├── Appearance (basic)
-    ├── Network (KCM)
+    ├── Network (custom Spike NetworkManager UI)
     └── About
 ```
 
@@ -372,11 +372,11 @@ Build the core system. Spike Shell boots to a usable desktop. The installer work
 │   ├── Sound (KCM)
 │   ├── Display (KCM)
 │   ├── Power (KCM)
-│   ├── Keyboard (KCM)
-│   ├── Mouse/Touchpad (KCM)
-│   ├── Network (KCM)
+│   ├── Keyboard (custom — no plasma-desktop)
+│   ├── Mouse/Touchpad (custom — no plasma-desktop)
+│   ├── Network (custom Spike NetworkManager UI)
 │   ├── Bluetooth (KCM, conditional)
-│   ├── Date & Time (KCM)
+│   ├── Date & Time (custom — no plasma-desktop)
 │   └── About (with user guide reader)
 ├── KDE standalone apps installed:
 │   ├── Discover (software center)

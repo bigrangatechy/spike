@@ -638,7 +638,7 @@ At panel startup:
 └── "Turn Off Wi-Fi" toggle
 ```
 
-- **Settings entry:** **Settings → Network** (KCM module loaded) 
+- **Settings entry:** **Settings → Network** (Spike custom NetworkManager UI — same panel as the tray applet; not plasma-nm / KCM)
 
 - **Hotspot:** Available in popup → "Create Hotspot" 
 
@@ -961,7 +961,9 @@ The settings panel is the central location for all system configuration. It embo
 
 ### Architecture
 
-The settings panel is a hybrid: custom Spike pages for Spike-specific settings, and KDE KCM (KDE Configuration Modules) for standard system settings. All modules are loaded inside a single Spike-themed window, giving the user a unified experience.
+The settings panel is a hybrid: custom Spike pages for Spike-specific settings and for NetworkManager UI, and KDE KCM (KDE Configuration Modules) for hardware modules whose **standalone** packages do not pull `plasma-desktop` / `plasma-workspace` (no plasmashell). All modules are loaded inside a single Spike-themed window.
+
+**KCM packaging rule:** Never install `plasma-desktop` or `plasma-workspace` on Spike. Prefer standalone KCM providers (`kscreen`, `plasma-pa`, `powerdevil`, `bluedevil`, `print-manager`). If an upstream KCM only exists inside Plasma Desktop/Workspace, implement a Spike custom page instead.
 
 **Settings Window:**
 
@@ -1015,35 +1017,43 @@ The settings panel is a hybrid: custom Spike pages for Spike-specific settings, 
 ├── Appearance (custom) — theme, panel, fonts, icons
 ├── Notifications (custom) — history, DND, sound
 ├── Keyboard Layout (custom) — layouts, switching
-└── Language (KCM) — system language
+└── Language (custom) — system language / region
+    └── Note: upstream kcm_regionandlang lives in plasma-workspace; Spike does not ship plasmashell
 ```
 
 **Hardware:**
 
 ```
-├── Display (KCM) — resolution, refresh rate, scaling
-├── Sound (KCM) — output, input, alerts
-├── Power (KCM) — battery, suspend, lid switch
-├── Keyboard (KCM) — repeat rate, shortcuts
-├── Mouse/Touchpad (KCM) — speed, acceleration, tapping
-├── Bluetooth (KCM) — devices, pairing
-└── Printer (KCM) — printer setup, queues
+├── Display (KCM) — kscreen / kcm_kscreen (standalone package)
+├── Sound (KCM) — plasma-pa / kcm_pulseaudio (standalone; needs PipeWire)
+├── Power (KCM) — powerdevil / kcm_powerdevilprofilesconfig (standalone)
+├── Keyboard (custom) — repeat rate, shortcuts
+│   └── Note: upstream kcm_keyboard lives in plasma-desktop; not shipped
+├── Mouse/Touchpad (custom) — speed, acceleration, tapping
+│   └── Note: upstream kcm_touchpad lives in plasma-desktop; not shipped
+├── Bluetooth (KCM) — bluedevil / kcm_bluetooth (standalone)
+└── Printer (KCM) — print-manager / kcm_printer_manager (standalone)
 ```
 
 **Network:**
 
 ```
-├── Network (KCM) — Wi-Fi, Ethernet, hotspot
-└── VPN (KCM) — OpenVPN, WireGuard
+├── Network (custom) — Wi-Fi, Ethernet, hotspot via NetworkManager D-Bus
+│   └── Shared UI with the panel Network tray applet; nmcli used as connect helper when needed
+│   └── Do not use plasma-nm (pulls QtWebEngine ~200MB — too heavy for Tier-1)
+└── VPN (custom) — OpenVPN, WireGuard via NetworkManager (UI fleshed later)
 ```
 
 **System:**
 
 ```
-├── Users (KCM) — account management
-├── Date & Time (KCM) — timezone, NTP
-├── Accessibility (KCM) — magnifier, sticky keys, etc.
-├── Software Sources (custom + KCM) — repositories, additional drivers (NVIDIA)
+├── Users (custom) — account management
+│   └── Note: upstream kcm_users lives in plasma-workspace; not shipped
+├── Date & Time (custom) — timezone, NTP
+│   └── Note: upstream kcm_clock lives in plasma-desktop; not shipped
+├── Accessibility (custom) — magnifier, sticky keys, etc.
+│   └── Note: upstream kcm_access lives in plasma-desktop; not shipped
+├── Software Sources (custom + optional KCM) — repositories, additional drivers (NVIDIA)
 └── About (custom) — system info, user guide reader, version
 ```
 

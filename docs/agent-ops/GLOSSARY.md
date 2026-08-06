@@ -31,8 +31,9 @@ This file defines every Spike-specific term an AI agent (or human contributor) n
 | **System tray applets** | 14 always-present applets: clock, network, battery, brightness, volume, updates, notifications, removable devices, keyboard layout, input method, night light, power profiles, camera/mic indicator, spike-menu (launcher button). + 4 conditional (BT, modem, etc.). | `DESKTOP.md` |
 | **Notification daemon** | Notification system following **disk-before-display invariant** (write to disk BEFORE showing on screen). Never loses notifications due to crash or power loss. | `DESKTOP.md` |
 | **Spikes menu** | The launcher button on the panel (left zone). Opens the application launcher. | `DESKTOP.md` |
-| **KDE standalone apps** | KDE applications included WITHOUT full Plasma: Discover, Dolphin, Konsole, System Settings modules (KCMs), Kate, Ark, Spectacle, KCalc. | `ARCHITECTURE.md` |
-| **KCM** | KDE Control Module. System Settings modules used in Spike's hybrid settings panel (custom Spike pages + KCM modules). | `DESKTOP.md` |
+| **KDE standalone apps** | KDE applications included WITHOUT full Plasma: Discover, Dolphin, Konsole, Kate, Ark, Spectacle, KCalc, plus selected Settings KCMs from standalone packages (`kscreen`, `plasma-pa`, `powerdevil`, `bluedevil`, `print-manager`). Not full System Settings / not `plasma-nm`. | `ARCHITECTURE.md`, `CONSTRAINTS.md` |
+| **KCM** | KDE Control Module. Loaded in Spike Settings via KF6 `KCModuleLoader` when the provider package does not pull `plasma-desktop` / `plasma-workspace`. | `DESKTOP.md` |
+| **Network applet** | Spike Shell tray applet + Settings → Network page talking to NetworkManager over D-Bus (custom; not plasma-nm / nm-tray). | `DESKTOP.md`, `NETWORKING.md` |
 
 
 ## Configuration & State Management

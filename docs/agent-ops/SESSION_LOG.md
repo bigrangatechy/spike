@@ -4,6 +4,21 @@ Append-only. Newest sessions at the **top**.
 
 ---
 
+## 2026-08-06 — Settings category audit + Network applet (0.0.12)
+
+**Done:**
+- Walked every DESKTOP.md Settings category; nav complete.
+- Safe KCM packages on live list: `kscreen`, `plasma-pa`, `powerdevil`, `bluedevil`, `print-manager`, PipeWire stack.
+- Plasma-coupled pages → Spike stubs (no `plasma-desktop` / `plasma-workspace`).
+- Spike NetworkManager tray applet + Settings → Network (`NmClient` + `NetworkPanelWidget`); no `plasma-nm`.
+- Docs aligned: `DESKTOP.md`, `DESIGN-DECISIONS.md`, `ARCHITECTURE.md`, `ROADMAP.md`, `NETWORKING.md`, `CONSTRAINTS.md`, `DECISIONS.md`, `STATE.md`.
+
+**Package:** `spike-shell_0.0.12-1`.
+
+**Try after commit/push:** rebuild ISO → smoke tray Net popup (scan/connect) + Settings → Network; Display/Sound/Power KCMs.
+
+---
+
 ## 2026-08-06 — Cursor works; session power + launcher stubs broken
 
 **Finding:** Input/cursor OK on 0.0.6. Restart/Shut down used `systemctl` (needs root/polkit) and this Ubuntu `loginctl` has no power verbs. Launcher stubs pointed at missing apps (`xterm`/`dolphin`/`firefox`) and only activated on double-click.

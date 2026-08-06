@@ -460,11 +460,12 @@ KDE standalone apps included (NOT full Plasma):
 ├── Discover (software manager — Flatpak frontend)
 ├── Dolphin (file manager)
 ├── Konsole (terminal emulator)
-├── System Settings modules (KCMs)
 ├── Kate (text editor)
 ├── Ark (archive manager)
 ├── Spectacle (screenshot tool)
-└── KCalc (calculator)
+├── KCalc (calculator)
+└── Selected Settings KCMs (kscreen, plasma-pa, powerdevil, bluedevil, print-manager)
+    └── Not full System Settings; not plasma-nm; never plasma-desktop/workspace
 ```
 
 Flatpak via Discover for user applications:
@@ -1466,13 +1467,14 @@ Session manager:
 Settings panel:
 
 ```
-├── Hybrid: custom Spike pages + KDE System Settings modules (KCMs)
-├── Custom pages: Overview, Network, Privacy, Power, Updates,
-│                 Diagnostics, About
-├── KCM modules: Display, Sound, Keyboard, Mouse, Fonts, Colors,
-│                Applications, Storage
-├── All settings changes go through spike-config (DBus)
-└── Never writes config files directly
+├── Hybrid: custom Spike pages + selected standalone KDE KCMs
+├── Custom: Appearance, Notifications, Network (NetworkManager), Language,
+│           Keyboard/Mouse, Users, Date & Time, Accessibility, Advanced…
+├── KCM (standalone pkgs only): Display, Sound, Power, Bluetooth, Printer
+├── Forbidden: plasma-desktop, plasma-workspace, plasma-nm
+├── spike-config settings via org.spike.Config D-Bus
+├── Live network connections via NetworkManager D-Bus (not spike-config keyfiles)
+└── Never writes config files directly from the GUI
 ```
 
 Theme engine:

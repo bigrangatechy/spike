@@ -2,6 +2,7 @@
 
 #include "launcher/Launcher.hpp"
 #include "panel/applets/ClockApplet.hpp"
+#include "panel/applets/NetworkApplet.hpp"
 #include "panel/applets/SessionMenuApplet.hpp"
 #include "settings/ConfigClient.hpp"
 #include "settings/SettingsWindow.hpp"
@@ -68,6 +69,9 @@ Panel::Panel(QWidget *parent)
   layout->addWidget(spikeBtn);
 
   layout->addStretch(1);
+
+  auto *network = new NetworkApplet(this);
+  layout->addWidget(network);
 
   auto *clock = new ClockApplet(this);
   layout->addWidget(clock);

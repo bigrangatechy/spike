@@ -19,24 +19,29 @@
 | `scripts/build-iso.sh` | ✅ Packages spike-config + spike-shell + lb build |
 | Stage 1 live ISO | ✅ Hardware boot + login |
 | Stage 2 (`spike-config`) | ✅ Target detect OK (N4020 / ~4GB) |
-| Stage 3 (Spike Shell) | 📝 0.0.10: in-window KCM host ready for page flesh-out |
+| Stage 3 (Spike Shell) | 📝 0.0.12: Network tray + Settings Network; docs aligned |
 | Stage 4 (installer) | 🔲 Later — still **pre-alpha** until BDFL opens Alpha |
 
 ## In Progress
 
 | Item | Notes |
 | :-: | :-: |
-| Stage 3 — Settings | Flesh custom pages + pull KCM packages per category |
-| Stage 3 — Spike Shell | Rebuild ISO with KDE apps + Settings/D-Bus/KCM host |
+| Stage 3 — Spike Shell | Rebuild ISO after commit; smoke Network + KCMs |
 
 ## Blocked / Waiting On Decision
 
-_None._ Alpha timing is intentional “by feel,” not blocked.
+| Item | Notes |
+| :-: | :-: |
+| Language / Keyboard / Mouse / Users / Date & Time / Accessibility | Spike custom pages (Plasma KCMs not shipped) — flesh UI next |
 
 ## Recently Completed
 
 | Date | Item |
 | :-: | :-: |
+| 2026-08-06 | Docs updated for Network custom UI + Settings KCM allowlist |
+| 2026-08-06 | NetworkManager tray applet + Settings Network page (D-Bus + nmcli, no plasma-nm) |
+| 2026-08-06 | Settings category audit: every DESKTOP.md page present; Appearance wired to Config |
+| 2026-08-06 | Live packages: kscreen, plasma-pa, powerdevil, bluedevil, print-manager, PipeWire |
 | 2026-08-06 | In-window KCM host (`KCModuleLoader`) with Apply/Reset/Defaults |
 | 2026-08-06 | `org.spike.Config` D-Bus service + Settings skeleton + Kickoff-style launcher |
 | 2026-08-06 | Live smoke: shutdown OK; apps OK; htop needed Terminal=true wrap |
@@ -52,10 +57,11 @@ _None._ Alpha timing is intentional “by feel,” not blocked.
 
 ## Next Suggested Work
 
-1. Rebuild ISO + smoke power (restart/shutdown) and launcher apps.  
-2. Stage 3 deepen: wallpapers, optional light browser later.  
-3. Stage 4 (pre-alpha): installer squashfs → ext4.  
-4. Open **Alpha** only when installer feels ready (BDFL).
+1. Rebuild ISO + smoke Network tray (scan/connect/disconnect) and Settings → Network.  
+2. Smoke Display/Sound/Power/Bluetooth/Printer KCMs.  
+3. Flesh Plasma-coupled stubs (Language, Keyboard, Mouse, Users, Date & Time, Accessibility).  
+4. Stage 4 (pre-alpha): installer squashfs → ext4.  
+5. Open **Alpha** only when installer feels ready (BDFL).
 
 ## How To Update This File
 

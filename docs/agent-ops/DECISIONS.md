@@ -6,6 +6,20 @@ Operational decisions that affect how work proceeds. Product/architecture ration
 
 ---
 
+## 2026-08-06 — Settings Network is Spike custom; KCM allowlist only
+
+**Decision:**
+- **Network GUI:** Spike Shell tray applet + **Settings → Network** (NetworkManager D-Bus / `nmcli` helper). Do **not** ship `plasma-nm` (QtWebEngine ~200MB).
+- **KCM host:** Keep in-window KF6 `KCModuleLoader` for standalone providers only: `kscreen`, `plasma-pa`, `powerdevil`, `bluedevil`, `print-manager` (+ PipeWire for Sound).
+- **Forbidden on ISO:** `plasma-desktop`, `plasma-workspace` (plasmashell autostart fights Spike Shell).
+- **Plasma-coupled pages** (Language, Hardware Keyboard, Mouse/Touchpad, Users, Date & Time, Accessibility): Spike custom stubs / pages — do not pull those KCMs via Plasma packages.
+
+**Why:** Matches `DESIGN-DECISIONS.md` custom network applet; Tier-1 RAM budget; no second desktop shell.
+
+**Refs:** `DESKTOP.md`, `NETWORKING.md`, `ARCHITECTURE.md`, `CONSTRAINTS.md`, `STATE.md`, `src/spike-shell/src/network/`.
+
+---
+
 ## 2026-08-06 — Pre-alpha stays open through shell/installer; Alpha by feel
 
 **Decision:** Keep implementing **Spike Shell** and other early stack pieces under the **pre-alpha** label. Do **not** open **Phase 2 (Alpha)** on a calendar or Stage counter. Consider Alpha only once the **installer** is working end-to-end (and BDFL judges readiness by feel). Roadmap phase names (pre-alpha / alpha / pre-beta / beta) remain labels, not hard gates for writing code.

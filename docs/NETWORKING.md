@@ -20,6 +20,8 @@ This document specifies all networking configuration in Spike — Wi-Fi, Etherne
 └── One configuration source, one GUI, one DBus interface
 ```
 
+**GUI:** Spike Shell owns the UI — panel Network tray applet and **Settings → Network** (custom Qt Widgets). Do **not** ship `plasma-nm` (QtWebEngine / Plasma stack). Users never run `nmcli` for normal use; CLI remains developer-only (`PHILOSOPHY.md`).
+
 **3. Firewall on by default**
 
 ```

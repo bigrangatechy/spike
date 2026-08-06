@@ -1,15 +1,22 @@
 #include "settings/KcmHost.hpp"
 #include "settings/SettingsWindow.hpp"
 
+#include "network/NetworkPanelWidget.hpp"
+#include "network/NmClient.hpp"
 #include "settings/ConfigClient.hpp"
 
 #include <QCheckBox>
+#include <QComboBox>
+#include <QFormLayout>
 #include <QHBoxLayout>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QLabel>
 #include <QLineEdit>
 #include <QListWidget>
 #include <QMessageBox>
 #include <QPushButton>
+#include <QSpinBox>
 #include <QSplitter>
 #include <QStackedWidget>
 #include <QTextEdit>
@@ -23,6 +30,12 @@ namespace {
 QString categoryHeader(const QString &id)
 {
   return id;
+}
+
+QJsonObject parseModuleJson(const QString &json)
+{
+  const QJsonDocument doc = QJsonDocument::fromJson(json.toUtf8());
+  return doc.isObject() ? doc.object() : QJsonObject{};
 }
 
 } // namespace
@@ -92,61 +105,109 @@ SettingsWindow::SettingsWindow(ConfigClient *config, QWidget *parent)
 
 void SettingsWindow::buildPages()
 {
+  // DESKTOP.md Settings Panel — every category entry must appear here.
+  // KCM only when the provider package does not pull plasma-desktop / plasma-workspace.
   m_pages = {
       // Personal
       {QStringLiteral("appearance"), QStringLiteral("Appearance"), QStringLiteral("PERSONAL"),
-       QStringLiteral("theme panel wallpaper font icons"), false, false, {}},
+       QStringLiteral("theme panel wallpaper font icons"), false, false, {},
+       QStringLiteral("Theme, panel, fonts, icons (org.spike.Config desktop)."),
+       QStringLiteral("desktop")},
       {QStringLiteral("notifications"), QStringLiteral("Notifications"), QStringLiteral("PERSONAL"),
-       QStringLiteral("dnd history sound"), false, false, {}},
+       QStringLiteral("dnd history sound"), false, false, {},
+       QStringLiteral("History / DND / sound — Spike notification daemon (not shipped yet). "
+                      "Retention keys live under privacy in spike-config."),
+       QStringLiteral("privacy")},
       {QStringLiteral("keyboard-layout"), QStringLiteral("Keyboard Layout"), QStringLiteral("PERSONAL"),
-       QStringLiteral("layout switching"), false, false, {}},
+       QStringLiteral("layout switching"), false, false, {},
+       QStringLiteral("Layouts and switching — Spike custom (not kcm_keyboard). "
+                      "Installer default lives in installer.keyboard_layout."),
+       QStringLiteral("installer")},
       {QStringLiteral("language"), QStringLiteral("Language"), QStringLiteral("PERSONAL"),
-       QStringLiteral("locale language region"), false, true, QStringLiteral("kcm_regionandlang")},
-      // Hardware
+       QStringLiteral("locale language region"), false, false, {},
+       QStringLiteral("System language / region. Upstream KCM (kcm_regionandlang) lives in "
+                      "plasma-workspace — Spike stub until a Plasma-free path exists."),
+       {}},
+      // Hardware — KCMs from standalone packages on the live ISO
       {QStringLiteral("display"), QStringLiteral("Display"), QStringLiteral("HARDWARE"),
        QStringLiteral("resolution refresh scaling brightness"), false, true,
-       QStringLiteral("kcm_kscreen")},
+       QStringLiteral("kcm_kscreen"), {}, {}},
       {QStringLiteral("sound"), QStringLiteral("Sound"), QStringLiteral("HARDWARE"),
-       QStringLiteral("volume audio output input"), false, true, QStringLiteral("kcm_pulseaudio")},
+       QStringLiteral("volume audio output input"), false, true, QStringLiteral("kcm_pulseaudio"),
+       {}, {}},
       {QStringLiteral("power"), QStringLiteral("Power"), QStringLiteral("HARDWARE"),
-       QStringLiteral("battery suspend lid"), false, true, QStringLiteral("kcm_powerdevilprofilesconfig")},
+       QStringLiteral("battery suspend lid"), false, true,
+       QStringLiteral("kcm_powerdevilprofilesconfig"), {}, {}},
       {QStringLiteral("keyboard"), QStringLiteral("Keyboard"), QStringLiteral("HARDWARE"),
-       QStringLiteral("repeat shortcuts"), false, true, QStringLiteral("kcm_keyboard")},
+       QStringLiteral("repeat shortcuts"), false, false, {},
+       QStringLiteral("Repeat rate and shortcuts. Upstream KCM (kcm_keyboard) lives in "
+                      "plasma-desktop — Spike stub (no plasmashell on Spike)."),
+       {}},
       {QStringLiteral("mouse"), QStringLiteral("Mouse/Touchpad"), QStringLiteral("HARDWARE"),
-       QStringLiteral("pointer touchpad tapping"), false, true, QStringLiteral("kcm_touchpad")},
+       QStringLiteral("pointer touchpad tapping"), false, false, {},
+       QStringLiteral("Pointer / touchpad. Upstream KCM (kcm_touchpad) lives in "
+                      "plasma-desktop — Spike stub."),
+       {}},
       {QStringLiteral("bluetooth"), QStringLiteral("Bluetooth"), QStringLiteral("HARDWARE"),
-       QStringLiteral("bt devices pairing"), false, true, QStringLiteral("kcm_bluetooth")},
+       QStringLiteral("bt devices pairing"), false, true, QStringLiteral("kcm_bluetooth"), {}, {}},
       {QStringLiteral("printer"), QStringLiteral("Printer"), QStringLiteral("HARDWARE"),
-       QStringLiteral("print queue"), false, true, QStringLiteral("kcm_printer_manager")},
-      // Network
+       QStringLiteral("print queue"), false, true, QStringLiteral("kcm_printer_manager"), {}, {}},
+      // Network — Spike NM UI (no plasma-nm / QtWebEngine)
       {QStringLiteral("network"), QStringLiteral("Network"), QStringLiteral("NETWORK"),
-       QStringLiteral("wifi ethernet hotspot"), false, true, QStringLiteral("kcm_networkmanagement")},
+       QStringLiteral("wifi ethernet hotspot"), false, false, {},
+       QStringLiteral("Spike NetworkManager UI (D-Bus + nmcli). Tray applet shares this."),
+       {}},
       {QStringLiteral("vpn"), QStringLiteral("VPN"), QStringLiteral("NETWORK"),
-       QStringLiteral("openvpn wireguard"), false, true, QStringLiteral("kcm_networkmanagement")},
+       QStringLiteral("openvpn wireguard"), false, false, {},
+       QStringLiteral("VPN (OpenVPN / WireGuard via NetworkManager) — coming next. "
+                      "Use Network for Wi‑Fi/Ethernet for now."),
+       {}},
       // System
       {QStringLiteral("users"), QStringLiteral("Users"), QStringLiteral("SYSTEM"),
-       QStringLiteral("account password"), false, true, QStringLiteral("kcm_users")},
+       QStringLiteral("account password"), false, false, {},
+       QStringLiteral("Accounts / password. Upstream KCM (kcm_users) lives in "
+                      "plasma-workspace — Spike stub."),
+       {}},
       {QStringLiteral("datetime"), QStringLiteral("Date & Time"), QStringLiteral("SYSTEM"),
-       QStringLiteral("timezone ntp clock"), false, true, QStringLiteral("kcm_clock")},
+       QStringLiteral("timezone ntp clock"), false, false, {},
+       QStringLiteral("Timezone / NTP. Upstream KCM (kcm_clock) lives in plasma-desktop — "
+                      "Spike stub. Installer timezone is under installer.timezone."),
+       QStringLiteral("installer")},
       {QStringLiteral("accessibility"), QStringLiteral("Accessibility"), QStringLiteral("SYSTEM"),
-       QStringLiteral("magnifier sticky keys"), false, true, QStringLiteral("kcm_access")},
+       QStringLiteral("magnifier sticky keys"), false, false, {},
+       QStringLiteral("Magnifier, sticky keys, etc. Upstream KCM (kcm_access) lives in "
+                      "plasma-desktop — Spike stub."),
+       {}},
       {QStringLiteral("software-sources"), QStringLiteral("Software Sources"), QStringLiteral("SYSTEM"),
-       QStringLiteral("repos drivers nvidia"), false, false, {}},
+       QStringLiteral("repos drivers nvidia"), false, false, {},
+       QStringLiteral("APT repos / additional drivers — Spike custom + optional KCM later."),
+       {}},
       {QStringLiteral("about"), QStringLiteral("About"), QStringLiteral("SYSTEM"),
-       QStringLiteral("version system info guide"), false, false, {}},
+       QStringLiteral("version system info guide"), false, false, {}, {}, {}},
       // Advanced
       {QStringLiteral("memory"), QStringLiteral("Memory"), QStringLiteral("ADVANCED"),
-       QStringLiteral("zram swap swappiness earlyoom"), true, false, {}},
+       QStringLiteral("zram swap swappiness earlyoom"), true, false, {}, {},
+       QStringLiteral("memory")},
       {QStringLiteral("boot"), QStringLiteral("Boot"), QStringLiteral("ADVANCED"),
-       QStringLiteral("grub timeout boot counter"), true, false, {}},
+       QStringLiteral("grub timeout boot counter"), true, false, {},
+       QStringLiteral("GRUB timeout, boot failure counter, splash (org.spike.Config boot)."),
+       QStringLiteral("boot")},
       {QStringLiteral("kernel-modules"), QStringLiteral("Kernel Modules"), QStringLiteral("ADVANCED"),
-       QStringLiteral("blacklist modules"), true, false, {}},
+       QStringLiteral("blacklist modules"), true, false, {},
+       QStringLiteral("Module blacklist (org.spike.Config security.module_blacklist)."),
+       QStringLiteral("security")},
       {QStringLiteral("updates"), QStringLiteral("Updates"), QStringLiteral("ADVANCED"),
-       QStringLiteral("schedule security"), true, false, {}},
+       QStringLiteral("schedule security"), true, false, {},
+       QStringLiteral("Update schedule / auto-security (org.spike.Config updates)."),
+       QStringLiteral("updates")},
       {QStringLiteral("storage"), QStringLiteral("Storage"), QStringLiteral("ADVANCED"),
-       QStringLiteral("disk smart mount"), true, false, {}},
+       QStringLiteral("disk smart mount"), true, false, {},
+       QStringLiteral("Disk overview from detected hardware (org.spike.Config hardware)."),
+       QStringLiteral("hardware")},
       {QStringLiteral("diagnostics"), QStringLiteral("Diagnostics"), QStringLiteral("ADVANCED"),
-       QStringLiteral("logs hardware report"), true, false, {}},
+       QStringLiteral("logs hardware report"), true, false, {},
+       QStringLiteral("System info / hardware inventory via DetectHardware."),
+       {}},
   };
 
   for (const PageDef &page : m_pages) {
@@ -155,8 +216,40 @@ void SettingsWindow::buildPages()
       w = makeAboutPage();
     } else if (page.id == QLatin1String("memory")) {
       w = makeMemoryPage();
+    } else if (page.id == QLatin1String("appearance")) {
+      w = makeAppearancePage();
+    } else if (page.id == QLatin1String("network")) {
+      w = makeNetworkPage();
+    } else if (page.id == QLatin1String("diagnostics")) {
+      auto *diag = new QWidget(this);
+      auto *lay = new QVBoxLayout(diag);
+      lay->addWidget(new QLabel(QStringLiteral("<h2>Diagnostics</h2>"), diag));
+      auto *info = new QLabel(page.blurb, diag);
+      info->setWordWrap(true);
+      lay->addWidget(info);
+      auto *body = new QTextEdit(diag);
+      body->setObjectName(QStringLiteral("DiagnosticsBody"));
+      body->setReadOnly(true);
+      lay->addWidget(body, 1);
+      auto *refresh = new QPushButton(QStringLiteral("Run DetectHardware"), diag);
+      lay->addWidget(refresh);
+      connect(refresh, &QPushButton::clicked, this, [this, body]() {
+        QString err;
+        const QString json = m_config ? m_config->detectHardware(&err) : QString();
+        if (json.isEmpty()) {
+          body->setPlainText(QStringLiteral("Error: %1").arg(err));
+          m_status->setText(QStringLiteral("DetectHardware failed"));
+        } else {
+          body->setPlainText(json);
+          m_status->setText(QStringLiteral("DetectHardware OK"));
+        }
+      });
+      refresh->click();
+      w = diag;
     } else if (page.isKcm) {
       w = makeKcmPage(page);
+    } else if (!page.configModule.isEmpty()) {
+      w = makeModuleStatePage(page);
     } else {
       w = makePlaceholder(page);
     }
@@ -186,13 +279,170 @@ QWidget *SettingsWindow::makePlaceholder(const PageDef &page)
   auto *lay = new QVBoxLayout(w);
   auto *title = new QLabel(QStringLiteral("<h2>%1</h2>").arg(page.title), w);
   lay->addWidget(title);
-  auto *info = new QLabel(
-      QStringLiteral("Spike custom page — controls will talk to org.spike.Config over D-Bus.\n"
-                     "Placeholder for this milestone."),
-      w);
+  auto *info = new QLabel(page.blurb.isEmpty()
+                              ? QStringLiteral("Spike custom page — controls will talk to "
+                                               "org.spike.Config over D-Bus.")
+                              : page.blurb,
+                          w);
   info->setWordWrap(true);
   lay->addWidget(info);
   lay->addStretch(1);
+  return w;
+}
+
+QWidget *SettingsWindow::makeModuleStatePage(const PageDef &page)
+{
+  auto *w = new QWidget(this);
+  auto *lay = new QVBoxLayout(w);
+  lay->addWidget(new QLabel(QStringLiteral("<h2>%1</h2>").arg(page.title), w));
+  if (!page.blurb.isEmpty()) {
+    auto *hint = new QLabel(page.blurb, w);
+    hint->setWordWrap(true);
+    lay->addWidget(hint);
+  }
+  auto *body = new QTextEdit(w);
+  body->setObjectName(QStringLiteral("ModuleState"));
+  body->setReadOnly(true);
+  lay->addWidget(body, 1);
+  auto *refresh = new QPushButton(QStringLiteral("Load from spike-config"), w);
+  lay->addWidget(refresh);
+  const QString module = page.configModule;
+  connect(refresh, &QPushButton::clicked, this, [this, body, module]() {
+    QString err;
+    const QString json = m_config ? m_config->getModuleState(module, &err) : QString();
+    if (json.isEmpty()) {
+      body->setPlainText(QStringLiteral("Could not reach org.spike.Config:\n%1").arg(err));
+      m_status->setText(QStringLiteral("spike-config unavailable"));
+    } else {
+      body->setPlainText(json);
+      m_status->setText(QStringLiteral("GetModuleState(%1)").arg(module));
+    }
+  });
+  refresh->click();
+  return w;
+}
+
+QWidget *SettingsWindow::makeNetworkPage()
+{
+  auto *w = new QWidget(this);
+  auto *lay = new QVBoxLayout(w);
+  lay->addWidget(new QLabel(QStringLiteral("<h2>Network</h2>"), w));
+  auto *hint = new QLabel(
+      QStringLiteral("Wi‑Fi and Ethernet via NetworkManager (org.freedesktop.NetworkManager)."),
+      w);
+  hint->setWordWrap(true);
+  lay->addWidget(hint);
+  auto *nm = new NmClient(w);
+  auto *panel = new NetworkPanelWidget(nm, w);
+  // Settings page is already Settings — hide the nested "Network Settings" button action noise.
+  connect(panel, &NetworkPanelWidget::openFullSettings, this, [this]() {
+    m_status->setText(QStringLiteral("Already in Network settings"));
+  });
+  lay->addWidget(panel, 1);
+  return w;
+}
+
+QWidget *SettingsWindow::makeAppearancePage()
+{
+  auto *w = new QWidget(this);
+  auto *lay = new QVBoxLayout(w);
+  lay->addWidget(new QLabel(QStringLiteral("<h2>Appearance</h2>"), w));
+  auto *hint = new QLabel(
+      QStringLiteral("Writes to org.spike.Config module desktop. Panel live-apply comes later."),
+      w);
+  hint->setWordWrap(true);
+  lay->addWidget(hint);
+
+  auto *form = new QFormLayout();
+  auto *panelPos = new QComboBox(w);
+  panelPos->addItem(QStringLiteral("Bottom"), QStringLiteral("bottom"));
+  panelPos->addItem(QStringLiteral("Top"), QStringLiteral("top"));
+  form->addRow(QStringLiteral("Panel position"), panelPos);
+
+  auto *panelHeight = new QSpinBox(w);
+  panelHeight->setRange(24, 48);
+  panelHeight->setSuffix(QStringLiteral(" px"));
+  form->addRow(QStringLiteral("Panel height"), panelHeight);
+
+  auto *autoHide = new QCheckBox(QStringLiteral("Auto-hide panel"), w);
+  form->addRow(QString(), autoHide);
+
+  auto *anim = new QCheckBox(QStringLiteral("Window animations"), w);
+  form->addRow(QString(), anim);
+
+  auto *accent = new QLineEdit(w);
+  accent->setPlaceholderText(QStringLiteral("#6d4aff"));
+  form->addRow(QStringLiteral("Accent color"), accent);
+
+  auto *fontSize = new QSpinBox(w);
+  fontSize->setRange(8, 18);
+  fontSize->setSuffix(QStringLiteral(" pt"));
+  form->addRow(QStringLiteral("Font size"), fontSize);
+
+  lay->addLayout(form);
+
+  auto *status = new QLabel(w);
+  status->setWordWrap(true);
+  lay->addWidget(status);
+
+  auto load = [this, panelPos, panelHeight, autoHide, anim, accent, fontSize, status]() {
+    QString err;
+    const QString json =
+        m_config ? m_config->getModuleState(QStringLiteral("desktop"), &err) : QString();
+    if (json.isEmpty()) {
+      status->setText(QStringLiteral("spike-config unavailable: %1").arg(err));
+      return;
+    }
+    const QJsonObject o = parseModuleJson(json);
+    const QString pos = o.value(QStringLiteral("panel_position")).toString(QStringLiteral("bottom"));
+    const int idx = panelPos->findData(pos);
+    if (idx >= 0) {
+      panelPos->setCurrentIndex(idx);
+    }
+    panelHeight->setValue(o.value(QStringLiteral("panel_height")).toInt(32));
+    autoHide->setChecked(o.value(QStringLiteral("panel_auto_hide")).toBool(false));
+    anim->setChecked(o.value(QStringLiteral("animations_enabled")).toBool(false));
+    accent->setText(o.value(QStringLiteral("accent_color")).toString(QStringLiteral("#6d4aff")));
+    fontSize->setValue(o.value(QStringLiteral("font_size_pt")).toInt(10));
+    status->setText(QStringLiteral("Loaded desktop module from spike-config"));
+  };
+
+  auto *row = new QHBoxLayout();
+  auto *reload = new QPushButton(QStringLiteral("Reload"), w);
+  auto *apply = new QPushButton(QStringLiteral("Apply"), w);
+  row->addWidget(reload);
+  row->addWidget(apply);
+  row->addStretch(1);
+  lay->addLayout(row);
+  lay->addStretch(1);
+
+  connect(reload, &QPushButton::clicked, this, load);
+  connect(apply, &QPushButton::clicked, this,
+          [this, panelPos, panelHeight, autoHide, anim, accent, fontSize, status]() {
+            if (!m_config) {
+              return;
+            }
+            QString err;
+            auto set = [&](const QString &key, const QVariant &v) -> bool {
+              if (!m_config->setSetting(QStringLiteral("desktop"), key, v, &err)) {
+                status->setText(QStringLiteral("SetSetting(%1) failed: %2").arg(key, err));
+                return false;
+              }
+              return true;
+            };
+            if (!set(QStringLiteral("panel_position"), panelPos->currentData()) ||
+                !set(QStringLiteral("panel_height"), panelHeight->value()) ||
+                !set(QStringLiteral("panel_auto_hide"), autoHide->isChecked()) ||
+                !set(QStringLiteral("animations_enabled"), anim->isChecked()) ||
+                !set(QStringLiteral("accent_color"), accent->text().trimmed()) ||
+                !set(QStringLiteral("font_size_pt"), fontSize->value())) {
+              return;
+            }
+            status->setText(QStringLiteral("Appearance saved via org.spike.Config"));
+            m_status->setText(QStringLiteral("desktop settings applied"));
+          });
+
+  load();
   return w;
 }
 

@@ -40,11 +40,16 @@ private:
     bool advanced = false;
     bool isKcm = false;
     QString kcmPlugin; // plugin id for KcmHost when isKcm
+    QString blurb;     // shown on custom stubs / module pages
+    QString configModule; // org.spike.Config module for JSON state pages
   };
 
   void buildPages();
   void rebuildNav();
   QWidget *makePlaceholder(const PageDef &page);
+  QWidget *makeModuleStatePage(const PageDef &page);
+  QWidget *makeAppearancePage();
+  QWidget *makeNetworkPage();
   QWidget *makeKcmPage(const PageDef &page);
   QWidget *makeAboutPage();
   QWidget *makeMemoryPage();

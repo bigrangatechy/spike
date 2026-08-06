@@ -166,9 +166,9 @@ Spike Shell:
 │   ├── History viewer (grouped by day, searchable)
 │   └── Tray badge (unread count, never auto-clears)
 ├── Settings Panel
-│   ├── Custom pages (memory, boot, notifications, updates, storage, diagnostics)
-│   ├── KCM module loader (display, sound, power, keyboard, mouse, etc.)
-│   ├── Unified Spike-themed window
+│   ├── Custom pages (appearance, notifications, network, memory, boot, …)
+│   ├── KCM module loader (display, sound, power, bluetooth, printer — standalone pkgs only)
+│   ├── Unified Spike-themed window (same process as spike-shell)
 │   └── Context-aware help (links to user guide sections)
 ├── Session Manager
 │   ├── Login/logout/shutdown/suspend
@@ -221,7 +221,7 @@ Spike uses KDE applications that run independently of the Plasma desktop shell. 
 | Ark | Archive tool | Handles zip, tar, etc. via file associations |
 | Spectacle | Screenshots | Keyboard-driven, saves to clipboard or file |
 | KCalc | Calculator | Simple, sufficient |
-| KDE System Settings modules | Configuration | Used inside Spike Settings panel |
+| KDE Settings KCMs (selected) | Configuration | Standalone packages only, hosted inside Spike Settings |
 
 ### What Is Not Installed
 
@@ -530,7 +530,7 @@ Users with NVIDIA hardware are encouraged to report their experience through the
 
 - Backend: NetworkManager (included with Ubuntu Server) 
 
-- GUI: Custom Spike Shell network applet (NetworkManager DBus) 
+- GUI: Custom Spike Shell network tray applet + **Settings → Network** (NetworkManager D-Bus; not plasma-nm)
 
 - All major Wi-Fi firmware vendors shipped on ISO (Intel, Atheros, Realtek, Broadcom) 
 

@@ -207,15 +207,20 @@ Installer must REFUSE eMMC, not warn.
 | Notifications scope | Per-session (not visible to other users) | `DESKTOP.md` |
 | Recently used (launcher) | Cleared on every logout | `DESKTOP.md` |
 | Autostart filtering | Only approved autostart entries run | `DESKTOP.md` |
-| Settings architecture | Hybrid: custom Spike pages + KDE KCM modules | `DESKTOP.md` |
-| Settings rule | All changes go through spike-config via DBus | `DESKTOP.md`, `CONFIGURATION.md` |
+| Settings architecture | Hybrid: custom Spike pages + KDE KCMs from **standalone** packages only (never `plasma-desktop` / `plasma-workspace`) | `DESKTOP.md`, `DESIGN-DECISIONS.md` |
+| Settings KCM allowlist | Display=`kscreen`, Sound=`plasma-pa`, Power=`powerdevil`, Bluetooth=`bluedevil`, Printer=`print-manager` | `DESKTOP.md` |
+| Settings Network GUI | Custom Spike UI (tray + Settings); **not** `plasma-nm` (QtWebEngine) | `DESKTOP.md`, `NETWORKING.md` |
+| Settings rule | Spike-config settings via `org.spike.Config`; live network connections via NetworkManager D-Bus | `DESKTOP.md`, `CONFIGURATION.md`, `NETWORKING.md` |
 | Guest session | Not available (deliberate — complexity + data leakage risk) | `PRIVACY.md` |
 
 ### KDE Standalone Apps (Included)
 
 ```
-Discover, Dolphin, Konsole, System Settings (KCMs), Kate, Ark, Spectacle, KCalc
+Discover, Dolphin, Konsole, Kate, Ark, Spectacle, KCalc
++ Settings KCMs via standalone packages (kscreen, plasma-pa, powerdevil, bluedevil, print-manager)
 ```
+
+Do **not** list full Plasma System Settings / `plasma-nm` as shipped apps — Spike hosts selected KCMs inside Spike Settings.
 
 ### Qt Rendering
 

@@ -15,6 +15,8 @@ linux-generic
 network-manager
 wpasupplicant
 iw
+# nmcli used by Spike Network applet / Settings as NM CLI helper (same package)
+# (network-manager provides /usr/bin/nmcli)
 net-tools
 iproute2
 iputils-ping
@@ -70,6 +72,22 @@ htop
 gparted
 # Light Wayland terminal kept as Terminal=true launcher fallback (htop etc.)
 foot
+
+# Settings KCMs (DESKTOP.md Hardware/Network) — standalone packages, NOT plasma-desktop/workspace.
+# Do NOT add plasma-desktop or plasma-workspace: they ship plasmashell autostart and fight Spike Shell.
+# Safe KCM providers (verified: no Depends on plasma-workspace / plasma-desktop):
+kscreen
+plasma-pa
+powerdevil
+bluedevil
+print-manager
+# Network KCM (plasma-nm) deferred: Depends on QtWebEngine (~200MB) — too heavy for Tier-1 4GB.
+# Network/VPN Settings pages are Spike stubs until a lighter path exists.
+
+# Audio stack (MULTIMEDIA.md) — required for Sound KCM / session
+pipewire
+pipewire-pulse
+wireplumber
 
 # Hardware helpers used later by installer detection (lightweight)
 pciutils

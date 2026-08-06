@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(spike-shell VERSION 0.0.10 LANGUAGES CXX)
+project(spike-shell VERSION 0.0.12 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -39,8 +39,14 @@ add_executable(spike-shell
   src/panel/Panel.hpp
   src/panel/applets/ClockApplet.cpp
   src/panel/applets/ClockApplet.hpp
+  src/panel/applets/NetworkApplet.cpp
+  src/panel/applets/NetworkApplet.hpp
   src/panel/applets/SessionMenuApplet.cpp
   src/panel/applets/SessionMenuApplet.hpp
+  src/network/NmClient.cpp
+  src/network/NmClient.hpp
+  src/network/NetworkPanelWidget.cpp
+  src/network/NetworkPanelWidget.hpp
   src/launcher/Launcher.cpp
   src/launcher/Launcher.hpp
   src/settings/ConfigClient.cpp

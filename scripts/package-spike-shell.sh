@@ -6,7 +6,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SRC="${ROOT}/src/spike-shell"
 OUT_DIR="${ROOT}/build/packages"
-VERSION="${SPIKE_SHELL_VERSION:-0.0.10}"
+VERSION="${SPIKE_SHELL_VERSION:-0.0.12}"
 REVISION="${SPIKE_SHELL_REVISION:-1}"
 PKG_VER="${VERSION}-${REVISION}"
 ARCH=amd64
@@ -116,8 +116,9 @@ Maintainer: BigRangaTech <spike@bigrangatech.com>
 Depends: libqt6widgets6 | libqt6widgets6t64, libqt6gui6 | libqt6gui6t64, libqt6core6t64 | libqt6core6, libqt6dbus6 | libqt6dbus6t64, qt6-wayland, liblayershellqtinterface6, layer-shell-qt, libkf6kcmutils6, libkf6kcmutilscore6, libkf6coreaddons6
 Recommends: kwin-wayland, xwayland, dbus-user-session, seatd, libseat1, breeze-cursor-theme, spike-config, libkf6kcmutils-bin
 Description: Spike Linux desktop shell (Qt6 Widgets)
- Bottom panel, Kickoff-style launcher, Settings (in-window KCM host + custom),
- and session menu under standalone KWin. Stage 3 pre-alpha — see docs/DESKTOP.md.
+ Bottom panel, Kickoff launcher, Network tray applet, Settings
+ (custom pages + in-window KCMs), session menu under standalone KWin.
+ Stage 3 pre-alpha — see docs/DESKTOP.md.
 EOF
 
 find "${DEST}" -type d -exec chmod 755 {} +
