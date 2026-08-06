@@ -10,15 +10,17 @@ MVP for this skeleton:
 
 | Piece | Status |
 |-------|--------|
-| Bottom panel (32px) | ✅ stub |
-| Spike button → launcher | ✅ stub |
-| Clock applet | ✅ stub |
-| Session menu (logout/reboot/poweroff) | ✅ stub (`loginctl` / `systemctl`) |
-| Theme (`spike.qss`) — white text on dark | ✅ stub |
+| Bottom panel (32px) | ✅ |
+| Spike button → Kickoff-style launcher | ✅ favorites + categories + power footer |
+| Clock applet | ✅ |
+| Session menu (Settings / logout / reboot / poweroff) | ✅ |
+| Settings window (categories + About/Memory via D-Bus) | ✅ first wire |
+| KCM pages | 📝 listed; opens via `kcmshell6` until in-window host |
+| Theme (`spike.qss`) — white text on dark | ✅ |
 | ISO / `.deb` packaging | ✅ via `scripts/package-spike-shell.sh` |
 | `wlr-layer-shell` panel anchoring | ✅ via LayerShellQt (bottom edge) |
 | Session start (seatd + cursor) | ✅ live smoke |
-| `.desktop` app scanning | ✅ basic scan + single-click launch |
+| `.desktop` app scanning + `Terminal=true` | ✅ |
 | Notification daemon / tray applets | ⬜ later |
 
 ## Build (host smoke)
@@ -30,7 +32,7 @@ cmake --build build -j"$(nproc)"
 ./build/spike-shell
 ```
 
-Needs: `cmake`, `qt6-base-dev`, `liblayershellqtinterface-dev`. On a full Spike session you will also need `kwin-wayland` + `layer-shell-qt`; for host smoke-tests without a compositor the panel opens as a normal window (geometry fallback).
+Needs: `cmake`, `qt6-base-dev`, `liblayershellqtinterface-dev`. On a full Spike session you will also need `kwin-wayland` + `layer-shell-qt`; for host smoke-tests without a compositor the panel opens as a normal window (geometry fallback). Settings talks to `org.spike.Config` on the system bus (`spike-config`).
 
 ## Package + ISO
 

@@ -19,14 +19,15 @@
 | `scripts/build-iso.sh` | ✅ Packages spike-config + spike-shell + lb build |
 | Stage 1 live ISO | ✅ Hardware boot + login |
 | Stage 2 (`spike-config`) | ✅ Target detect OK (N4020 / ~4GB) |
-| Stage 3 (Spike Shell) | 📝 0.0.8: input/cursor OK; power + launcher apps pending rebuild |
+| Stage 3 (Spike Shell) | 📝 0.0.9: Kickoff launcher + Settings wire + org.spike.Config D-Bus |
 | Stage 4 (installer) | 🔲 Later — still **pre-alpha** until BDFL opens Alpha |
 
 ## In Progress
 
 | Item | Notes |
 | :-: | :-: |
-| Stage 3 — Spike Shell | Rebuild ISO; smoke power menu + real launcher apps |
+| Stage 3 — Settings | In-window KCM host next; custom pages beyond About/Memory |
+| Stage 3 — Spike Shell | Rebuild ISO with KDE apps + Settings/D-Bus |
 
 ## Blocked / Waiting On Decision
 
@@ -36,7 +37,9 @@ _None._ Alpha timing is intentional “by feel,” not blocked.
 
 | Date | Item |
 | :-: | :-: |
-| 2026-08-06 | Live apps on ISO: foot, pcmanfm-qt, featherpad, galculator, xarchiver, htop, gparted, nm-tray |
+| 2026-08-06 | `org.spike.Config` D-Bus service + Settings skeleton + Kickoff-style launcher |
+| 2026-08-06 | Live smoke: shutdown OK; apps OK; htop needed Terminal=true wrap |
+| 2026-08-06 | Align live package list with KDE standalone apps (CONSTRAINTS.md) |
 | 2026-08-06 | Session input fixed (seatd/groups/cursors); launcher `.desktop` scan; power via sudo/polkit |
 | 2026-08-06 | spike-shell white-on-dark QSS + `.deb` wired into live ISO |
 | 2026-08-06 | Stage 3 Spike Shell skeleton (`src/spike-shell/`, builds) |

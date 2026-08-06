@@ -62,6 +62,8 @@ SessionMenuApplet::SessionMenuApplet(QWidget *parent)
 void SessionMenuApplet::showMenu()
 {
   QMenu menu(this);
+  QAction *settings = menu.addAction(QStringLiteral("Settings"));
+  menu.addSeparator();
   QAction *logout = menu.addAction(QStringLiteral("Log out"));
   QAction *reboot = menu.addAction(QStringLiteral("Restart"));
   QAction *poweroff = menu.addAction(QStringLiteral("Shut down"));
@@ -71,7 +73,17 @@ void SessionMenuApplet::showMenu()
     return;
   }
 
-  if (chosen == logout) {
+  if (chosen == settings) {
+    // Walk up to Panel and open Settings (same process).
+    QWidget *w = parentWidget();
+    while (w) {
+      if (w->objectName() == QLatin1String("SpikePanel")) {
+        QMetaObject::invokeMethod(w, "openSettings", Qt::QueuedConnection);
+        break;
+      }
+      w = w->parentWidget();
+    }
+  } else if (chosen == logout) {
     const QString sessionId = qEnvironmentVariable("XDG_SESSION_ID");
     if (!sessionId.isEmpty()) {
       runDetached(QStringLiteral("loginctl"),

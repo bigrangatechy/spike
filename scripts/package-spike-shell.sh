@@ -6,7 +6,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SRC="${ROOT}/src/spike-shell"
 OUT_DIR="${ROOT}/build/packages"
-VERSION="${SPIKE_SHELL_VERSION:-0.0.8}"
+VERSION="${SPIKE_SHELL_VERSION:-0.0.9}"
 REVISION="${SPIKE_SHELL_REVISION:-1}"
 PKG_VER="${VERSION}-${REVISION}"
 ARCH=amd64
@@ -108,11 +108,11 @@ Section: x11
 Priority: optional
 Architecture: ${ARCH}
 Maintainer: BigRangaTech <spike@bigrangatech.com>
-Depends: libqt6widgets6 | libqt6widgets6t64, libqt6gui6 | libqt6gui6t64, libqt6core6t64 | libqt6core6, qt6-wayland, liblayershellqtinterface6, layer-shell-qt
-Recommends: kwin-wayland, xwayland, dbus-user-session, seatd, libseat1, breeze-cursor-theme
+Depends: libqt6widgets6 | libqt6widgets6t64, libqt6gui6 | libqt6gui6t64, libqt6core6t64 | libqt6core6, libqt6dbus6 | libqt6dbus6t64, qt6-wayland, liblayershellqtinterface6, layer-shell-qt
+Recommends: kwin-wayland, xwayland, dbus-user-session, seatd, libseat1, breeze-cursor-theme, spike-config
 Description: Spike Linux desktop shell (Qt6 Widgets)
- Bottom panel, launcher, clock, and session menu under standalone KWin.
- Stage 3 pre-alpha skeleton — see docs/DESKTOP.md.
+ Bottom panel, Kickoff-style launcher, Settings (hybrid KCM + custom),
+ and session menu under standalone KWin. Stage 3 pre-alpha — see docs/DESKTOP.md.
 EOF
 
 find "${DEST}" -type d -exec chmod 755 {} +

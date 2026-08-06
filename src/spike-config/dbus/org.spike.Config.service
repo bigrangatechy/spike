@@ -1,0 +1,5 @@
+[D-BUS Service]
+Name=org.spike.Config
+Exec=/usr/bin/spike-config-dbus
+User=root
+SystemdService=spike-config.service

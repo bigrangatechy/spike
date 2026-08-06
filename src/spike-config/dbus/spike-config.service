@@ -1,0 +1,12 @@
+[Unit]
+Description=Spike configuration engine (org.spike.Config)
+Documentation=file:///usr/share/doc/spike-config/README
+
+[Service]
+Type=dbus
+BusName=org.spike.Config
+ExecStart=/usr/bin/spike-config-dbus
+# On-demand: dbus/systemd start us when Settings calls the bus name.
+
+[Install]
+WantedBy=multi-user.target

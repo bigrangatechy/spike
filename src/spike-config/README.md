@@ -79,7 +79,7 @@ python3 -m spike_config --state
 | `--detect` | 📝 best-effort `/proc` stub (installer detectors later) |
 | `--rollback` | ✅ basic (revert one changelog entry) |
 | `--boot-count` | ✅ get / reset / increment |
-| `.deb` + ISO inject | ✅ `package-spike-config.sh` / `packages.chroot` |
-| DBus API | ⬜ later |
+| `.deb` + ISO inject | ✅ `package-spike-config.sh` / live hook |
+| DBus API (`org.spike.Config`) | ✅ system bus + activation (`spike-config-dbus`) |
 
 License: GPLv2+ (code). Docs/branding remain CC-BY-SA 4.0.

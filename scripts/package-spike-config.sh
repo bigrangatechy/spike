@@ -6,7 +6,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SRC="${ROOT}/src/spike-config"
 OUT_DIR="${ROOT}/build/packages"
-VERSION="${SPIKE_CONFIG_VERSION:-0.0.2}"
+VERSION="${SPIKE_CONFIG_VERSION:-0.0.3}"
 REVISION="${SPIKE_CONFIG_REVISION:-1}"
 PKG_VER="${VERSION}-${REVISION}"
 ARCH=all
@@ -21,9 +21,13 @@ Builds ${DEB_NAME} from src/spike-config/ (pure Python, Architecture: all).
 
 Install paths (product):
   /usr/bin/spike-config
+  /usr/bin/spike-config-dbus
   /usr/lib/python3/dist-packages/spike_config/
   /usr/lib/spike/config/templates/
   /usr/lib/spike/config/default-state.json
+  /usr/share/dbus-1/system-services/org.spike.Config.service
+  /usr/share/dbus-1/system.d/org.spike.Config.conf
+  /usr/lib/systemd/system/spike-config.service
 EOF
 }
 
@@ -62,7 +66,10 @@ mkdir -p \
   "${DEST}/usr/bin" \
   "${DEST}/usr/lib/python3/dist-packages" \
   "${DEST}/usr/lib/spike/config/templates" \
-  "${DEST}/usr/share/doc/${PKG_NAME}"
+  "${DEST}/usr/share/doc/${PKG_NAME}" \
+  "${DEST}/usr/share/dbus-1/system-services" \
+  "${DEST}/usr/share/dbus-1/system.d" \
+  "${DEST}/usr/lib/systemd/system"
 
 # Python package
 cp -a "${SRC}/spike_config" "${DEST}/usr/lib/python3/dist-packages/"
@@ -84,6 +91,25 @@ if __name__ == "__main__":
 EOF
 chmod 755 "${DEST}/usr/bin/spike-config"
 
+# D-Bus service entrypoint (org.spike.Config on the system bus)
+cat >"${DEST}/usr/bin/spike-config-dbus" <<'EOF'
+#!/usr/bin/python3
+"""Spike configuration D-Bus service (org.spike.Config)."""
+from spike_config.dbus_service import main
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+EOF
+chmod 755 "${DEST}/usr/bin/spike-config-dbus"
+
+# D-Bus / systemd activation
+install -m 644 "${SRC}/dbus/org.spike.Config.service" \
+  "${DEST}/usr/share/dbus-1/system-services/org.spike.Config.service"
+install -m 644 "${SRC}/dbus/org.spike.Config.conf" \
+  "${DEST}/usr/share/dbus-1/system.d/org.spike.Config.conf"
+install -m 644 "${SRC}/dbus/spike-config.service" \
+  "${DEST}/usr/lib/systemd/system/spike-config.service"
+
 # Docs
 cp "${SRC}/README.md" "${DEST}/usr/share/doc/${PKG_NAME}/README"
 cat >"${DEST}/usr/share/doc/${PKG_NAME}/copyright" <<'EOF'
@@ -104,11 +130,11 @@ Section: admin
 Priority: optional
 Architecture: ${ARCH}
 Maintainer: BigRangaTech <spike@bigrangatech.com>
-Depends: python3 (>= 3.10)
+Depends: python3 (>= 3.10), python3-dbus, python3-gi
 Description: Spike Linux configuration engine
  Generates system configuration from a JSON state store and templates.
- Invoked on-demand by the installer, Settings (later), or the developer CLI.
- See docs/CONFIGURATION.md in the Spike source tree.
+ Invoked on-demand by the installer, Settings (D-Bus org.spike.Config),
+ or the developer CLI. See docs/CONFIGURATION.md.
 EOF
 
 cat >"${DEST}/DEBIAN/postinst" <<'EOF'
@@ -131,7 +157,9 @@ chmod 755 "${DEST}/DEBIAN/postinst"
 # Permissions
 find "${DEST}" -type d -exec chmod 755 {} +
 find "${DEST}/usr/lib" -type f -exec chmod 644 {} +
+find "${DEST}/usr/share" -type f -exec chmod 644 {} +
 chmod 755 "${DEST}/usr/bin/spike-config"
+chmod 755 "${DEST}/usr/bin/spike-config-dbus"
 
 mkdir -p "$OUT_DIR"
 dpkg-deb --root-owner-group --build "$DEST" "${OUT_DIR}/${DEB_NAME}"

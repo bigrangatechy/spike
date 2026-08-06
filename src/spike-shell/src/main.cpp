@@ -96,7 +96,7 @@ int main(int argc, char *argv[])
 {
   QApplication app(argc, argv);
   QApplication::setApplicationName(QStringLiteral("spike-shell"));
-  QApplication::setApplicationVersion(QStringLiteral("0.0.2"));
+  QApplication::setApplicationVersion(QStringLiteral("0.0.9"));
   QApplication::setOrganizationName(QStringLiteral("BigRangaTech"));
 
   applyDarkPalette(app);

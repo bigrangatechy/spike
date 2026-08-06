@@ -52,20 +52,24 @@ seatd
 libseat1
 # Visible pointer (without this KWin logs "Unable to load any cursor theme")
 breeze-cursor-theme
-# Lightweight Wayland terminal for the Spike launcher on live
-foot
 # Power actions from Spike Shell (logind asks polkit; without this → Access denied)
 polkitd
 
-# Stage-3 live apps (real .desktop entries for Spike launcher; keep Tier-1 lean).
-# No full browser yet — QtWebEngine/Falkon is ~200MB+ and too heavy for 4GB targets.
-pcmanfm-qt
-featherpad
-galculator
-xarchiver
+# Stage-3 live apps — KDE standalone set from CONSTRAINTS.md / DESIGN-DECISIONS.md.
+# Spike Shell owns the shell; these are the application layer (not full Plasma).
+# No full browser yet — QtWebEngine is too heavy for 4GB Tier-1 targets (Firefox via Flatpak later).
+dolphin
+konsole
+kate
+ark
+kcalc
+kde-spectacle
+plasma-discover
+# Live/debug extras (not in the shipped app list, but useful on USB smoke tests)
 htop
 gparted
-nm-tray
+# Light Wayland terminal kept as Terminal=true launcher fallback (htop etc.)
+foot
 
 # Hardware helpers used later by installer detection (lightweight)
 pciutils
