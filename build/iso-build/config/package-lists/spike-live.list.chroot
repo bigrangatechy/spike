@@ -71,6 +71,8 @@ polkitd
 pulseaudio-utils
 upower
 alsa-utils
+# Quiets PipeWire "RTKit error: ServiceUnknown" (optional but cheap).
+rtkit
 
 # Stage-3 live apps — KDE standalone set from CONSTRAINTS.md / DESIGN-DECISIONS.md.
 # Spike Shell owns the shell; these are the application layer (not full Plasma).
@@ -103,6 +105,8 @@ print-manager
 pipewire
 pipewire-pulse
 wireplumber
+# Bluetooth A2DP/HFP via PipeWire (bluez/bluedevil alone is not enough)
+libspa-0.2-bluetooth
 
 # Hardware helpers used later by installer detection (lightweight)
 pciutils

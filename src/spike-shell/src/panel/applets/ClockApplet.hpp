@@ -11,6 +11,9 @@ class ClockApplet : public QLabel
 public:
   explicit ClockApplet(QWidget *parent = nullptr);
 
+protected:
+  void mouseReleaseEvent(QMouseEvent *event) override;
+
 private slots:
   void tick();
 };

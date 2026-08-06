@@ -448,8 +448,9 @@ QWidget *SettingsWindow::makeAppearancePage()
                 !set(QStringLiteral("font_size_pt"), fontSize->value())) {
               return;
             }
-            status->setText(QStringLiteral("Appearance saved via org.spike.Config"));
-            m_status->setText(QStringLiteral("desktop settings applied"));
+            status->setText(QStringLiteral(
+                "Saved. Panel/theme apply after session restart (live-apply later)."));
+            m_status->setText(QStringLiteral("appearance saved — restart session to apply"));
           });
 
   load();
@@ -508,7 +509,7 @@ QWidget *SettingsWindow::makeMemoryPage()
       body->setPlainText(QStringLiteral("Error: %1").arg(err));
     } else {
       body->setPlainText(json);
-      m_status->setText(QStringLiteral("Settings applied path: GetModuleState(memory)"));
+      m_status->setText(QStringLiteral("Loaded memory module"));
     }
   });
   refresh->click();

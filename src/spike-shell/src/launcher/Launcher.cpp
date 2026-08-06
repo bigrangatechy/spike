@@ -3,6 +3,7 @@
 #include <QDir>
 #include <QFile>
 #include <QHBoxLayout>
+#include <QIcon>
 #include <QKeyEvent>
 #include <QLabel>
 #include <QLineEdit>
@@ -23,6 +24,7 @@ struct AppEntry {
   QString name;
   QString exec;
   QString category;
+  QString icon;
   bool terminal = false;
 };
 
@@ -118,6 +120,7 @@ QList<AppEntry> scanDesktopApps()
       QString name;
       QString exec;
       QString categories;
+      QString icon;
       bool noDisplay = false;
       bool hidden = false;
       bool terminal = false;
@@ -142,6 +145,8 @@ QList<AppEntry> scanDesktopApps()
           name = value;
         } else if (key == QLatin1String("Exec") && exec.isEmpty()) {
           exec = cleanExec(value);
+        } else if (key == QLatin1String("Icon") && icon.isEmpty()) {
+          icon = value;
         } else if (key == QLatin1String("Categories") && categories.isEmpty()) {
           categories = value;
         } else if (key == QLatin1String("NoDisplay") && value == QLatin1String("true")) {
@@ -162,7 +167,7 @@ QList<AppEntry> scanDesktopApps()
         continue;
       }
       seenNames.insert(name);
-      apps.push_back({name, exec, categoryFor(categories), terminal});
+      apps.push_back({name, exec, categoryFor(categories), icon, terminal});
     }
   }
 
@@ -351,6 +356,22 @@ void Launcher::populateFavorites()
     }
     auto *item = new QListWidgetItem(fav.label, m_favorites);
     item->setData(Qt::UserRole, fav.command);
+    QString iconName = fav.command;
+    if (fav.command == QLatin1String("__settings__")) {
+      iconName = QStringLiteral("preferences-system");
+    } else if (fav.command == QLatin1String("dolphin")) {
+      iconName = QStringLiteral("system-file-manager");
+    } else if (fav.command == QLatin1String("kate")) {
+      iconName = QStringLiteral("accessories-text-editor");
+    } else if (fav.command == QLatin1String("plasma-discover")) {
+      iconName = QStringLiteral("plasmadiscover");
+    } else if (fav.command == QLatin1String("konsole")) {
+      iconName = QStringLiteral("utilities-terminal");
+    }
+    const QIcon ic = QIcon::fromTheme(iconName);
+    if (!ic.isNull()) {
+      item->setIcon(ic);
+    }
   }
 }
 
@@ -371,11 +392,23 @@ void Launcher::populateApps()
     }
     auto *item = new QListWidgetItem(app.name, m_apps);
     item->setData(Qt::UserRole, app.terminal ? wrapForTerminal(app.exec) : app.exec);
+    if (!app.icon.isEmpty()) {
+      QIcon ic;
+      if (app.icon.startsWith(QLatin1Char('/'))) {
+        ic = QIcon(app.icon);
+      } else {
+        ic = QIcon::fromTheme(app.icon);
+      }
+      if (!ic.isNull()) {
+        item->setIcon(ic);
+      }
+    }
   }
 
   if (m_apps->count() == 0) {
     auto *item = new QListWidgetItem(QStringLiteral("Konsole"), m_apps);
     item->setData(Qt::UserRole, QStringLiteral("konsole"));
+    item->setIcon(QIcon::fromTheme(QStringLiteral("utilities-terminal")));
   }
 }
 

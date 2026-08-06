@@ -7,7 +7,7 @@
 # when nothing is listening (seatd-launch fails if /run/seatd.sock exists).
 set -euo pipefail
 
-export XDG_CURRENT_DESKTOP="${XDG_CURRENT_DESKTOP:-Spike}"
+export XDG_CURRENT_DESKTOP="${XDG_CURRENT_DESKTOP:-Spike:KDE}"
 export XDG_SESSION_TYPE=wayland
 # KWin needs a real xcursor theme or the pointer is invisible (looks like "no input").
 export XCURSOR_THEME="${XCURSOR_THEME:-breeze_cursors}"
@@ -22,7 +22,7 @@ if [[ "$(id -u)" -eq 0 ]]; then
     exec runuser -u "${SUDO_USER}" -- /usr/bin/env \
       XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/${SUDO_UID}}" \
       XDG_SESSION_ID="${XDG_SESSION_ID:-}" \
-      XDG_CURRENT_DESKTOP=Spike \
+      XDG_CURRENT_DESKTOP=Spike:KDE \
       XDG_SESSION_TYPE=wayland \
       "$0" "$@"
   fi
@@ -147,6 +147,20 @@ start_audio() {
 start_audio
 sync || true
 
+# Portals need a session bus + XDG_CURRENT_DESKTOP containing KDE (kde.portal UseIn=KDE).
+start_portals() {
+  if ! command -v systemctl >/dev/null 2>&1; then
+    return 0
+  fi
+  ensure_session_bus || true
+  echo "spike-session: XDG_CURRENT_DESKTOP=${XDG_CURRENT_DESKTOP}"
+  echo "spike-session: starting xdg-desktop-portal (user units)"
+  systemctl --user start xdg-desktop-portal.service \
+    plasma-xdg-desktop-portal-kde.service 2>&1 || true
+  systemctl --user --no-pager --full status xdg-desktop-portal.service \
+    plasma-xdg-desktop-portal-kde.service 2>&1 | head -n 40 || true
+}
+
 ensure_session_bus() {
   if [[ -n "${DBUS_SESSION_BUS_ADDRESS:-}" ]]; then
     return 0
@@ -158,6 +172,8 @@ ensure_session_bus() {
   return 1
 }
 
+start_portals
+
 run_kwin_direct() {
   if ensure_session_bus; then
     exec kwin_wayland --drm --xwayland --exit-with-session=spike-shell
@@ -167,7 +183,7 @@ run_kwin_direct() {
     exec dbus-run-session -- env \
       LIBSEAT_BACKEND="${LIBSEAT_BACKEND}" \
       SEATD_SOCK="${SEATD_SOCK:-}" \
-      XDG_CURRENT_DESKTOP=Spike \
+      XDG_CURRENT_DESKTOP=Spike:KDE \
       XDG_SESSION_TYPE=wayland \
       XCURSOR_THEME="${XCURSOR_THEME}" \
       XCURSOR_SIZE="${XCURSOR_SIZE}" \
@@ -197,7 +213,7 @@ start_kwin() {
     if command -v dbus-run-session >/dev/null 2>&1; then
       echo "spike-session: wrapping with dbus-run-session"
       exec dbus-run-session -- env LIBSEAT_BACKEND=seatd \
-        XDG_CURRENT_DESKTOP=Spike XDG_SESSION_TYPE=wayland \
+        XDG_CURRENT_DESKTOP=Spike:KDE XDG_SESSION_TYPE=wayland \
         XCURSOR_THEME="${XCURSOR_THEME}" XCURSOR_SIZE="${XCURSOR_SIZE}" \
         QT_QPA_PLATFORMTHEME="${QT_QPA_PLATFORMTHEME}" \
         seatd-launch -- kwin_wayland --drm --xwayland --exit-with-session=spike-shell

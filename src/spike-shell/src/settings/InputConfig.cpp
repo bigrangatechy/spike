@@ -71,7 +71,10 @@ QVector<PointerDevice> listPointerDevices()
     const bool isPad = lower.contains(QLatin1String("touchpad")) ||
                        lower.contains(QLatin1String("synaptics")) ||
                        lower.contains(QLatin1String("trackpad")) ||
-                       lower.contains(QLatin1String("clickpad"));
+                       lower.contains(QLatin1String("clickpad")) ||
+                       lower.contains(QLatin1String("htix")) || // Gemini Lake laptop pads
+                       lower.startsWith(QLatin1String("elan")) ||
+                       lower.contains(QLatin1String("dll")); // Dell pads
     const bool isMouse = lower.contains(QLatin1String("mouse")) ||
                          lower.contains(QLatin1String("trackpoint")) ||
                          lower.contains(QLatin1String("pointer"));

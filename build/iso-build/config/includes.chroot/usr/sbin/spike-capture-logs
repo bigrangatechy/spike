@@ -105,8 +105,17 @@ write_snapshot_into() {
   {
     dpkg -l 'spike-config' 'spike-shell' 'kwin-wayland' 'layer-shell-qt' \
       'liblayershellqtinterface6' 'pipewire' 'pipewire-pulse' 'wireplumber' \
-      'plasma-pa' 'firmware-sof-signed' 2>&1 || true
+      'plasma-pa' 'firmware-sof-signed' 'breeze' 'breeze-icon-theme' \
+      'kf6-breeze-icon-theme' 'qt6-svg-plugins' 'libqt6svg6' 'pulseaudio-utils' \
+      'upower' 'alsa-utils' 'rtkit' 'xdg-desktop-portal' 'xdg-desktop-portal-kde' \
+      2>&1 || true
     ls -la /usr/bin/spike-config /usr/bin/spike-shell /usr/bin/spike-session 2>&1 || true
+    ls -la /usr/share/icons/spike-icons/index.theme \
+      /usr/share/wireplumber/wireplumber.conf.d/51-spike-sof-hdmi-disable.conf \
+      /usr/share/color-schemes/SpikeDark.colors 2>&1 || true
+    wc -c /usr/share/wireplumber/wireplumber.conf.d/51-spike-sof-hdmi-disable.conf \
+      /usr/share/color-schemes/SpikeDark.colors 2>&1 || true
+    ls -la /usr/lib/*/qt6/plugins/iconengines/ 2>&1 || true
     ls -la /var/lib/spike/config 2>&1 || true
   } >"$cap/packages.txt" 2>&1 || true
 
@@ -134,17 +143,52 @@ write_snapshot_into() {
     -g 'spike-shell|spike-session|spike-config|kwin|wayland|libinput|seat|drm|LayerShell|spike-detect|pipewire|wireplumber|sof-|ASoC|pulse' \
     >"$cap/journal-shell.txt" 2>&1 || true
 
-  # Audio diagnostics (SOF HDMI spam / PipeWire probes).
+  # Audio diagnostics must run as the graphical session user — root has no
+  # XDG_RUNTIME_DIR / pulse socket (previous captures showed "Connection refused").
   {
     echo "=== aplay -l ==="
     aplay -l 2>&1 || true
-    echo "=== pactl info ==="
-    pactl info 2>&1 || true
-    echo "=== wpctl status ==="
-    wpctl status 2>&1 || true
-    echo "=== systemctl --user (pipewire) ==="
-    systemctl --user status pipewire.service pipewire.socket wireplumber.service \
-      pipewire-pulse.service pipewire-pulse.socket --no-pager 2>&1 || true
+    echo "=== session-user audio (pactl / wpctl / systemctl --user) ==="
+    ran_user_audio=0
+    for rd in /run/user/*; do
+      [ -d "$rd" ] || continue
+      uid="$(basename "$rd")"
+      case "$uid" in
+        *[!0-9]*) continue ;;
+      esac
+      [ -S "$rd/pulse/native" ] || [ -S "$rd/pipewire-0" ] || [ -d "$rd" ] || continue
+      user="$(getent passwd "$uid" | cut -d: -f1 || true)"
+      [ -n "$user" ] || continue
+      [ "$user" = root ] && continue
+      echo "--- as ${user} (uid=${uid} XDG_RUNTIME_DIR=${rd}) ---"
+      if command -v runuser >/dev/null 2>&1; then
+        runuser -u "$user" -- env XDG_RUNTIME_DIR="$rd" \
+          DBUS_SESSION_BUS_ADDRESS="unix:path=${rd}/bus" \
+          sh -c '
+            echo "=== pactl info ==="
+            pactl info 2>&1 || true
+            echo "=== pactl short sinks ==="
+            pactl list short sinks 2>&1 || true
+            echo "=== wpctl status ==="
+            wpctl status 2>&1 || true
+            echo "=== systemctl --user pipewire* ==="
+            systemctl --user status pipewire.service pipewire.socket wireplumber.service \
+              pipewire-pulse.service pipewire-pulse.socket --no-pager 2>&1 || true
+          ' 2>&1 || true
+        ran_user_audio=1
+        break
+      fi
+    done
+    if [ "$ran_user_audio" -eq 0 ]; then
+      echo "(no /run/user session found — falling back to root; expect Connection refused)"
+      echo "=== pactl info ==="
+      pactl info 2>&1 || true
+      echo "=== wpctl status ==="
+      wpctl status 2>&1 || true
+      echo "=== systemctl --user (pipewire) ==="
+      systemctl --user status pipewire.service pipewire.socket wireplumber.service \
+        pipewire-pulse.service pipewire-pulse.socket --no-pager 2>&1 || true
+    fi
     echo "=== journal pipewire/wireplumber/sof (boot) ==="
     journalctl -b --no-pager -u 'pipewire*' -u 'wireplumber*' 2>&1 | tail -n 200 || true
     journalctl -b --no-pager -k 2>&1 | grep -iE 'sof-|ASoC|snd_|essx|pipewire' | tail -n 200 || true

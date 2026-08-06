@@ -19,14 +19,14 @@
 | `scripts/build-iso.sh` | ✅ Packages spike-config + spike-shell + lb build |
 | Stage 1 live ISO | ✅ Hardware boot + login |
 | Stage 2 (`spike-config`) | ✅ Target detect OK (N4020 / ~4GB) |
-| Stage 3 (Spike Shell) | 📝 0.0.16: real Libinput kcminputrc + honest Apply; 0.0.15 icon/WP fixes pending rebuild |
+| Stage 3 (Spike Shell) | 📝 0.0.17: portals Spike:KDE, audio groups, WP/SOF tighten, volume retry, launcher icons; pending ISO rebuild |
 | Stage 4 (installer) | 🔲 Pre-alpha until installer E2E — that gate opens **Alpha** |
 
 ## In Progress
 
 | Item | Notes |
 | :-: | :-: |
-| Stage 3 — desktop smoke | Rebuild ISO; verify icons, Volume/Battery, new Settings pages, prior Breeze/portal/SOF polish |
+| Stage 3 — desktop smoke | Rebuild ISO with 0.0.17; verify icons, Volume, portals, SOF quiet, Mouse Apply, clock→Date&Time |
 
 ## Blocked / Waiting On Decision
 
@@ -41,6 +41,9 @@
 
 | Date | Item |
 | :-: | :-: |
+| 2026-08-06 | spike-shell 0.0.17: portals Spike:KDE, audio/pipewire groups, BT SPA, PW 44100 live drop-in, SOF scoped, volume/wpctl, launcher icons, verify-includes hook |
+| 2026-08-06 | spike-shell 0.0.16: Libinput kcminputrc + honest Mouse/Keyboard Apply |
+| 2026-08-06 | spike-shell 0.0.15: non-empty WP/SpikeDark, qt6-svg-plugins, pulse wait |
 | 2026-08-06 | spike-shell 0.0.14: Date/Time, Keyboard, Mouse, Layout pages; Volume + Battery applets; spike-icons |
 | 2026-08-06 | Pre-rebuild polish: breeze + plasma-integration + portal-kde + applications.menu + SpikeDark + SOF HDMI WP rule |
 | 2026-08-06 | Smoke: session + Network/Settings + **graceful shutdown** (capture 20260806T115605Z) |
@@ -65,7 +68,7 @@
 
 ## Next Suggested Work
 
-1. Rebuild ISO + smoke: Breeze decorations, spike-icons, Volume/Battery, Date & Time / Keyboard / Mouse / Layout, SOF HDMI quiet, Session Shut down.  
+1. Rebuild ISO + smoke: SVG icons, Volume sound, SOF quieter, portals OK, Mouse Apply, clock→Date&Time, launcher icons.  
 2. Next Settings pass: Users / Language / Accessibility stubs → real pages.  
 3. Stage 4 (still pre-alpha): custom installer until it works E2E.  
 4. Open **Alpha** when installer E2E is confirmed (BDFL gate).

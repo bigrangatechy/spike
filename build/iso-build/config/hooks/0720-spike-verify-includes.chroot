@@ -1,0 +1,43 @@
+#!/bin/sh
+# Fail the ISO build if critical Spike includes landed empty (caught WP/SpikeDark
+# shipping as 0-byte and WirePlumber ignoring them).
+set -eu
+
+fail=0
+check() {
+  f="$1"
+  min="${2:-1}"
+  if [ ! -f "$f" ]; then
+    echo "E: missing critical include: $f" >&2
+    fail=1
+    return
+  fi
+  bytes="$(wc -c <"$f" | tr -d ' ')"
+  if [ "$bytes" -lt "$min" ]; then
+    echo "E: critical include too small (${bytes}B < ${min}B): $f" >&2
+    fail=1
+  else
+    echo "I: ok ${bytes}B $f"
+  fi
+}
+
+check /usr/share/wireplumber/wireplumber.conf.d/51-spike-sof-hdmi-disable.conf 100
+check /usr/share/color-schemes/SpikeDark.colors 500
+check /etc/xdg/kwinrc 50
+check /etc/xdg/kdeglobals 50
+check /etc/xdg/menus/applications.menu 500
+check /usr/share/icons/spike-icons/index.theme 50
+check /etc/pipewire/pipewire.conf.d/99-spike.conf 50
+
+# SVG icon engine required for Breeze panel icons.
+if [ ! -e /usr/lib/x86_64-linux-gnu/qt6/plugins/iconengines/libqsvgicon.so ] &&
+   ! ls /usr/lib/*/qt6/plugins/iconengines/libqsvgicon.so >/dev/null 2>&1; then
+  echo "E: qt6 SVG icon engine missing (install qt6-svg-plugins)" >&2
+  fail=1
+else
+  echo "I: qt6 SVG icon engine present"
+fi
+
+if [ "$fail" -ne 0 ]; then
+  exit 1
+fi

@@ -4,7 +4,30 @@ Append-only. Newest sessions at the **top**.
 
 ---
 
-## 2026-08-06 — Honest input Apply + scorecard from previous smoke
+## 2026-08-06 — Pre-rebuild hardening (0.0.17)
+
+More before ISO rebuild (beyond 0.0.15/0.0.16 smoke fixes):
+
+**Shell / diagnostics**
+- Volume: pactl retries + `wpctl` fallback; live pkg `rtkit`
+- Launcher: `.desktop` / favorites use `QIcon::fromTheme`
+- Clock click → Settings Date & Time; HTIX-style touchpad detection
+- Capture: audio probes via `runuser` as session user (`XDG_RUNTIME_DIR`)
+- Appearance / Memory status wording honest (saved ≠ live panel apply)
+
+**Live session / audio / portals**
+- `XDG_CURRENT_DESKTOP=Spike:KDE` so `kde.portal` matches; start portal units from session + shell
+- Live user groups: +`audio` +`pipewire`
+- `libspa-0.2-bluetooth`; PipeWire live drop-in 44100Hz (`99-spike.conf`)
+- SOF HDMI WP rule scoped to Essx8336 card (not all HDMI)
+- Hook `0720-spike-verify-includes.chroot` fails build if critical includes empty / SVG engine missing
+
+**Package:** `spike-shell_0.0.17-1`.
+
+**Try:** rebuild → icons + launcher icons; Volume/`pactl`; quieter SOF; Mouse Apply honesty; clock→Date&Time; portals without ServiceUnknown.
+
+---
+
 
 **Previous ISO (`spike-capture-20260806T130212Z`, before 099c3c1 rebuild):**
 - Worked: Breeze titlebars; session start; PipeWire units start; graceful path available.

@@ -20,5 +20,5 @@ fi
 
 if [ -f /etc/systemd/system/spike-live-groups.service ]; then
   systemctl enable spike-live-groups.service || true
-  echo "I: enabled spike-live-groups.service (video/input/render for seatd)"
+  echo "I: enabled spike-live-groups.service (video/input/render/audio/pipewire)"
 fi
