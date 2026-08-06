@@ -1,0 +1,16 @@
+[Unit]
+Description=Add Spike live users to video/input/render groups
+Documentation=file:///usr/share/doc/spike-shell/README
+DefaultDependencies=no
+After=local-fs.target systemd-sysusers.service
+# Casper creates the live user before getty; be ready before login prompts.
+Before=getty.target multi-user.target
+Wants=local-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/sbin/spike-live-groups
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

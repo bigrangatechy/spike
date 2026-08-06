@@ -16,8 +16,9 @@ MVP for this skeleton:
 | Session menu (logout/reboot/poweroff) | ✅ stub (`loginctl` / `systemctl`) |
 | Theme (`spike.qss`) — white text on dark | ✅ stub |
 | ISO / `.deb` packaging | ✅ via `scripts/package-spike-shell.sh` |
-| `wlr-layer-shell` panel anchoring | ⬜ later (runs as normal window for now) |
-| `.desktop` app scanning | ⬜ later |
+| `wlr-layer-shell` panel anchoring | ✅ via LayerShellQt (bottom edge) |
+| Session start (seatd + cursor) | ✅ live smoke |
+| `.desktop` app scanning | ✅ basic scan + single-click launch |
 | Notification daemon / tray applets | ⬜ later |
 
 ## Build (host smoke)
@@ -29,7 +30,7 @@ cmake --build build -j"$(nproc)"
 ./build/spike-shell
 ```
 
-Needs: `cmake`, `qt6-base-dev` (Widgets). On a full Spike session you will also need `kwin-wayland`; for host smoke-tests the panel opens as a normal window.
+Needs: `cmake`, `qt6-base-dev`, `liblayershellqtinterface-dev`. On a full Spike session you will also need `kwin-wayland` + `layer-shell-qt`; for host smoke-tests without a compositor the panel opens as a normal window (geometry fallback).
 
 ## Package + ISO
 
@@ -39,11 +40,13 @@ Needs: `cmake`, `qt6-base-dev` (Widgets). On a full Spike session you will also 
 sudo ./scripts/build-iso.sh
 ```
 
-`build-iso.sh` packages both `spike-config` and `spike-shell`, stages newest `spike-*.deb` under `includes.chroot/var/cache/spike-local/`, and installs them via hook `0600-spike-config.chroot`. Live package list includes Qt6 Widgets runtime, `qt6-wayland`, `kwin-wayland`, and `xwayland`.
+`build-iso.sh` packages both `spike-config` and `spike-shell`, stages newest `spike-*.deb` under `includes.chroot/var/cache/spike-local/`, and installs them via hook `0600-spike-config.chroot`. Live package list includes Qt6 Widgets, `layer-shell-qt`, `kwin-wayland`, and `xwayland`.
 
-## Session stub
+## Session
 
-`session/spike-session` starts `kwin_wayland` then `spike-shell`. On the live image: `spike-shell` alone for a quick panel smoke, or pick the **Spike** Wayland session (`spike.desktop`) when a display manager is present.
+`session/spike-session` starts **DRM** `kwin_wayland` via **`seatd-launch`** (so keyboard/mouse are granted from a text VT), then `spike-shell`. Refuses bare root; if you `sudo`, it re-execs as `SUDO_USER`. Logs tee to `$XDG_RUNTIME_DIR` and `/var/log/spike/session-latest.log` (casper copies that to USB).
+
+**Important:** run from a text VT as the live user. Prefer plain `spike-session` (not sudo).
 
 ## License
 

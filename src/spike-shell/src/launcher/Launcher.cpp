@@ -1,12 +1,122 @@
 #include "launcher/Launcher.hpp"
 
+#include <QDir>
+#include <QFile>
 #include <QKeyEvent>
 #include <QLineEdit>
 #include <QListWidget>
 #include <QProcess>
+#include <QSet>
+#include <QStandardPaths>
 #include <QVBoxLayout>
 
+#include <algorithm>
+
 namespace spike {
+
+namespace {
+
+struct AppEntry {
+  QString name;
+  QString exec;
+};
+
+QString cleanExec(QString exec)
+{
+  // Strip freedesktop field codes and keep a runnable command line.
+  static const char *const codes[] = {"%f", "%F", "%u", "%U", "%d", "%D", "%n", "%N",
+                                      "%i", "%c", "%k", "%v", "%m"};
+  for (const char *code : codes) {
+    exec.replace(QString::fromUtf8(code), QString());
+  }
+  return exec.simplified();
+}
+
+QList<AppEntry> scanDesktopApps()
+{
+  QList<AppEntry> apps;
+  QSet<QString> seenNames;
+
+  QStringList dirs = QStandardPaths::standardLocations(QStandardPaths::ApplicationsLocation);
+  // Ensure system path is present even if XDG vars are odd on live.
+  if (!dirs.contains(QStringLiteral("/usr/share/applications"))) {
+    dirs.prepend(QStringLiteral("/usr/share/applications"));
+  }
+
+  for (const QString &dirPath : dirs) {
+    QDir dir(dirPath);
+    if (!dir.exists()) {
+      continue;
+    }
+    const QFileInfoList files =
+        dir.entryInfoList({QStringLiteral("*.desktop")}, QDir::Files, QDir::Name);
+    for (const QFileInfo &fi : files) {
+      QFile file(fi.absoluteFilePath());
+      if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        continue;
+      }
+
+      QString name;
+      QString exec;
+      bool noDisplay = false;
+      bool hidden = false;
+      bool inDesktopEntry = false;
+
+      while (!file.atEnd()) {
+        const QString line = QString::fromUtf8(file.readLine()).trimmed();
+        if (line.startsWith(QLatin1Char('['))) {
+          inDesktopEntry = (line == QLatin1String("[Desktop Entry]"));
+          continue;
+        }
+        if (!inDesktopEntry || line.isEmpty() || line.startsWith(QLatin1Char('#'))) {
+          continue;
+        }
+        const int eq = line.indexOf(QLatin1Char('='));
+        if (eq <= 0) {
+          continue;
+        }
+        const QString key = line.left(eq);
+        const QString value = line.mid(eq + 1);
+        if (key == QLatin1String("Name") && name.isEmpty()) {
+          name = value;
+        } else if (key == QLatin1String("Exec") && exec.isEmpty()) {
+          exec = cleanExec(value);
+        } else if (key == QLatin1String("NoDisplay") && value == QLatin1String("true")) {
+          noDisplay = true;
+        } else if (key == QLatin1String("Hidden") && value == QLatin1String("true")) {
+          hidden = true;
+        } else if (key == QLatin1String("Type") && value != QLatin1String("Application")) {
+          noDisplay = true;
+        }
+      }
+
+      if (noDisplay || hidden || name.isEmpty() || exec.isEmpty()) {
+        continue;
+      }
+      if (seenNames.contains(name)) {
+        continue;
+      }
+      seenNames.insert(name);
+      apps.push_back({name, exec});
+    }
+  }
+
+  std::sort(apps.begin(), apps.end(),
+            [](const AppEntry &a, const AppEntry &b) { return a.name.toLower() < b.name.toLower(); });
+  return apps;
+}
+
+void addFallback(QListWidget *list, const QString &label, const QString &command)
+{
+  // Only advertise fallbacks that exist on PATH.
+  if (QStandardPaths::findExecutable(command.split(QLatin1Char(' ')).constFirst()).isEmpty()) {
+    return;
+  }
+  auto *item = new QListWidgetItem(label, list);
+  item->setData(Qt::UserRole, command);
+}
+
+} // namespace
 
 Launcher::Launcher(QWidget *parent)
   : QWidget(parent, Qt::Popup | Qt::FramelessWindowHint)
@@ -29,16 +139,21 @@ Launcher::Launcher(QWidget *parent)
 
   connect(m_search, &QLineEdit::textChanged, this, &Launcher::filterChanged);
   connect(m_search, &QLineEdit::returnPressed, this, &Launcher::activateCurrent);
+  // Single click should launch (itemActivated is usually double-click / Enter).
+  connect(m_list, &QListWidget::itemClicked, this, [this](QListWidgetItem *) {
+    activateCurrent();
+  });
   connect(m_list, &QListWidget::itemActivated, this, [this](QListWidgetItem *) {
     activateCurrent();
   });
 
-  populateStubEntries();
+  populateEntries();
 }
 
 void Launcher::showEvent(QShowEvent *event)
 {
   QWidget::showEvent(event);
+  populateEntries();
   m_search->clear();
   filterChanged(QString());
   m_search->setFocus(Qt::OtherFocusReason);
@@ -79,32 +194,29 @@ void Launcher::activateCurrent()
     return;
   }
 
-  const QString cmd = item->data(Qt::UserRole).toString();
+  const QString cmd = item->data(Qt::UserRole).toString().trimmed();
   if (!cmd.isEmpty()) {
-    QProcess::startDetached(cmd, {});
+    // desktop Exec lines may include args; run via sh -c for simplicity.
+    QProcess::startDetached(QStringLiteral("/bin/sh"), {QStringLiteral("-c"), cmd});
   }
   hide();
 }
 
-void Launcher::populateStubEntries()
+void Launcher::populateEntries()
 {
-  // Hardcoded stubs until .desktop scanning lands.
-  struct Entry {
-    const char *label;
-    const char *command;
-  };
-  const Entry entries[] = {
-      {"Terminal", "xterm"},
-      {"Files", "dolphin"},
-      {"Firefox", "firefox"},
-      {"Settings (soon)", ""},
-  };
-
   m_list->clear();
-  for (const Entry &e : entries) {
-    auto *item = new QListWidgetItem(QString::fromUtf8(e.label), m_list);
-    item->setData(Qt::UserRole, QString::fromUtf8(e.command));
+
+  const QList<AppEntry> apps = scanDesktopApps();
+  for (const AppEntry &app : apps) {
+    auto *item = new QListWidgetItem(app.name, m_list);
+    item->setData(Qt::UserRole, app.exec);
   }
+
+  if (m_list->count() == 0) {
+    addFallback(m_list, QStringLiteral("Terminal"), QStringLiteral("foot"));
+    addFallback(m_list, QStringLiteral("Terminal (xterm)"), QStringLiteral("xterm"));
+  }
+
   if (m_list->count() > 0) {
     m_list->setCurrentRow(0);
   }

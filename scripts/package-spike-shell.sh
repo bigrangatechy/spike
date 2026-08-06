@@ -6,7 +6,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SRC="${ROOT}/src/spike-shell"
 OUT_DIR="${ROOT}/build/packages"
-VERSION="${SPIKE_SHELL_VERSION:-0.0.1}"
+VERSION="${SPIKE_SHELL_VERSION:-0.0.8}"
 REVISION="${SPIKE_SHELL_REVISION:-1}"
 PKG_VER="${VERSION}-${REVISION}"
 ARCH=amd64
@@ -58,7 +58,22 @@ command -v cmake >/dev/null || {
 
 BUILD="${SRC}/build-pkg"
 rm -rf "$BUILD"
-cmake -S "$SRC" -B "$BUILD" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr
+
+# Prefer system LayerShellQt; fall back to extracted -dev under build/deps-extract.
+CMAKE_ARGS=(-S "$SRC" -B "$BUILD" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr)
+if [[ ! -d /usr/lib/x86_64-linux-gnu/cmake/LayerShellQt ]]; then
+  EXTRACT="${ROOT}/build/deps-extract/root/usr"
+  if [[ -d "${EXTRACT}/lib/x86_64-linux-gnu/cmake/LayerShellQt" ]]; then
+    CMAKE_ARGS+=("-DCMAKE_PREFIX_PATH=${EXTRACT}")
+  else
+    echo "error: LayerShellQt CMake package missing." >&2
+    echo "  sudo apt install liblayershellqtinterface-dev" >&2
+    echo "  (or extract it under build/deps-extract/ — see SESSION_LOG)" >&2
+    exit 1
+  fi
+fi
+
+cmake "${CMAKE_ARGS[@]}"
 cmake --build "$BUILD" -j"$(nproc)"
 
 STAGE="$(mktemp -d)"
@@ -93,8 +108,8 @@ Section: x11
 Priority: optional
 Architecture: ${ARCH}
 Maintainer: BigRangaTech <spike@bigrangatech.com>
-Depends: libqt6widgets6 | libqt6widgets6t64, libqt6gui6 | libqt6gui6t64, libqt6core6t64 | libqt6core6, qt6-wayland
-Recommends: kwin-wayland
+Depends: libqt6widgets6 | libqt6widgets6t64, libqt6gui6 | libqt6gui6t64, libqt6core6t64 | libqt6core6, qt6-wayland, liblayershellqtinterface6, layer-shell-qt
+Recommends: kwin-wayland, xwayland, dbus-user-session, seatd, libseat1, breeze-cursor-theme
 Description: Spike Linux desktop shell (Qt6 Widgets)
  Bottom panel, launcher, clock, and session menu under standalone KWin.
  Stage 3 pre-alpha skeleton — see docs/DESKTOP.md.

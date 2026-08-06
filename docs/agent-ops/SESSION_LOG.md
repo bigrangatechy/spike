@@ -4,6 +4,90 @@ Append-only. Newest sessions at the **top**.
 
 ---
 
+## 2026-08-06 — Cursor works; session power + launcher stubs broken
+
+**Finding:** Input/cursor OK on 0.0.6. Restart/Shut down used `systemctl` (needs root/polkit) and this Ubuntu `loginctl` has no power verbs. Launcher stubs pointed at missing apps (`xterm`/`dolphin`/`firefox`) and only activated on double-click.
+
+**Fix (0.0.7):** Power via `busctl` → logind `PowerOff`/`Reboot`, then `sudo -n systemctl`. Launcher scans `.desktop` files, single-click launches, ISO adds `foot`.
+
+**Try:** rebuild → Session menu power actions; Spike menu should list Foot (and any other .desktop apps).
+
+---
+
+## 2026-08-06 — PowerOff Access denied; launcher stubs
+
+**Finding (USB session log):** Cursor OK on 0.0.6. `Call to PowerOff failed: Access denied` twice; auth log: `Polkit found to be unavailable` for `org.freedesktop.login1.power-off`. Launcher still stub apps (not on ISO).
+
+**Fix (0.0.8):** Power via `sudo -n systemctl` first (wait for exit), then logind `busctl`. Ship `polkitd` + live allow rule. Launcher scans `.desktop` + single-click; ISO adds `foot` (from 0.0.7).
+
+**Try:** rebuild → Restart/Shut down; Spike menu should show Foot / real .desktop apps.
+
+---
+
+## 2026-08-06 — "No input" was invisible cursor
+
+**Finding:** Session 0.0.5 log shows KWin up, libinput opening the touchpad (`HTIX5288`), groups OK (video/input/render), system seatd OK. Then: `Failed to load cursor theme "default"` / `Unable to load any cursor theme`.
+
+**Cause:** Pointer events work; no cursor theme on the live image → invisible cursor (feels like dead input).
+
+**Fix (0.0.6):** Ship `breeze-cursor-theme`; `spike-session` sets `XCURSOR_THEME=breeze_cursors`.
+
+**Try:** rebuild → `spike-session` → expect visible pointer + clicks on Spike button.
+
+---
+
+## 2026-08-06 — spike-session failed: seatd-launch vs system seatd
+
+**Finding:** `session-latest.log` showed seat/session OK, then:
+`Socket file found at socket path /run/seatd.sock, refusing to start` / `seatd exited prematurely`.
+System `seatd.service` already running; `seatd-launch` tries to bind the same socket. Live user also not in `video` (seatd `-g video`).
+
+**Fix (0.0.5):** Use system seatd when `/run/seatd.sock` exists (no seatd-launch). `spike-live-groups.service` adds live users to `video,input,render` before getty.
+
+**Try:** rebuild → login on tty → `spike-session` → input should work. Log still at USB `…/log/spike/session-latest.log`.
+
+---
+
+## 2026-08-06 — Input still dead after root-guard; user re-ran without sudo
+
+**Finding:** Root guard worked (sudo refused); user re-ran as `ubuntu`. Still no input. Follow log only showed the sudo attempt; no session log on USB (writable not user-writable at those paths).
+
+**Cause (likely):** Starting KWin from a text VT without a DM — DRM works, libseat/logind often does not grant `/dev/input`.
+
+**Fix (0.0.4):** Start via `seatd-launch`; ship `seatd`+`libseat1`; log to `/var/log/spike/` (casper → USB); sudo auto-re-exec as `SUDO_USER`.
+
+**Try:** rebuild → `spike-session` (no sudo) → expect mouse/keyboard. Power-off OK; collect `/var/log/spike/session-latest.log` via USB install-logs.
+
+---
+
+## 2026-08-06 — Dead input again; follow log empty on USB
+
+**Finding:** Captures `072454Z` (boot snapshot) + `072558Z` (--follow). Packages OK (shell 0.0.2, layer-shell-qt). Follow `journal-follow.txt` was **0 bytes** (stdio block buffer + hard reboot). No `spike-session.log`. Seat at boot had no sessions (expected pre-login).
+
+**Fix:** Line-buffered follow + periodic sync; `spike-session` tees to USB `spike-session-latest.log`; refuses root / no-seat; shutdown finalize unit. Shell → 0.0.3.
+
+**Try:** rebuild → `--follow` → `spike-session` as live user (not sudo) → power off if stuck → collect USB (`spike-session-latest.log` + `journal-follow.txt`).
+
+---
+
+## 2026-08-06 — Slim debug capture for shell/session
+
+**Done:** `spike-capture-logs` no longer dumps full syslog/dmesg/udev/nmcli/lsmod. Keeps spike-config, package check, seat/session, filtered journal, and copies `spike-session.log` when present. Re-run `sudo spike-capture-logs` after testing the shell so session logs land on USB.
+
+---
+
+## 2026-08-06 — spike-session: centred panel + dead input
+
+**Finding:** USB capture `spike-capture-20260806T065815Z` is early boot only (no kwin/shell lines). User report: panel appeared mid-screen; mouse/keyboard dead under `spike-session`.
+
+**Cause:** (1) Wayland ignores client `setGeometry` — KWin centres the xdg-shell stub. (2) Session likely nested / not taking DRM seat → compositor up, seat input dead.
+
+**Fix:** Panel uses LayerShellQt bottom anchors + exclusive zone. `spike-session` clears parent displays, starts `kwin_wayland --drm --xwayland`, wraps `dbus-run-session`, logs to `$XDG_RUNTIME_DIR/spike-session.log`. ISO adds `layer-shell-qt` / `liblayershellqtinterface6`. Shell bumped to 0.0.2.
+
+**Try:** rebuild ISO → from a text VT (Ctrl+Alt+F3), log in, run `spike-session`. Panel should sit on the bottom edge; input should work. If not, grab `$XDG_RUNTIME_DIR/spike-session.log`.
+
+---
+
 ## 2026-08-06 — Spike Shell white text + ISO packaging
 
 **Done:** Panel/launcher/menus use **white text on dark** (`spike.qss` + `applyDarkPalette` in `main.cpp`). New `scripts/package-spike-shell.sh` → `spike-shell_0.0.1-1_amd64.deb`. `build-iso.sh` packages + stages both config and shell; hook installs both; package list adds Qt6 Widgets, `qt6-wayland`, `kwin-wayland`, `xwayland`. Host needs `cmake` + `qt6-base-dev`.

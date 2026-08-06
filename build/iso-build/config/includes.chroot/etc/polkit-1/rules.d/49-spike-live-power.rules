@@ -1,0 +1,19 @@
+// Spike live: allow local active seats to power off / reboot without a polkit agent.
+// Without polkitd, logind returns Access denied for these actions.
+polkit.addRule(function (action, subject) {
+    if (!subject.local || !subject.active) {
+        return polkit.Result.NOT_HANDLED;
+    }
+    var ids = [
+        "org.freedesktop.login1.power-off",
+        "org.freedesktop.login1.power-off-multiple-sessions",
+        "org.freedesktop.login1.reboot",
+        "org.freedesktop.login1.reboot-multiple-sessions",
+        "org.freedesktop.login1.halt",
+        "org.freedesktop.login1.halt-multiple-sessions"
+    ];
+    if (ids.indexOf(action.id) >= 0) {
+        return polkit.Result.YES;
+    }
+    return polkit.Result.NOT_HANDLED;
+});

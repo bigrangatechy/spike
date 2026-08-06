@@ -1,11 +1,16 @@
 #include "panel/Panel.hpp"
 
+#include <LayerShellQt/Window>
+
 #include <QApplication>
 #include <QFile>
 #include <QPalette>
 #include <QScreen>
+#include <QWindow>
 
 namespace {
+
+constexpr int kPanelHeight = 32;
 
 void loadStyleSheet(QApplication &app)
 {
@@ -44,24 +49,63 @@ void applyDarkPalette(QApplication &app)
   app.setPalette(pal);
 }
 
+bool anchorPanelBottom(spike::Panel &panel, QScreen *screen)
+{
+  // Wayland clients cannot place themselves with setGeometry(); KWin will
+  // centre a normal xdg-shell window. Use wlr-layer-shell via LayerShellQt.
+  panel.createWinId();
+  QWindow *win = panel.windowHandle();
+  if (!win) {
+    return false;
+  }
+
+  LayerShellQt::Window *layer = LayerShellQt::Window::get(win);
+  if (!layer) {
+    return false;
+  }
+
+  using LS = LayerShellQt::Window;
+  layer->setScope(QStringLiteral("spike-panel"));
+  layer->setLayer(LS::LayerTop);
+  layer->setAnchors(LS::Anchors(LS::AnchorLeft) | LS::AnchorRight | LS::AnchorBottom);
+  layer->setExclusiveZone(kPanelHeight);
+  layer->setExclusiveEdge(LS::AnchorBottom);
+  layer->setKeyboardInteractivity(LS::KeyboardInteractivityOnDemand);
+  layer->setActivateOnShow(true);
+  if (screen) {
+    layer->setScreen(screen);
+    layer->setDesiredSize(QSize(screen->geometry().width(), kPanelHeight));
+  }
+  return true;
+}
+
+void placePanelFallback(spike::Panel &panel, QScreen *screen)
+{
+  // X11 / nested smoke tests only — ignored by Wayland compositors.
+  if (!screen) {
+    return;
+  }
+  const QRect geo = screen->geometry();
+  panel.setGeometry(geo.left(), geo.bottom() - kPanelHeight + 1, geo.width(),
+                    kPanelHeight);
+}
+
 } // namespace
 
 int main(int argc, char *argv[])
 {
   QApplication app(argc, argv);
   QApplication::setApplicationName(QStringLiteral("spike-shell"));
-  QApplication::setApplicationVersion(QStringLiteral("0.0.1"));
+  QApplication::setApplicationVersion(QStringLiteral("0.0.2"));
   QApplication::setOrganizationName(QStringLiteral("BigRangaTech"));
 
   applyDarkPalette(app);
   loadStyleSheet(app);
 
   spike::Panel panel;
-  // Stage 3 stub: normal window. Later: wlr-layer-shell bottom layer (DESKTOP.md).
-  if (QScreen *screen = app.primaryScreen()) {
-    const QRect geo = screen->availableGeometry();
-    panel.setGeometry(geo.left(), geo.bottom() - panel.height() + 1, geo.width(),
-                      panel.height());
+  QScreen *screen = app.primaryScreen();
+  if (!anchorPanelBottom(panel, screen)) {
+    placePanelFallback(panel, screen);
   }
   panel.show();
 

@@ -1,0 +1,12 @@
+[Unit]
+Description=Finalize Spike debug capture on shutdown
+DefaultDependencies=no
+Before=shutdown.target reboot.target halt.target
+ConditionPathExists=/run/spike-capture/follow.pid
+
+[Service]
+Type=oneshot
+ExecStart=/usr/sbin/spike-capture-logs --finalize
+
+[Install]
+WantedBy=shutdown.target reboot.target halt.target

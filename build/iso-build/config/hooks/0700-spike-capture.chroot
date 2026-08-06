@@ -1,7 +1,7 @@
 # Enable spike-detect (target hardware) and spike-capture-logs (debug boots).
 set -e
 
-chmod 755 /usr/sbin/spike-capture-logs 2>/dev/null || true
+chmod 755 /usr/sbin/spike-capture-logs /usr/sbin/spike-live-groups 2>/dev/null || true
 
 if [ -f /etc/systemd/system/spike-detect.service ]; then
   systemctl enable spike-detect.service || true
@@ -11,4 +11,14 @@ fi
 if [ -f /etc/systemd/system/spike-capture-logs.service ]; then
   systemctl enable spike-capture-logs.service || true
   echo "I: enabled spike-capture-logs.service"
+fi
+
+if [ -f /etc/systemd/system/spike-capture-finalize.service ]; then
+  systemctl enable spike-capture-finalize.service || true
+  echo "I: enabled spike-capture-finalize.service (optional finalize on shutdown)"
+fi
+
+if [ -f /etc/systemd/system/spike-live-groups.service ]; then
+  systemctl enable spike-live-groups.service || true
+  echo "I: enabled spike-live-groups.service (video/input/render for seatd)"
 fi

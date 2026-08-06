@@ -2,8 +2,54 @@
 
 #include <QMenu>
 #include <QProcess>
+#include <QStringList>
 
 namespace spike {
+
+namespace {
+
+// Run and wait — startDetached cannot tell success from "Access denied".
+bool runWait(const QString &program, const QStringList &args, int timeoutMs = 8000)
+{
+  QProcess proc;
+  proc.start(program, args);
+  if (!proc.waitForStarted(3000)) {
+    return false;
+  }
+  if (!proc.waitForFinished(timeoutMs)) {
+    proc.kill();
+    return false;
+  }
+  return proc.exitStatus() == QProcess::NormalExit && proc.exitCode() == 0;
+}
+
+bool runDetached(const QString &program, const QStringList &args)
+{
+  return QProcess::startDetached(program, args);
+}
+
+void runPowerAction(const QString &logindMethod, const QString &systemctlVerb)
+{
+  // 1) Passwordless sudo (Ubuntu live user) — most reliable without a greeter/polkit agent.
+  if (runWait(QStringLiteral("sudo"),
+              {QStringLiteral("-n"), QStringLiteral("systemctl"), systemctlVerb})) {
+    return;
+  }
+
+  // 2) logind D-Bus (needs polkitd + allow rule for local active seats).
+  if (runWait(QStringLiteral("busctl"),
+              {QStringLiteral("call"), QStringLiteral("org.freedesktop.login1"),
+               QStringLiteral("/org/freedesktop/login1"),
+               QStringLiteral("org.freedesktop.login1.Manager"), logindMethod, QStringLiteral("b"),
+               QStringLiteral("false")})) {
+    return;
+  }
+
+  // 3) Last resort (may fail without auth).
+  runDetached(QStringLiteral("systemctl"), {systemctlVerb});
+}
+
+} // namespace
 
 SessionMenuApplet::SessionMenuApplet(QWidget *parent)
   : QPushButton(QStringLiteral("Session"), parent)
@@ -21,13 +67,23 @@ void SessionMenuApplet::showMenu()
   QAction *poweroff = menu.addAction(QStringLiteral("Shut down"));
 
   QAction *chosen = menu.exec(mapToGlobal(QPoint(0, -menu.sizeHint().height())));
+  if (!chosen) {
+    return;
+  }
+
   if (chosen == logout) {
-    QProcess::startDetached(QStringLiteral("loginctl"), {QStringLiteral("terminate-user"),
-                                                         qEnvironmentVariable("USER")});
+    const QString sessionId = qEnvironmentVariable("XDG_SESSION_ID");
+    if (!sessionId.isEmpty()) {
+      runDetached(QStringLiteral("loginctl"),
+                  {QStringLiteral("terminate-session"), sessionId});
+    } else {
+      runDetached(QStringLiteral("loginctl"),
+                  {QStringLiteral("terminate-user"), qEnvironmentVariable("USER")});
+    }
   } else if (chosen == reboot) {
-    QProcess::startDetached(QStringLiteral("systemctl"), {QStringLiteral("reboot")});
+    runPowerAction(QStringLiteral("Reboot"), QStringLiteral("reboot"));
   } else if (chosen == poweroff) {
-    QProcess::startDetached(QStringLiteral("systemctl"), {QStringLiteral("poweroff")});
+    runPowerAction(QStringLiteral("PowerOff"), QStringLiteral("poweroff"));
   }
 }
 

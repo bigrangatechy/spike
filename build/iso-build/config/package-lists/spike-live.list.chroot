@@ -41,9 +41,31 @@ libqt6widgets6
 libqt6gui6
 libqt6core6t64
 qt6-wayland
+layer-shell-qt
+liblayershellqtinterface6
 # Standalone compositor for spike-session (no Plasma)
 kwin-wayland
 xwayland
+dbus-user-session
+# Seat access for starting KWin from a text VT (no display manager yet)
+seatd
+libseat1
+# Visible pointer (without this KWin logs "Unable to load any cursor theme")
+breeze-cursor-theme
+# Lightweight Wayland terminal for the Spike launcher on live
+foot
+# Power actions from Spike Shell (logind asks polkit; without this → Access denied)
+polkitd
+
+# Stage-3 live apps (real .desktop entries for Spike launcher; keep Tier-1 lean).
+# No full browser yet — QtWebEngine/Falkon is ~200MB+ and too heavy for 4GB targets.
+pcmanfm-qt
+featherpad
+galculator
+xarchiver
+htop
+gparted
+nm-tray
 
 # Hardware helpers used later by installer detection (lightweight)
 pciutils

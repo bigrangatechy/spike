@@ -30,14 +30,14 @@ Install at least:
 sudo apt update
 sudo apt install live-build debootstrap squashfs-tools xorriso isolinux syslinux-common syslinux-utils \
   grub-pc-bin grub-efi-amd64-bin grub-efi-amd64-signed shim-signed mtools dosfstools rsync ca-certificates gnupg \
-  build-essential cmake qt6-base-dev
+  build-essential cmake qt6-base-dev liblayershellqtinterface-dev
 ```
 
 Exact package names can vary slightly by Ubuntu series; if `live-build` pulls additional recommends, keep them. Document any host-specific extras in `SESSION_LOG.md` when discovered.
 
 `gnupg` must also land **inside** the bootstrap chroot. Spike sets `LB_BOOTSTRAP_INCLUDE=apt-utils,ca-certificates,gnupg` in `auto/config` (Ubuntu live-build 3.0 has no `--bootstrap-include` flag). Without it, apt archive setup fails with `env: 'gpg': No such file or directory` and no ISO is produced.
 
-Host packages `cmake` + `qt6-base-dev` are required to build `spike-shell` `.deb` during `build-iso.sh`.
+Host packages `cmake`, `qt6-base-dev`, and `liblayershellqtinterface-dev` are required to build `spike-shell` `.deb` during `build-iso.sh`.
 
 Optional later:
 

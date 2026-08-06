@@ -130,17 +130,29 @@ GRUB entries on the remastered ISO:
 | Entry | Notes |
 | :-: | :-: |
 | Spike Live | Normal (`quiet splash`) |
-| Spike Live (debug logging) | No splash; kernel `debug`; auto-runs `spike-capture-logs` onto USB `writable` |
+| Spike Live (debug logging) | No splash; kernel `debug`; auto-runs slim `spike-capture-logs` onto USB `writable` |
 | Spike Live (safe graphics) | `nomodeset` |
 
-After a debug boot, on the build host with the stick remounted:
+Debug capture (Stage 3) keeps **spike-config**, **shell/session/seat**, filtered journal (`kwin`/`spike-shell`/`libinput`/…), and `$XDG_RUNTIME_DIR/spike-session.log` when present. It does **not** dump full syslog/dmesg/udev.
+
+To log **spike-session startup** (finalize optional — hard power-off is OK):
+
+```
+sudo spike-capture-logs --follow
+# as the live user, NOT sudo:
+spike-session
+# if input dies: power off; stick keeps journal-follow + spike-session-latest.log
+# optional if you can switch VT: sudo spike-capture-logs --finalize
+```
+
+`spike-session` refuses root and requires a logind seat. It tees a line-buffered log to USB `spike-session-latest.log`.
+
+Then on the build host with the stick remounted:
 
 ```
 sudo ./scripts/spike-collect-usb-logs.sh
-# → build/iso-build/debug-logs/spike-capture-* and install-logs-*
+# → build/iso-build/debug-logs/spike-capture-*
 ```
-
-Or manually: `spike-config --state` on the live console.
 
 Remaster ISO only: `./scripts/spike-iso-hybridize.sh`
 

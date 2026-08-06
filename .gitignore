@@ -1,3 +1,5 @@
 *.deb
 __pycache__/
 *.py[cod]
+build/deps-extract/
+build/iso-extract/

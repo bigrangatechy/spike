@@ -19,8 +19,8 @@ Panel::Panel(QWidget *parent)
   setObjectName(QStringLiteral("SpikePanel"));
   setFixedHeight(kPanelHeight);
   setWindowTitle(QStringLiteral("Spike Panel"));
-  // Keep the panel above other windows during stub testing.
-  setWindowFlags(Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint | Qt::Tool);
+  // Frameless toplevel — positioning is done via layer-shell in main.cpp.
+  setWindowFlags(Qt::FramelessWindowHint | Qt::Window);
 
   auto *layout = new QHBoxLayout(this);
   layout->setContentsMargins(8, 2, 8, 2);

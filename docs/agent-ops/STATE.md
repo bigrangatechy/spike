@@ -19,14 +19,14 @@
 | `scripts/build-iso.sh` | ✅ Packages spike-config + spike-shell + lb build |
 | Stage 1 live ISO | ✅ Hardware boot + login |
 | Stage 2 (`spike-config`) | ✅ Target detect OK (N4020 / ~4GB) |
-| Stage 3 (Spike Shell) | 📝 Skeleton packaged for ISO; white-on-dark theme; layer-shell later |
+| Stage 3 (Spike Shell) | 📝 0.0.8: input/cursor OK; power + launcher apps pending rebuild |
 | Stage 4 (installer) | 🔲 Later — still **pre-alpha** until BDFL opens Alpha |
 
 ## In Progress
 
 | Item | Notes |
 | :-: | :-: |
-| Stage 3 — Spike Shell | On ISO path; deepen layer-shell / app scan after live smoke |
+| Stage 3 — Spike Shell | Rebuild ISO; smoke power menu + real launcher apps |
 
 ## Blocked / Waiting On Decision
 
@@ -36,6 +36,8 @@ _None._ Alpha timing is intentional “by feel,” not blocked.
 
 | Date | Item |
 | :-: | :-: |
+| 2026-08-06 | Live apps on ISO: foot, pcmanfm-qt, featherpad, galculator, xarchiver, htop, gparted, nm-tray |
+| 2026-08-06 | Session input fixed (seatd/groups/cursors); launcher `.desktop` scan; power via sudo/polkit |
 | 2026-08-06 | spike-shell white-on-dark QSS + `.deb` wired into live ISO |
 | 2026-08-06 | Stage 3 Spike Shell skeleton (`src/spike-shell/`, builds) |
 | 2026-08-06 | Pre-alpha kept through shell/installer; Alpha by feel (installer cue) |
@@ -46,8 +48,8 @@ _None._ Alpha timing is intentional “by feel,” not blocked.
 
 ## Next Suggested Work
 
-1. Rebuild ISO + smoke `spike-shell` on live (white panel text; optional `spike-session` / KWin).  
-2. Stage 3 deepen: layer-shell panel, `.desktop` scanning.  
+1. Rebuild ISO + smoke power (restart/shutdown) and launcher apps.  
+2. Stage 3 deepen: wallpapers, optional light browser later.  
 3. Stage 4 (pre-alpha): installer squashfs → ext4.  
 4. Open **Alpha** only when installer feels ready (BDFL).
 

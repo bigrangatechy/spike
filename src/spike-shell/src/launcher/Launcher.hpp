@@ -25,7 +25,7 @@ private slots:
   void activateCurrent();
 
 private:
-  void populateStubEntries();
+  void populateEntries();
 
   QLineEdit *m_search = nullptr;
   QListWidget *m_list = nullptr;

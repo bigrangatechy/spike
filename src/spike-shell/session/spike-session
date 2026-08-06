@@ -1,11 +1,32 @@
-#!/bin/sh
-# Spike session stub — starts standalone KWin Wayland then Spike Shell.
+#!/bin/bash
+# Spike session — standalone KWin Wayland + Spike Shell.
 # Spec: docs/BOOT-PROCESS.md / docs/DESKTOP.md
-# Not yet installed on the live ISO (Stage 3 skeleton).
-set -eu
+#
+# Live ISO has no display manager yet, so we start from a text VT.
+# Prefer the system seatd socket when present; only use seatd-launch
+# when nothing is listening (seatd-launch fails if /run/seatd.sock exists).
+set -euo pipefail
 
 export XDG_CURRENT_DESKTOP="${XDG_CURRENT_DESKTOP:-Spike}"
-export XDG_SESSION_TYPE="${XDG_SESSION_TYPE:-wayland}"
+export XDG_SESSION_TYPE=wayland
+# KWin needs a real xcursor theme or the pointer is invisible (looks like "no input").
+export XCURSOR_THEME="${XCURSOR_THEME:-breeze_cursors}"
+export XCURSOR_SIZE="${XCURSOR_SIZE:-24}"
+
+# If started with sudo, bounce back to the invoking user (keeps their seat).
+if [[ "$(id -u)" -eq 0 ]]; then
+  if [[ -n "${SUDO_USER:-}" && "${SUDO_USER}" != root && -n "${SUDO_UID:-}" ]]; then
+    echo "spike-session: re-exec as ${SUDO_USER} (sudo drops the seat — use plain spike-session next time)" >&2
+    exec runuser -u "${SUDO_USER}" -- /usr/bin/env \
+      XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/${SUDO_UID}}" \
+      XDG_SESSION_ID="${XDG_SESSION_ID:-}" \
+      XDG_CURRENT_DESKTOP=Spike \
+      XDG_SESSION_TYPE=wayland \
+      "$0" "$@"
+  fi
+  echo "spike-session: do not run as root — seat/input will fail. Log in as the live user." >&2
+  exit 1
+fi
 
 if ! command -v kwin_wayland >/dev/null 2>&1; then
   echo "spike-session: kwin_wayland not found" >&2
@@ -17,5 +38,139 @@ if ! command -v spike-shell >/dev/null 2>&1; then
   exit 1
 fi
 
-# KWin owns the Wayland display; shell runs as a client on that socket.
-exec kwin_wayland --exit-with-session=spike-shell
+if [[ -z "${XDG_SESSION_ID:-}" ]]; then
+  echo "spike-session: no XDG_SESSION_ID (log in on a text VT first)" >&2
+  exit 1
+fi
+
+# Do not nest under a parent compositor.
+unset DISPLAY WAYLAND_DISPLAY WAYLAND_SOCKET || true
+
+resolve_log_paths() {
+  LOGS=()
+  if [[ -n "${XDG_RUNTIME_DIR:-}" ]]; then
+    LOGS+=("${XDG_RUNTIME_DIR}/spike-session.log")
+  else
+    LOGS+=("/tmp/spike-session.$$.log")
+  fi
+  if [[ -d /var/log/spike && -w /var/log/spike ]]; then
+    LOGS+=("/var/log/spike/session-latest.log")
+  elif [[ -w /var/log ]]; then
+    LOGS+=("/var/log/spike-session-latest.log")
+  fi
+  local candidate w
+  for candidate in /log-persistence /cdrom /media/writable /mnt/writable; do
+    if [[ -d "$candidate" && -w "$candidate" ]]; then
+      LOGS+=("${candidate}/spike-session-latest.log")
+      break
+    fi
+  done
+  if command -v findmnt >/dev/null 2>&1; then
+    w="$(findmnt -n -o TARGET -S LABEL=writable 2>/dev/null || true)"
+    if [[ -n "$w" && -w "$w" ]]; then
+      LOGS+=("${w}/spike-session-latest.log")
+    fi
+  fi
+}
+
+resolve_log_paths
+TEE_ARGS=()
+for f in "${LOGS[@]}"; do
+  mkdir -p "$(dirname "$f")" 2>/dev/null || true
+  : >"$f" 2>/dev/null || continue
+  TEE_ARGS+=("$f")
+done
+if [[ ${#TEE_ARGS[@]} -eq 0 ]]; then
+  TEE_ARGS+=("/tmp/spike-session.$$.log")
+  : >"${TEE_ARGS[0]}"
+fi
+exec > >(stdbuf -oL tee -a "${TEE_ARGS[@]}") 2>&1
+
+echo "spike-session: start $(date -Is)"
+echo "spike-session: user=$(id -un) uid=$(id -u) groups=$(id -Gn)"
+echo "spike-session: session=${XDG_SESSION_ID:-?} tty=$(tty 2>/dev/null || echo '?')"
+echo "spike-session: XCURSOR_THEME=${XCURSOR_THEME} XCURSOR_SIZE=${XCURSOR_SIZE}"
+echo "spike-session: logs=${TEE_ARGS[*]}"
+if command -v loginctl >/dev/null 2>&1; then
+  echo "spike-session: --- loginctl session ---"
+  loginctl show-session "$XDG_SESSION_ID" -p Name -p User -p Seat -p TTY -p Type -p Class -p Active -p State 2>&1 || true
+  echo "spike-session: --- seat0 ---"
+  loginctl show-seat seat0 -p ActiveSession -p Sessions 2>&1 || true
+fi
+echo "spike-session: --- drm/input (sample) ---"
+ls -la /dev/dri/card0 /dev/dri/card1 /dev/dri/renderD128 /dev/input/event0 /dev/input/event1 2>&1 || true
+if [[ -S /run/seatd.sock ]]; then
+  echo "spike-session: seatd socket: /run/seatd.sock (system seatd running)"
+else
+  echo "spike-session: seatd socket: absent"
+fi
+# seatd is started with -g video; membership is required to connect.
+if ! id -nG | tr ' ' '\n' | grep -qx video; then
+  echo "spike-session: WARNING: user not in 'video' group — seatd may deny the seat. Log out/in after spike-live-groups, or rebuild." >&2
+fi
+sync || true
+
+ensure_session_bus() {
+  if [[ -n "${DBUS_SESSION_BUS_ADDRESS:-}" ]]; then
+    return 0
+  fi
+  if [[ -n "${XDG_RUNTIME_DIR:-}" && -S "${XDG_RUNTIME_DIR}/bus" ]]; then
+    export DBUS_SESSION_BUS_ADDRESS="unix:path=${XDG_RUNTIME_DIR}/bus"
+    return 0
+  fi
+  return 1
+}
+
+run_kwin_direct() {
+  if ensure_session_bus; then
+    exec kwin_wayland --drm --xwayland --exit-with-session=spike-shell
+  fi
+  if command -v dbus-run-session >/dev/null 2>&1; then
+    echo "spike-session: wrapping with dbus-run-session"
+    exec dbus-run-session -- env \
+      LIBSEAT_BACKEND="${LIBSEAT_BACKEND}" \
+      SEATD_SOCK="${SEATD_SOCK:-}" \
+      XDG_CURRENT_DESKTOP=Spike \
+      XDG_SESSION_TYPE=wayland \
+      XCURSOR_THEME="${XCURSOR_THEME}" \
+      XCURSOR_SIZE="${XCURSOR_SIZE}" \
+      kwin_wayland --drm --xwayland --exit-with-session=spike-shell
+  fi
+  exec kwin_wayland --drm --xwayland --exit-with-session=spike-shell
+}
+
+start_kwin() {
+  if [[ -S /run/seatd.sock ]]; then
+    # System seatd.service already owns the socket — do NOT seatd-launch.
+    echo "spike-session: using system seatd at /run/seatd.sock"
+    export LIBSEAT_BACKEND=seatd
+    export SEATD_SOCK=/run/seatd.sock
+    sync || true
+    run_kwin_direct
+  fi
+
+  if command -v seatd-launch >/dev/null 2>&1; then
+    echo "spike-session: no system seatd — starting via seatd-launch"
+    export LIBSEAT_BACKEND=seatd
+    sync || true
+    if ensure_session_bus; then
+      exec seatd-launch -- kwin_wayland --drm --xwayland --exit-with-session=spike-shell
+    fi
+    if command -v dbus-run-session >/dev/null 2>&1; then
+      echo "spike-session: wrapping with dbus-run-session"
+      exec dbus-run-session -- env LIBSEAT_BACKEND=seatd \
+        XDG_CURRENT_DESKTOP=Spike XDG_SESSION_TYPE=wayland \
+        XCURSOR_THEME="${XCURSOR_THEME}" XCURSOR_SIZE="${XCURSOR_SIZE}" \
+        seatd-launch -- kwin_wayland --drm --xwayland --exit-with-session=spike-shell
+    fi
+    exec seatd-launch -- kwin_wayland --drm --xwayland --exit-with-session=spike-shell
+  fi
+
+  echo "spike-session: no seatd — falling back to logind"
+  export LIBSEAT_BACKEND=logind
+  unset SEATD_SOCK || true
+  sync || true
+  run_kwin_direct
+}
+
+start_kwin

@@ -1,0 +1,16 @@
+#!/bin/sh
+# Ensure live users can talk to seatd (-g video) and open DRM/input nodes.
+# Must run before getty login so new sessions pick up the supplementary groups.
+set -eu
+
+for g in video input render; do
+  getent group "$g" >/dev/null 2>&1 || continue
+  getent passwd | awk -F: '$3 >= 1000 && $3 < 65534 { print $1 }' | while read -r u; do
+    case "$u" in
+      nobody|nogroup) continue ;;
+    esac
+    usermod -aG "$g" "$u" 2>/dev/null || true
+  done
+done
+
+echo "I: spike-live-groups applied (video,input,render)"

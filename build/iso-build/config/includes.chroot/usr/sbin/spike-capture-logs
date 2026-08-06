@@ -1,76 +1,240 @@
 #!/bin/sh
-# Spike live debug capture — dump boot + spike-config evidence for agents/devs.
-# Spec: pre-alpha live ISO diagnostics (casper writable / USB LABEL=writable).
+# Spike live debug capture — Stage 3 focused (shell / session / seat).
+#
+# Snapshot (default):
+#   sudo spike-capture-logs
+#
+# Arm logging *before* spike-session, then finalize after:
+#   sudo spike-capture-logs --follow     # starts journal follow into USB capture dir
+#   spike-session                        # other VT or same user session
+#   sudo spike-capture-logs --finalize   # stop follow, copy spike-session.log, write snapshot
+#
+# Or one-shot after a session attempt (still the usual path).
 set -eu
 
 TS="$(date -u +%Y%m%dT%H%M%SZ)"
 HOST="$(hostname 2>/dev/null || echo spike-live)"
+MODE=snapshot
+case "${1:-}" in
+  --follow|-f) MODE=follow ;;
+  --finalize|--stop) MODE=finalize ;;
+  --help|-h)
+    cat <<'EOF'
+Usage: spike-capture-logs [--follow|--finalize]
 
-# Prefer casper log-persistence / USB writable so captures survive reboot.
-# Fall back to /var/log (casper often copies that into install-logs-* on the stick).
-OUT=""
-for candidate in \
-  /log-persistence \
-  /cdrom \
-  /media/writable \
-  /mnt/writable
-do
-  if [ -d "$candidate" ] && [ -w "$candidate" ]; then
-    OUT="${candidate}/spike-capture-${TS}"
-    break
+  (default)   Write a Stage 3 snapshot to USB writable / log-persistence.
+  --follow    Start capturing journal *now* (run before spike-session).
+  --finalize  Stop --follow, copy spike-session.log, write a fresh snapshot.
+
+Does not dump full syslog/dmesg/udev.
+EOF
+    exit 0
+    ;;
+  "") ;;
+  *)
+    echo "unknown option: $1 (try --help)" >&2
+    exit 1
+    ;;
+esac
+
+STATE_DIR="/run/spike-capture"
+FOLLOW_PID_FILE="${STATE_DIR}/follow.pid"
+FOLLOW_OUT_FILE="${STATE_DIR}/follow.out"
+FOLLOW_DIR_FILE="${STATE_DIR}/follow.dir"
+
+resolve_out_base() {
+  OUT=""
+  for candidate in \
+    /log-persistence \
+    /cdrom \
+    /media/writable \
+    /mnt/writable
+  do
+    if [ -d "$candidate" ] && [ -w "$candidate" ]; then
+      OUT="$candidate"
+      break
+    fi
+  done
+
+  if [ -z "$OUT" ] && command -v findmnt >/dev/null 2>&1; then
+    W="$(findmnt -n -o TARGET -S LABEL=writable 2>/dev/null || true)"
+    if [ -n "$W" ] && [ -w "$W" ]; then
+      OUT="$W"
+    fi
   fi
-done
 
-if [ -z "$OUT" ] && command -v findmnt >/dev/null 2>&1; then
-  W="$(findmnt -n -o TARGET -S LABEL=writable 2>/dev/null || true)"
-  if [ -n "$W" ] && [ -w "$W" ]; then
-    OUT="${W}/spike-capture-${TS}"
+  if [ -z "$OUT" ]; then
+    OUT="/var/log"
   fi
-fi
+  echo "$OUT"
+}
 
-# Last resort: /var/log (still recovered via casper install-logs on the USB).
-if [ -z "$OUT" ]; then
-  OUT="/var/log/spike-capture-${TS}"
-fi
+write_snapshot_into() {
+  # $1 = capture directory
+  cap="$1"
+  mkdir -p "$cap" "$cap/session-logs"
 
-mkdir -p "$OUT"
-{
-  echo "spike-capture ${TS} host=${HOST}"
-  echo "cmdline: $(cat /proc/cmdline 2>/dev/null || true)"
-  echo "uname: $(uname -a 2>/dev/null || true)"
-} >"$OUT/meta.txt"
+  {
+    echo "spike-capture ${TS} host=${HOST}"
+    echo "cmdline: $(cat /proc/cmdline 2>/dev/null || true)"
+    echo "uname: $(uname -a 2>/dev/null || true)"
+    echo "focus: shell/session (full syslog/dmesg/udev disabled)"
+    echo "mode: ${MODE}"
+  } >"$cap/meta.txt"
 
-# spike-config evidence
-{
-  echo "=== which ==="
-  command -v spike-config || echo "MISSING"
-  echo "=== version ==="
-  spike-config --version 2>&1 || true
-  echo "=== state ==="
-  spike-config --state 2>&1 || true
-  echo "=== changelog (tail) ==="
-  spike-config --changelog 2>&1 | tail -n 80 || true
-} >"$OUT/spike-config.txt" 2>&1 || true
+  {
+    echo "=== which ==="
+    command -v spike-config || echo "MISSING"
+    echo "=== version ==="
+    spike-config --version 2>&1 || true
+    echo "=== state ==="
+    spike-config --state 2>&1 || true
+  } >"$cap/spike-config.txt" 2>&1 || true
 
-# Package / files
-{
-  dpkg -l spike-config 2>&1 || true
-  ls -la /usr/bin/spike-config /usr/lib/spike/config 2>&1 || true
-  ls -la /var/lib/spike/config 2>&1 || true
-} >"$OUT/spike-config-files.txt" 2>&1 || true
+  {
+    dpkg -l 'spike-config' 'spike-shell' 'kwin-wayland' 'layer-shell-qt' 'liblayershellqtinterface6' 2>&1 || true
+    ls -la /usr/bin/spike-config /usr/bin/spike-shell /usr/bin/spike-session 2>&1 || true
+    ls -la /var/lib/spike/config 2>&1 || true
+  } >"$cap/packages.txt" 2>&1 || true
 
-# System journals / logs (best effort)
-journalctl -b -n 500 --no-pager >"$OUT/journal-boot.txt" 2>&1 || true
-dmesg >"$OUT/dmesg.txt" 2>&1 || true
-cp -a /var/log/casper.log "$OUT/casper.log" 2>/dev/null || true
-cp -a /var/log/syslog "$OUT/syslog" 2>/dev/null || true
-ip -br a >"$OUT/network.txt" 2>&1 || true
-nmcli -t device status >"$OUT/nmcli-devices.txt" 2>&1 || true
-lsmod >"$OUT/lsmod.txt" 2>&1 || true
-free -h >"$OUT/memory.txt" 2>&1 || true
-df -h >"$OUT/disk.txt" 2>&1 || true
+  {
+    echo "=== which ==="
+    command -v spike-shell || echo "spike-shell MISSING"
+    command -v spike-session || echo "spike-session MISSING"
+    command -v kwin_wayland || echo "kwin_wayland MISSING"
+    echo "=== env (sanitized) ==="
+    echo "XDG_SESSION_TYPE=${XDG_SESSION_TYPE:-}"
+    echo "XDG_CURRENT_DESKTOP=${XDG_CURRENT_DESKTOP:-}"
+    echo "WAYLAND_DISPLAY=${WAYLAND_DISPLAY:-}"
+    echo "DISPLAY=${DISPLAY:-}"
+    echo "XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR:-}"
+    echo "=== loginctl ==="
+    loginctl 2>&1 || true
+    echo "=== seat0 ==="
+    loginctl show-seat seat0 2>&1 || true
+    echo "=== sessions ==="
+    loginctl list-sessions --no-legend 2>&1 || true
+  } >"$cap/session.txt" 2>&1 || true
 
-# Marker for host-side collector
-echo "$OUT" >"$OUT/CAPTURE_PATH.txt"
-echo "I: spike-capture wrote $OUT"
-ls -la "$OUT" || true
+  journalctl -b --no-pager \
+    -g 'spike-shell|spike-session|spike-config|kwin|wayland|libinput|seat|drm|LayerShell|spike-detect' \
+    >"$cap/journal-shell.txt" 2>&1 || true
+
+  copied_session=0
+  for f in /run/user/*/spike-session.log /tmp/spike-session.*.log \
+    /var/log/spike/session-latest.log \
+    /var/log/spike-session-latest.log \
+    /log-persistence/spike-session-latest.log \
+    /media/writable/spike-session-latest.log \
+    /mnt/writable/spike-session-latest.log
+  do
+    if [ -f "$f" ]; then
+      cp -a "$f" "$cap/session-logs/" 2>/dev/null || true
+      copied_session=1
+    fi
+  done
+  if command -v findmnt >/dev/null 2>&1; then
+    w="$(findmnt -n -o TARGET -S LABEL=writable 2>/dev/null || true)"
+    if [ -n "$w" ] && [ -f "${w}/spike-session-latest.log" ]; then
+      cp -a "${w}/spike-session-latest.log" "$cap/session-logs/" 2>/dev/null || true
+      copied_session=1
+    fi
+  fi
+  if [ "$copied_session" -eq 0 ]; then
+    echo "no spike-session.log found" >"$cap/session-logs/README.txt"
+  fi
+
+  free -h >"$cap/memory.txt" 2>&1 || true
+  df -h >"$cap/disk.txt" 2>&1 || true
+
+  echo "$cap" >"$cap/CAPTURE_PATH.txt"
+  echo "I: spike-capture wrote $cap"
+  ls -la "$cap" || true
+}
+
+stop_follow() {
+  if [ -f "$FOLLOW_PID_FILE" ]; then
+    pid="$(cat "$FOLLOW_PID_FILE" 2>/dev/null || true)"
+    if [ -n "${pid:-}" ] && kill -0 "$pid" 2>/dev/null; then
+      kill "$pid" 2>/dev/null || true
+      # give journalctl a moment to flush
+      sleep 0.3 2>/dev/null || true
+      kill -9 "$pid" 2>/dev/null || true
+    fi
+    rm -f "$FOLLOW_PID_FILE"
+  fi
+}
+
+case "$MODE" in
+  follow)
+    if [ -f "$FOLLOW_PID_FILE" ]; then
+      old="$(cat "$FOLLOW_PID_FILE" 2>/dev/null || true)"
+      if [ -n "${old:-}" ] && kill -0 "$old" 2>/dev/null; then
+        echo "I: follow already running (pid $old) → $(cat "$FOLLOW_DIR_FILE" 2>/dev/null || echo '?')"
+        exit 0
+      fi
+      stop_follow
+    fi
+
+    base="$(resolve_out_base)"
+    OUT="${base}/spike-capture-${TS}"
+    mkdir -p "$OUT" "$STATE_DIR"
+    {
+      echo "spike-capture-follow ${TS} host=${HOST}"
+      echo "cmdline: $(cat /proc/cmdline 2>/dev/null || true)"
+      echo "armed: run spike-session now; power-off is OK — journal is line-buffered to USB"
+      echo "optional: sudo spike-capture-logs --finalize"
+    } >"$OUT/meta.txt"
+
+    # Line-buffered follow so a hard reboot still leaves data (finalize optional).
+    # Broader than -g alone: grep keeps the file useful if journalctl -g -f is picky.
+    if command -v stdbuf >/dev/null 2>&1; then
+      stdbuf -oL journalctl -f -n 50 --no-pager 2>&1 \
+        | stdbuf -oL grep -E -i 'spike-shell|spike-session|spike-config|kwin|wayland|libinput|seat|drm|LayerShell|spike-detect|libseat' \
+        >"$OUT/journal-follow.txt" &
+    else
+      journalctl -f -n 50 --no-pager 2>&1 \
+        | grep -E -i 'spike-shell|spike-session|spike-config|kwin|wayland|libinput|seat|drm|LayerShell|spike-detect|libseat' \
+        >"$OUT/journal-follow.txt" &
+    fi
+    echo $! >"$FOLLOW_PID_FILE"
+    echo "$OUT" >"$FOLLOW_DIR_FILE"
+    echo "$OUT/journal-follow.txt" >"$FOLLOW_OUT_FILE"
+
+    # Flush the capture dir every few seconds while armed.
+    (
+      while [ -f "$FOLLOW_PID_FILE" ]; do
+        sync 2>/dev/null || true
+        sleep 2
+      done
+    ) >/dev/null 2>&1 &
+
+    echo "I: follow armed → $OUT"
+    echo "I: journal → $OUT/journal-follow.txt (survives reboot; finalize optional)"
+    echo "I: next: spike-session as the live user (not sudo), then power off or --finalize"
+    ;;
+
+  finalize)
+    OUT=""
+    if [ -f "$FOLLOW_DIR_FILE" ]; then
+      OUT="$(cat "$FOLLOW_DIR_FILE")"
+    fi
+    stop_follow
+    rm -f "$FOLLOW_OUT_FILE" "$FOLLOW_DIR_FILE"
+
+    if [ -z "$OUT" ] || [ ! -d "$OUT" ]; then
+      base="$(resolve_out_base)"
+      OUT="${base}/spike-capture-${TS}"
+      echo "W: no active --follow dir; writing fresh snapshot to $OUT" >&2
+    fi
+
+    # Refresh snapshot into the same (or new) dir; keep journal-follow.txt if present.
+    write_snapshot_into "$OUT"
+    ;;
+
+  snapshot)
+    base="$(resolve_out_base)"
+    OUT="${base}/spike-capture-${TS}"
+    write_snapshot_into "$OUT"
+    ;;
+esac
