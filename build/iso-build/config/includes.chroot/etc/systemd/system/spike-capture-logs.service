@@ -1,5 +1,5 @@
 [Unit]
-Description=Spike live debug log capture
+Description=Spike live debug log capture (full follow on debug boots)
 Documentation=file:///usr/share/doc/spike-config/README
 After=multi-user.target network-online.target spike-detect.service
 Wants=network-online.target spike-detect.service
@@ -8,7 +8,8 @@ ConditionKernelCommandLine=|spike.capture
 
 [Service]
 Type=oneshot
-ExecStart=/usr/sbin/spike-capture-logs
+# Arm continuous full-journal capture immediately so login/audio spam is recorded.
+ExecStart=/usr/sbin/spike-capture-logs --follow
 RemainAfterExit=yes
 
 [Install]

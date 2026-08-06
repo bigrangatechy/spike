@@ -4,6 +4,19 @@ Append-only. Newest sessions at the **top**.
 
 ---
 
+## 2026-08-06 — Login audio spam (SOF HDMI) + full debug capture
+
+**Finding:** After login, PipeWire/WirePlumber auto-started and looped on broken SOF HDMI (`sof-essx8336` pcm7 / `ASoC error (-5)`), flooding the console (worse with `debug` cmdline). No `spike-session` log — desktop never started. Hard power-off was manual.
+
+**Fix:**
+- Debug/`spike.capture` boots: `spike-capture-logs --follow` (full journal) + full snapshot (journal/dmesg/audio).
+- Defer PipeWire user units until `spike-session` (hook `0710-spike-audio-defer.chroot`).
+- `spike-shell` 0.0.13 starts PipeWire from session script.
+
+**Try:** rebuild → **Spike Live (debug logging)** → login (TTY should stay quiet) → `spike-session` → smoke Net/Settings → power off → USB `spike-capture-*` with `journal-follow.txt` + `audio/`.
+
+---
+
 ## 2026-08-06 — Settings category audit + Network applet (0.0.12)
 
 **Done:**

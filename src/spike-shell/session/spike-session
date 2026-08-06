@@ -108,6 +108,18 @@ fi
 if ! id -nG | tr ' ' '\n' | grep -qx video; then
   echo "spike-session: WARNING: user not in 'video' group — seatd may deny the seat. Log out/in after spike-live-groups, or rebuild." >&2
 fi
+
+# PipeWire is deferred on live TTY login (SOF HDMI probe spam). Start it here.
+start_audio() {
+  if ! command -v systemctl >/dev/null 2>&1; then
+    return 0
+  fi
+  echo "spike-session: starting PipeWire / WirePlumber (user units)"
+  systemctl --user start pipewire.socket pipewire.service wireplumber.service \
+    pipewire-pulse.socket pipewire-pulse.service 2>&1 || true
+  systemctl --user --no-pager --full status pipewire.service wireplumber.service 2>&1 | head -n 40 || true
+}
+start_audio
 sync || true
 
 ensure_session_bus() {

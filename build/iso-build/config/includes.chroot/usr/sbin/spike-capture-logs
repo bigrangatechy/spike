@@ -1,32 +1,42 @@
 #!/bin/sh
-# Spike live debug capture — Stage 3 focused (shell / session / seat).
+# Spike live debug capture — Stage 3 (shell / session / seat / audio).
 #
 # Snapshot (default):
 #   sudo spike-capture-logs
 #
+# Full dump (journal + dmesg + audio) — also used on debug boots:
+#   sudo spike-capture-logs --full
+#
 # Arm logging *before* spike-session, then finalize after:
 #   sudo spike-capture-logs --follow     # starts journal follow into USB capture dir
-#   spike-session                        # other VT or same user session
-#   sudo spike-capture-logs --finalize   # stop follow, copy spike-session.log, write snapshot
-#
-# Or one-shot after a session attempt (still the usual path).
+#   spike-session
+#   sudo spike-capture-logs --finalize
 set -eu
 
 TS="$(date -u +%Y%m%dT%H%M%SZ)"
 HOST="$(hostname 2>/dev/null || echo spike-live)"
 MODE=snapshot
+FULL=0
+# Kernel cmdline debug / spike.capture → always take a full dump.
+if grep -qw debug /proc/cmdline 2>/dev/null || grep -qw spike.capture /proc/cmdline 2>/dev/null; then
+  FULL=1
+fi
+
 case "${1:-}" in
   --follow|-f) MODE=follow ;;
   --finalize|--stop) MODE=finalize ;;
+  --full) MODE=snapshot; FULL=1 ;;
   --help|-h)
     cat <<'EOF'
-Usage: spike-capture-logs [--follow|--finalize]
+Usage: spike-capture-logs [--follow|--finalize|--full]
 
-  (default)   Write a Stage 3 snapshot to USB writable / log-persistence.
-  --follow    Start capturing journal *now* (run before spike-session).
+  (default)   Snapshot to USB writable / log-persistence.
+  --full      Snapshot plus full journal, dmesg, and audio diagnostics.
+  --follow    Capture full journal continuously (run before/with session).
   --finalize  Stop --follow, copy spike-session.log, write a fresh snapshot.
 
-Does not dump full syslog/dmesg/udev.
+On boots with kernel cmdline "debug" or "spike.capture", snapshots are --full
+and the boot service arms --follow automatically.
 EOF
     exit 0
     ;;
@@ -72,14 +82,15 @@ resolve_out_base() {
 write_snapshot_into() {
   # $1 = capture directory
   cap="$1"
-  mkdir -p "$cap" "$cap/session-logs"
+  mkdir -p "$cap" "$cap/session-logs" "$cap/audio"
 
   {
     echo "spike-capture ${TS} host=${HOST}"
     echo "cmdline: $(cat /proc/cmdline 2>/dev/null || true)"
     echo "uname: $(uname -a 2>/dev/null || true)"
-    echo "focus: shell/session (full syslog/dmesg/udev disabled)"
+    echo "focus: shell/session/audio"
     echo "mode: ${MODE}"
+    echo "full: ${FULL}"
   } >"$cap/meta.txt"
 
   {
@@ -92,7 +103,9 @@ write_snapshot_into() {
   } >"$cap/spike-config.txt" 2>&1 || true
 
   {
-    dpkg -l 'spike-config' 'spike-shell' 'kwin-wayland' 'layer-shell-qt' 'liblayershellqtinterface6' 2>&1 || true
+    dpkg -l 'spike-config' 'spike-shell' 'kwin-wayland' 'layer-shell-qt' \
+      'liblayershellqtinterface6' 'pipewire' 'pipewire-pulse' 'wireplumber' \
+      'plasma-pa' 'firmware-sof-signed' 2>&1 || true
     ls -la /usr/bin/spike-config /usr/bin/spike-shell /usr/bin/spike-session 2>&1 || true
     ls -la /var/lib/spike/config 2>&1 || true
   } >"$cap/packages.txt" 2>&1 || true
@@ -116,9 +129,34 @@ write_snapshot_into() {
     loginctl list-sessions --no-legend 2>&1 || true
   } >"$cap/session.txt" 2>&1 || true
 
+  # Always keep a focused shell filter for quick reads.
   journalctl -b --no-pager \
-    -g 'spike-shell|spike-session|spike-config|kwin|wayland|libinput|seat|drm|LayerShell|spike-detect' \
+    -g 'spike-shell|spike-session|spike-config|kwin|wayland|libinput|seat|drm|LayerShell|spike-detect|pipewire|wireplumber|sof-|ASoC|pulse' \
     >"$cap/journal-shell.txt" 2>&1 || true
+
+  # Audio diagnostics (SOF HDMI spam / PipeWire probes).
+  {
+    echo "=== aplay -l ==="
+    aplay -l 2>&1 || true
+    echo "=== pactl info ==="
+    pactl info 2>&1 || true
+    echo "=== wpctl status ==="
+    wpctl status 2>&1 || true
+    echo "=== systemctl --user (pipewire) ==="
+    systemctl --user status pipewire.service pipewire.socket wireplumber.service \
+      pipewire-pulse.service pipewire-pulse.socket --no-pager 2>&1 || true
+    echo "=== journal pipewire/wireplumber/sof (boot) ==="
+    journalctl -b --no-pager -u 'pipewire*' -u 'wireplumber*' 2>&1 | tail -n 200 || true
+    journalctl -b --no-pager -k 2>&1 | grep -iE 'sof-|ASoC|snd_|essx|pipewire' | tail -n 200 || true
+  } >"$cap/audio/diagnostics.txt" 2>&1 || true
+
+  if [ "$FULL" = 1 ]; then
+    journalctl -b --no-pager >"$cap/journal-full.txt" 2>&1 || true
+    dmesg >"$cap/dmesg.txt" 2>&1 || true
+    journalctl -b -k --no-pager >"$cap/journal-kernel.txt" 2>&1 || true
+    cp -a /var/log/syslog "$cap/syslog.copy" 2>/dev/null || true
+    cp -a /var/log/kern.log "$cap/kern.log.copy" 2>/dev/null || true
+  fi
 
   copied_session=0
   for f in /run/user/*/spike-session.log /tmp/spike-session.*.log \
@@ -148,7 +186,7 @@ write_snapshot_into() {
   df -h >"$cap/disk.txt" 2>&1 || true
 
   echo "$cap" >"$cap/CAPTURE_PATH.txt"
-  echo "I: spike-capture wrote $cap"
+  echo "I: spike-capture wrote $cap (full=${FULL})"
   ls -la "$cap" || true
 }
 
@@ -157,7 +195,6 @@ stop_follow() {
     pid="$(cat "$FOLLOW_PID_FILE" 2>/dev/null || true)"
     if [ -n "${pid:-}" ] && kill -0 "$pid" 2>/dev/null; then
       kill "$pid" 2>/dev/null || true
-      # give journalctl a moment to flush
       sleep 0.3 2>/dev/null || true
       kill -9 "$pid" 2>/dev/null || true
     fi
@@ -182,26 +219,20 @@ case "$MODE" in
     {
       echo "spike-capture-follow ${TS} host=${HOST}"
       echo "cmdline: $(cat /proc/cmdline 2>/dev/null || true)"
-      echo "armed: run spike-session now; power-off is OK — journal is line-buffered to USB"
+      echo "armed: full journal follow (no grep filter)"
       echo "optional: sudo spike-capture-logs --finalize"
     } >"$OUT/meta.txt"
 
-    # Line-buffered follow so a hard reboot still leaves data (finalize optional).
-    # Broader than -g alone: grep keeps the file useful if journalctl -g -f is picky.
+    # Full journal follow — needed to catch PipeWire/SOF spam and login issues.
     if command -v stdbuf >/dev/null 2>&1; then
-      stdbuf -oL journalctl -f -n 50 --no-pager 2>&1 \
-        | stdbuf -oL grep -E -i 'spike-shell|spike-session|spike-config|kwin|wayland|libinput|seat|drm|LayerShell|spike-detect|libseat' \
-        >"$OUT/journal-follow.txt" &
+      stdbuf -oL journalctl -f -n 200 --no-pager >"$OUT/journal-follow.txt" 2>&1 &
     else
-      journalctl -f -n 50 --no-pager 2>&1 \
-        | grep -E -i 'spike-shell|spike-session|spike-config|kwin|wayland|libinput|seat|drm|LayerShell|spike-detect|libseat' \
-        >"$OUT/journal-follow.txt" &
+      journalctl -f -n 200 --no-pager >"$OUT/journal-follow.txt" 2>&1 &
     fi
     echo $! >"$FOLLOW_PID_FILE"
     echo "$OUT" >"$FOLLOW_DIR_FILE"
     echo "$OUT/journal-follow.txt" >"$FOLLOW_OUT_FILE"
 
-    # Flush the capture dir every few seconds while armed.
     (
       while [ -f "$FOLLOW_PID_FILE" ]; do
         sync 2>/dev/null || true
@@ -209,9 +240,12 @@ case "$MODE" in
       done
     ) >/dev/null 2>&1 &
 
+    # Also write an immediate full snapshot alongside the follow stream.
+    FULL=1 write_snapshot_into "$OUT"
+
     echo "I: follow armed → $OUT"
     echo "I: journal → $OUT/journal-follow.txt (survives reboot; finalize optional)"
-    echo "I: next: spike-session as the live user (not sudo), then power off or --finalize"
+    echo "I: next: log in, run spike-session as live user (not sudo), then power off or --finalize"
     ;;
 
   finalize)
@@ -228,8 +262,7 @@ case "$MODE" in
       echo "W: no active --follow dir; writing fresh snapshot to $OUT" >&2
     fi
 
-    # Refresh snapshot into the same (or new) dir; keep journal-follow.txt if present.
-    write_snapshot_into "$OUT"
+    FULL=1 write_snapshot_into "$OUT"
     ;;
 
   snapshot)

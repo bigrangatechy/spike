@@ -1,0 +1,30 @@
+# Spike live: do not auto-start PipeWire on text login.
+# PipeWire probing broken SOF HDMI (essx8336 pcm7) floods the console with
+# ASoC/ipc errors when user@.service reaches default.target. spike-session
+# starts the audio stack explicitly once the graphical session begins.
+set -e
+
+# Disable for all users (preset + explicit disable of installed units).
+mkdir -p /etc/systemd/user-preset
+cat >/etc/systemd/user-preset/90-spike-audio.preset <<'EOF'
+disable pipewire.socket
+disable pipewire.service
+disable pipewire-pulse.socket
+disable pipewire-pulse.service
+disable wireplumber.service
+disable filter-chain.service
+EOF
+
+systemctl --global disable pipewire.socket pipewire.service \
+  pipewire-pulse.socket pipewire-pulse.service wireplumber.service \
+  filter-chain.service 2>/dev/null || true
+
+# Remove any wants symlinks left by package install.
+rm -f /etc/systemd/user/sockets.target.wants/pipewire.socket \
+  /etc/systemd/user/sockets.target.wants/pipewire-pulse.socket \
+  /etc/systemd/user/default.target.wants/pipewire.service \
+  /etc/systemd/user/default.target.wants/wireplumber.service \
+  /etc/systemd/user/pipewire.service.wants/wireplumber.service \
+  /etc/systemd/user/pipewire.service.wants/pipewire-pulse.service 2>/dev/null || true
+
+echo "I: PipeWire user units disabled globally (started by spike-session)"

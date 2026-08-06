@@ -19,25 +19,27 @@
 | `scripts/build-iso.sh` | ✅ Packages spike-config + spike-shell + lb build |
 | Stage 1 live ISO | ✅ Hardware boot + login |
 | Stage 2 (`spike-config`) | ✅ Target detect OK (N4020 / ~4GB) |
-| Stage 3 (Spike Shell) | 📝 0.0.12: Network tray + Settings Network; docs aligned |
+| Stage 3 (Spike Shell) | 📝 0.0.13: defer PipeWire to session; full debug capture |
 | Stage 4 (installer) | 🔲 Later — still **pre-alpha** until BDFL opens Alpha |
 
 ## In Progress
 
 | Item | Notes |
 | :-: | :-: |
-| Stage 3 — Spike Shell | Rebuild ISO after commit; smoke Network + KCMs |
+| Stage 3 — Spike Shell | Rebuild; smoke TTY login (no audio spam) + spike-session + Network |
 
 ## Blocked / Waiting On Decision
 
 | Item | Notes |
 | :-: | :-: |
 | Language / Keyboard / Mouse / Users / Date & Time / Accessibility | Spike custom pages (Plasma KCMs not shipped) — flesh UI next |
+| SOF HDMI pcm7 probe errors | WirePlumber may still retry in-session; tune monitor later if spam returns |
 
 ## Recently Completed
 
 | Date | Item |
 | :-: | :-: |
+| 2026-08-06 | Full debug capture follow + defer PipeWire until spike-session (SOF spam) |
 | 2026-08-06 | Docs updated for Network custom UI + Settings KCM allowlist |
 | 2026-08-06 | NetworkManager tray applet + Settings Network page (D-Bus + nmcli, no plasma-nm) |
 | 2026-08-06 | Settings category audit: every DESKTOP.md page present; Appearance wired to Config |
