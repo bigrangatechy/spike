@@ -19,15 +19,15 @@
 | `scripts/build-iso.sh` | ✅ Packages spike-config + spike-shell + lb build |
 | Stage 1 live ISO | ✅ Hardware boot + login |
 | Stage 2 (`spike-config`) | ✅ Target detect OK (N4020 / ~4GB) |
-| Stage 3 (Spike Shell) | 📝 0.0.9: Kickoff launcher + Settings wire + org.spike.Config D-Bus |
+| Stage 3 (Spike Shell) | 📝 0.0.10: in-window KCM host ready for page flesh-out |
 | Stage 4 (installer) | 🔲 Later — still **pre-alpha** until BDFL opens Alpha |
 
 ## In Progress
 
 | Item | Notes |
 | :-: | :-: |
-| Stage 3 — Settings | In-window KCM host next; custom pages beyond About/Memory |
-| Stage 3 — Spike Shell | Rebuild ISO with KDE apps + Settings/D-Bus |
+| Stage 3 — Settings | Flesh custom pages + pull KCM packages per category |
+| Stage 3 — Spike Shell | Rebuild ISO with KDE apps + Settings/D-Bus/KCM host |
 
 ## Blocked / Waiting On Decision
 
@@ -37,6 +37,7 @@ _None._ Alpha timing is intentional “by feel,” not blocked.
 
 | Date | Item |
 | :-: | :-: |
+| 2026-08-06 | In-window KCM host (`KCModuleLoader`) with Apply/Reset/Defaults |
 | 2026-08-06 | `org.spike.Config` D-Bus service + Settings skeleton + Kickoff-style launcher |
 | 2026-08-06 | Live smoke: shutdown OK; apps OK; htop needed Terminal=true wrap |
 | 2026-08-06 | Align live package list with KDE standalone apps (CONSTRAINTS.md) |

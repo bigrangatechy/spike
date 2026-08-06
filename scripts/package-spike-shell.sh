@@ -6,7 +6,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SRC="${ROOT}/src/spike-shell"
 OUT_DIR="${ROOT}/build/packages"
-VERSION="${SPIKE_SHELL_VERSION:-0.0.9}"
+VERSION="${SPIKE_SHELL_VERSION:-0.0.10}"
 REVISION="${SPIKE_SHELL_REVISION:-1}"
 PKG_VER="${VERSION}-${REVISION}"
 ARCH=amd64
@@ -59,18 +59,23 @@ command -v cmake >/dev/null || {
 BUILD="${SRC}/build-pkg"
 rm -rf "$BUILD"
 
-# Prefer system LayerShellQt; fall back to extracted -dev under build/deps-extract.
+# Prefer system LayerShellQt / KF6; fall back to extracted -dev under build/deps-extract.
 CMAKE_ARGS=(-S "$SRC" -B "$BUILD" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr)
-if [[ ! -d /usr/lib/x86_64-linux-gnu/cmake/LayerShellQt ]]; then
-  EXTRACT="${ROOT}/build/deps-extract/root/usr"
-  if [[ -d "${EXTRACT}/lib/x86_64-linux-gnu/cmake/LayerShellQt" ]]; then
-    CMAKE_ARGS+=("-DCMAKE_PREFIX_PATH=${EXTRACT}")
-  else
-    echo "error: LayerShellQt CMake package missing." >&2
-    echo "  sudo apt install liblayershellqtinterface-dev" >&2
-    echo "  (or extract it under build/deps-extract/ — see SESSION_LOG)" >&2
-    exit 1
-  fi
+EXTRACT_USR="${ROOT}/build/deps-extract/root/usr"
+if [[ -d /usr/lib/x86_64-linux-gnu/cmake/LayerShellQt ]]; then
+  :
+elif [[ -d "${EXTRACT_USR}/lib/x86_64-linux-gnu/cmake/LayerShellQt" ]]; then
+  CMAKE_ARGS+=("-DLayerShellQt_DIR=${EXTRACT_USR}/lib/x86_64-linux-gnu/cmake/LayerShellQt")
+  CMAKE_ARGS+=("-DCMAKE_PREFIX_PATH=${EXTRACT_USR}")
+else
+  echo "error: LayerShellQt CMake package missing." >&2
+  echo "  sudo apt install liblayershellqtinterface-dev" >&2
+  echo "  (or extract it under build/deps-extract/ — see SESSION_LOG)" >&2
+  exit 1
+fi
+if [[ ! -d /usr/lib/x86_64-linux-gnu/cmake/KF6KCMUtils ]] \
+   && [[ -d "${EXTRACT_USR}/include/KF6/KCMUtils" ]]; then
+  CMAKE_ARGS+=("-DCMAKE_PREFIX_PATH=${EXTRACT_USR}")
 fi
 
 cmake "${CMAKE_ARGS[@]}"
@@ -108,10 +113,10 @@ Section: x11
 Priority: optional
 Architecture: ${ARCH}
 Maintainer: BigRangaTech <spike@bigrangatech.com>
-Depends: libqt6widgets6 | libqt6widgets6t64, libqt6gui6 | libqt6gui6t64, libqt6core6t64 | libqt6core6, libqt6dbus6 | libqt6dbus6t64, qt6-wayland, liblayershellqtinterface6, layer-shell-qt
-Recommends: kwin-wayland, xwayland, dbus-user-session, seatd, libseat1, breeze-cursor-theme, spike-config
+Depends: libqt6widgets6 | libqt6widgets6t64, libqt6gui6 | libqt6gui6t64, libqt6core6t64 | libqt6core6, libqt6dbus6 | libqt6dbus6t64, qt6-wayland, liblayershellqtinterface6, layer-shell-qt, libkf6kcmutils6, libkf6kcmutilscore6, libkf6coreaddons6
+Recommends: kwin-wayland, xwayland, dbus-user-session, seatd, libseat1, breeze-cursor-theme, spike-config, libkf6kcmutils-bin
 Description: Spike Linux desktop shell (Qt6 Widgets)
- Bottom panel, Kickoff-style launcher, Settings (hybrid KCM + custom),
+ Bottom panel, Kickoff-style launcher, Settings (in-window KCM host + custom),
  and session menu under standalone KWin. Stage 3 pre-alpha — see docs/DESKTOP.md.
 EOF
 

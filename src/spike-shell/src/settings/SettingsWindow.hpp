@@ -29,7 +29,6 @@ private slots:
   void onSearchChanged(const QString &text);
   void onAdvancedToggled(bool on);
   void onHelpClicked();
-  void onOpenKcm();
   void refreshCurrentPage();
 
 private:
@@ -40,12 +39,13 @@ private:
     QString keywords;
     bool advanced = false;
     bool isKcm = false;
-    QString kcmPlugin; // kcmshell6 plugin id when isKcm
+    QString kcmPlugin; // plugin id for KcmHost when isKcm
   };
 
   void buildPages();
   void rebuildNav();
   QWidget *makePlaceholder(const PageDef &page);
+  QWidget *makeKcmPage(const PageDef &page);
   QWidget *makeAboutPage();
   QWidget *makeMemoryPage();
   int pageIndexForId(const QString &id) const;

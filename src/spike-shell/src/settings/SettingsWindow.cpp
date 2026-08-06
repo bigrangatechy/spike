@@ -1,3 +1,4 @@
+#include "settings/KcmHost.hpp"
 #include "settings/SettingsWindow.hpp"
 
 #include "settings/ConfigClient.hpp"
@@ -8,11 +9,9 @@
 #include <QLineEdit>
 #include <QListWidget>
 #include <QMessageBox>
-#include <QProcess>
 #include <QPushButton>
 #include <QSplitter>
 #include <QStackedWidget>
-#include <QStandardPaths>
 #include <QTextEdit>
 #include <QVBoxLayout>
 #include <QWidget>
@@ -116,7 +115,7 @@ void SettingsWindow::buildPages()
       {QStringLiteral("mouse"), QStringLiteral("Mouse/Touchpad"), QStringLiteral("HARDWARE"),
        QStringLiteral("pointer touchpad tapping"), false, true, QStringLiteral("kcm_touchpad")},
       {QStringLiteral("bluetooth"), QStringLiteral("Bluetooth"), QStringLiteral("HARDWARE"),
-       QStringLiteral("bt devices pairing"), false, true, QStringLiteral("bluedevil")},
+       QStringLiteral("bt devices pairing"), false, true, QStringLiteral("kcm_bluetooth")},
       {QStringLiteral("printer"), QStringLiteral("Printer"), QStringLiteral("HARDWARE"),
        QStringLiteral("print queue"), false, true, QStringLiteral("kcm_printer_manager")},
       // Network
@@ -156,6 +155,8 @@ void SettingsWindow::buildPages()
       w = makeAboutPage();
     } else if (page.id == QLatin1String("memory")) {
       w = makeMemoryPage();
+    } else if (page.isKcm) {
+      w = makeKcmPage(page);
     } else {
       w = makePlaceholder(page);
     }
@@ -164,35 +165,33 @@ void SettingsWindow::buildPages()
   }
 }
 
+QWidget *SettingsWindow::makeKcmPage(const PageDef &page)
+{
+  auto *w = new QWidget(this);
+  auto *lay = new QVBoxLayout(w);
+  lay->setContentsMargins(0, 0, 0, 0);
+  auto *title = new QLabel(QStringLiteral("<h2>%1</h2>").arg(page.title), w);
+  lay->addWidget(title);
+  auto *host = new KcmHost(w);
+  host->setObjectName(QStringLiteral("KcmHost"));
+  host->setProperty("kcmPlugin", page.kcmPlugin);
+  // Lazy-load on first show via refreshCurrentPage.
+  lay->addWidget(host, 1);
+  return w;
+}
+
 QWidget *SettingsWindow::makePlaceholder(const PageDef &page)
 {
   auto *w = new QWidget(this);
   auto *lay = new QVBoxLayout(w);
   auto *title = new QLabel(QStringLiteral("<h2>%1</h2>").arg(page.title), w);
   lay->addWidget(title);
-
-  if (page.isKcm) {
-    auto *info = new QLabel(
-        QStringLiteral(
-            "This page hosts a KDE System Settings module (<code>%1</code>) inside Spike Settings.\n"
-            "In-window KCM embedding lands next; for now you can open the module with kcmshell6.")
-            .arg(page.kcmPlugin),
-        w);
-    info->setWordWrap(true);
-    info->setTextFormat(Qt::RichText);
-    lay->addWidget(info);
-    auto *btn = new QPushButton(QStringLiteral("Open %1 module").arg(page.title), w);
-    btn->setProperty("kcmPlugin", page.kcmPlugin);
-    connect(btn, &QPushButton::clicked, this, &SettingsWindow::onOpenKcm);
-    lay->addWidget(btn);
-  } else {
-    auto *info = new QLabel(
-        QStringLiteral("Spike custom page — controls will talk to org.spike.Config over D-Bus.\n"
-                       "Placeholder for this milestone."),
-        w);
-    info->setWordWrap(true);
-    lay->addWidget(info);
-  }
+  auto *info = new QLabel(
+      QStringLiteral("Spike custom page — controls will talk to org.spike.Config over D-Bus.\n"
+                     "Placeholder for this milestone."),
+      w);
+  info->setWordWrap(true);
+  lay->addWidget(info);
   lay->addStretch(1);
   return w;
 }
@@ -346,30 +345,28 @@ void SettingsWindow::onHelpClicked()
                                           "(DESKTOP.md). Offline guide not shipped yet."));
 }
 
-void SettingsWindow::onOpenKcm()
-{
-  auto *btn = qobject_cast<QPushButton *>(sender());
-  if (!btn) {
-    return;
-  }
-  const QString plugin = btn->property("kcmPlugin").toString();
-  const QString kcmshell = QStandardPaths::findExecutable(QStringLiteral("kcmshell6"));
-  if (kcmshell.isEmpty()) {
-    QMessageBox::warning(this, QStringLiteral("KCM host"),
-                         QStringLiteral("kcmshell6 not found. Install the relevant KDE "
-                                        "System Settings modules when ready."));
-    return;
-  }
-  if (!QProcess::startDetached(kcmshell, {plugin})) {
-    m_status->setText(QStringLiteral("Failed to start kcmshell6 %1").arg(plugin));
-  } else {
-    m_status->setText(QStringLiteral("Opened %1 via kcmshell6 (temp host)").arg(plugin));
-  }
-}
-
 void SettingsWindow::refreshCurrentPage()
 {
-  // About / Memory refresh themselves on open via buttons; nothing else yet.
+  QWidget *page = m_stack->currentWidget();
+  if (!page) {
+    return;
+  }
+  auto *host = page->findChild<KcmHost *>(QStringLiteral("KcmHost"));
+  if (!host) {
+    return;
+  }
+  const QString plugin = host->property("kcmPlugin").toString();
+  if (plugin.isEmpty()) {
+    return;
+  }
+  if (host->isLoaded() && host->pluginId() == plugin) {
+    return;
+  }
+  if (host->loadPlugin(plugin)) {
+    m_status->setText(QStringLiteral("Loaded %1 in-window").arg(plugin));
+  } else {
+    m_status->setText(QStringLiteral("KCM %1 not available yet").arg(plugin));
+  }
 }
 
 int SettingsWindow::pageIndexForId(const QString &id) const

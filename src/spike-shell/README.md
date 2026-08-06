@@ -14,8 +14,8 @@ MVP for this skeleton:
 | Spike button → Kickoff-style launcher | ✅ favorites + categories + power footer |
 | Clock applet | ✅ |
 | Session menu (Settings / logout / reboot / poweroff) | ✅ |
-| Settings window (categories + About/Memory via D-Bus) | ✅ first wire |
-| KCM pages | 📝 listed; opens via `kcmshell6` until in-window host |
+| Settings window (categories + About/Memory via D-Bus) | ✅ |
+| KCM pages | ✅ in-window host (`KcmHost` + Apply/Reset); packages added as pages flesh out |
 | Theme (`spike.qss`) — white text on dark | ✅ |
 | ISO / `.deb` packaging | ✅ via `scripts/package-spike-shell.sh` |
 | `wlr-layer-shell` panel anchoring | ✅ via LayerShellQt (bottom edge) |
