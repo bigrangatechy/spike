@@ -33,8 +33,12 @@ check /etc/casper.conf 50
 check /etc/profile.d/99-spike-autostart-session.sh 50
 
 # sof-essx8336 HiFi must NOT pull HDMI (causes ASoC -5 spam + auto_null only).
-if grep -q 'Include.hdmi' /usr/share/alsa/ucm2/Intel/sof-essx8336/HiFi.conf 2>/dev/null; then
+# Match an active Include only — comments may mention the upstream directive.
+if grep -E '^[[:space:]]*Include\.hdmi' /usr/share/alsa/ucm2/Intel/sof-essx8336/HiFi.conf >/dev/null 2>&1; then
   echo "E: sof-essx8336 HiFi.conf still includes HDMI — remove Include.hdmi" >&2
+  fail=1
+elif ! grep -q 'SectionVerb' /usr/share/alsa/ucm2/Intel/sof-essx8336/HiFi.conf 2>/dev/null; then
+  echo "E: sof-essx8336 HiFi.conf missing SectionVerb" >&2
   fail=1
 else
   echo "I: sof-essx8336 HiFi.conf has no HDMI include"

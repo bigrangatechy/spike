@@ -4,7 +4,16 @@ Append-only. Newest sessions at the **top**.
 
 ---
 
-## 2026-08-07 — Fix portal hang + sof HDMI UCM + live autologin (0.0.18)
+## 2026-08-07 — Build fail: HiFi verify false positive + missing SectionVerb
+
+**Finding:** `0720-spike-verify-includes` failed on “still includes HDMI” because a *comment* contained `Include.hdmi`. Worse: that comment edit had also dropped `SectionVerb {` from the shipped HiFi.conf (UCM would be invalid).
+
+**Fix:** Restore HiFi.conf from upstream minus the HDMI include; verify hook matches only active `Include.hdmi` lines and requires `SectionVerb`.
+
+**Try:** re-run `./scripts/build-iso.sh`.
+
+---
+
 
 **Smoke (`spike-capture-20260806T135426Z`, 0.0.17):** Session “failed a lot” then started — `spike-session` blocked ~76s on `systemctl --user start` portals *before* Wayland (KDE portal ABRT, parent portal timeout). Pulse only `auto_null`; ~80 SOF ASoC −5 on HDMI pcm6/7. Packages/SVG/groups OK.
 
