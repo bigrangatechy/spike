@@ -1,6 +1,6 @@
 # Spike Agent Ops — Current State
 
-**Last updated:** 2026-08-07  
+**Last updated:** 2026-08-08  
 **Phase label:** Pre-alpha (implementation underway; Alpha gate not met yet)  
 **Note:** Stay in **pre-alpha** until the **installer works end-to-end** (live → install → reboot to installed desktop). That is the BDFL gate to open **Alpha** — not a calendar date, not “shell boots,” not Stage counter. See `DECISIONS.md`.
 
@@ -16,31 +16,40 @@
 | agent-ops core | ✅ Written |
 | ISO / build tooling | ✅ live-build; hybrid remaster + debug capture |
 | Installer stack | ✅ Custom Qt (not built yet) — Alpha cue when this works |
-| `scripts/build-iso.sh` | ✅ Packages spike-config + spike-shell + lb build |
+| `scripts/build-iso.sh` | ✅ Packages spike-config + spike-shell + spike-rescue + lb build |
 | Stage 1 live ISO | ✅ Hardware boot + login |
 | Stage 2 (`spike-config`) | ✅ Target detect OK (N4020 / ~4GB) |
-| Stage 3 (Spike Shell) | 📝 0.0.18: autologin as spike → spike-session; no portal block; sof UCM without HDMI; pending rebuild |
+| Stage 3 (Spike Shell) | 📝 0.0.21 + a11y OSK packages; Spike Rescue 0.0.1 MVP packaged for next ISO |
 | Stage 4 (installer) | 🔲 Pre-alpha until installer E2E — that gate opens **Alpha** |
 
 ## In Progress
 
 | Item | Notes |
 | :-: | :-: |
-| Stage 3 — desktop smoke | Rebuild ISO with 0.0.18; boot→desktop as spike; Speakers sink; quiet SOF; portals after Wayland |
+| Stage 3 — desktop smoke | Rebuild ISO: shell 0.0.21 + rescue 0.0.1 + a11y packages |
 
 ## Blocked / Waiting On Decision
 
 | Item | Notes |
 | :-: | :-: |
-| Language / Users / Accessibility / Notifications | Still stubs — next Settings passes |
+| Layer 2 GRUB recovery screen / Layer 4 installer restore | Rescue GUI MVP only for now |
+| Notification daemon / history tray | Prefs UI done; daemon not shipped |
+| Magnifier / high-contrast theme apply | Accessibility prefs started; visuals later |
+| APT edit / PPA / NVIDIA driver UX | Sources page lists + launches tools; in-page edit later |
 | Custom Spike SVG icons | Inherit-only `spike-icons` for now (BRANDING overrides later) |
 | Custom Spike Aurorae decorations | After Breeze works; BRANDING.md pixel match is follow-up |
+| Plasma-ish / BRANDING desktop polish | Expected gap: custom QSS shell ≠ Plasma recolour; wallpaper, fonts, Aurorae, icons after smoke |
 | Printer KCM QML / Sound Kirigami spam | Upstream noise; note only unless one-line fix |
+| N4020 sof-essx8336 silence | Sink present; speakers still dead — separate from canberra |
 
 ## Recently Completed
 
 | Date | Item |
 | :-: | :-: |
+| 2026-08-08 | spike-rescue 0.0.1: Layer 3 Rescue My Files (RO copy + SHA256) |
+| 2026-08-08 | spike-shell 0.0.20 + config 0.0.4: Notifications / Accessibility / Software Sources started |
+| 2026-08-08 | spike-shell 0.0.19: Appearance live panel; Memory/Boot forms; Language/Users/VPN pages |
+| 2026-08-08 | A4 audio OK (`libcanberra-pulse`); detect 0.0.3 HW fill; version single-source |
 | 2026-08-07 | spike-shell 0.0.18: live user spike + tty1 autologin → spike-session; drop sof HDMI UCM; non-blocking portals |
 | 2026-08-06 | spike-shell 0.0.17: portals Spike:KDE, audio/pipewire groups, BT SPA, PW 44100 live drop-in, SOF scoped, volume/wpctl, launcher icons, verify-includes hook |
 | 2026-08-06 | spike-shell 0.0.16: Libinput kcminputrc + honest Mouse/Keyboard Apply |
@@ -69,8 +78,8 @@
 
 ## Next Suggested Work
 
-1. Rebuild ISO + smoke: boots to desktop as **spike** (no manual login/session); Speakers not auto_null; quieter SOF; portals after desktop.  
-2. Next Settings pass: Users / Language / Accessibility stubs → real pages.  
+1. Rebuild ISO + smoke: Rescue My Files + Settings/OSK; A4 audio.  
+2. Next: installer (Alpha gate) or Layer 2/4 recovery polish.  
 3. Stage 4 (still pre-alpha): custom installer until it works E2E.  
 4. Open **Alpha** when installer E2E is confirmed (BDFL gate).
 

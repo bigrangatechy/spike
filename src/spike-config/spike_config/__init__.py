@@ -1,3 +1,4 @@
 """Spike configuration engine — see docs/CONFIGURATION.md."""
 
-__version__ = "0.0.2"
+# Single source of truth for CLI --version, pyproject (dynamic), and .deb packaging.
+__version__ = "0.0.4"

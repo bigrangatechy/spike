@@ -23,7 +23,7 @@ Requires root (or passwordless sudo) for chroot/loop mounts.
 Old ISO/image artifacts are removed during clean and again immediately
 before lb build so generation cannot collide with leftovers.
 
-spike-config is packaged and copied to includes.chroot (dpkg -i in a hook).
+spike-config, spike-shell, and spike-rescue are packaged and copied to includes.chroot (dpkg -i in a hook).
 Do not put Spike .debs in packages.chroot — that triggers in-chroot gpg.
 
 Spike builds ONE ISO. There is no --variant standard|plus flag.
@@ -217,6 +217,8 @@ inject_local_debs() {
   "${ROOT}/scripts/package-spike-config.sh" --out "$pkg_dir"
   echo "Packaging spike-shell ..."
   "${ROOT}/scripts/package-spike-shell.sh" --out "$pkg_dir"
+  echo "Packaging spike-rescue ..."
+  "${ROOT}/scripts/package-spike-rescue.sh" --out "$pkg_dir"
 
   # Clear any prior packages.chroot debs so archives won't invoke gpg.
   if [[ -d "$pkg_chroot" ]]; then
@@ -243,6 +245,10 @@ inject_local_debs() {
   fi
   if ! stage_newest 'spike-shell_*.deb'; then
     echo "error: spike-shell .deb missing after package step" >&2
+    exit 4
+  fi
+  if ! stage_newest 'spike-rescue_*.deb'; then
+    echo "error: spike-rescue .deb missing after package step" >&2
     exit 4
   fi
 }

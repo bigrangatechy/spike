@@ -39,6 +39,15 @@ need grub-mkimage
 need mkfs.vfat
 need mcopy
 need mmd
+need python3
+need cpio
+need blkid
+
+PATCH_INITRD_UUID="${ROOT}/scripts/spike-patch-initrd-uuid.py"
+[[ -f "${PATCH_INITRD_UUID}" ]] || {
+  echo "error: missing ${PATCH_INITRD_UUID}" >&2
+  exit 1
+}
 
 [[ -f "${IN_ISO}" ]] || {
   echo "error: input ISO not found: ${IN_ISO}" >&2
@@ -76,6 +85,40 @@ if [[ ! -f "${TREE}/casper/${KERNEL}" || ! -f "${TREE}/casper/${INITRD}" ]]; the
 fi
 
 mkdir -p "${TREE}/boot/grub" "${TREE}/EFI/BOOT"
+
+# --- Casper ↔ ISO9660 UUID sync ----------------------------------------------
+# ISO9660 has no real UUID field; blkid/GRUB use the volume modification date
+# as YYYY-MM-DD-hh-mm-ss-cc. live-build seeds casper with uuidgen(1), so after
+# remaster blkid UUID ≠ conf/uuid.conf and casper can reject the medium.
+# Fix: pick a volume date, rewrite .disk/casper-uuid* + initrd conf/uuid.conf
+# to that blkid form, then pass --modification-date= so the ISO matches.
+if [[ -n "${SOURCE_DATE_EPOCH:-}" ]]; then
+  VOL_DATE="$(date -u -d "@${SOURCE_DATE_EPOCH}" +%Y%m%d%H%M%S)00"
+else
+  VOL_DATE="$(date -u +%Y%m%d%H%M%S)00"
+fi
+# YYYYMMDDhhmmsscc → YYYY-MM-DD-hh-mm-ss-cc
+CASPER_FS_UUID="$(printf '%s' "${VOL_DATE}" | sed -E 's/^([0-9]{4})([0-9]{2})([0-9]{2})([0-9]{2})([0-9]{2})([0-9]{2})([0-9]{2})$/\1-\2-\3-\4-\5-\6-\7/')"
+if [[ ! "${CASPER_FS_UUID}" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{2}-[0-9]{2}-[0-9]{2}-[0-9]{2}$ ]]; then
+  echo "error: failed to derive casper FS UUID from VOL_DATE=${VOL_DATE}" >&2
+  exit 1
+fi
+echo "Syncing casper UUID to ISO9660 volume date ${VOL_DATE} → ${CASPER_FS_UUID}"
+
+mkdir -p "${TREE}/.disk"
+shopt -s nullglob
+uuid_files=("${TREE}/.disk"/casper-uuid-*)
+shopt -u nullglob
+if [[ ${#uuid_files[@]} -eq 0 ]]; then
+  # Match live-build naming: casper-uuid-<initrd suffix after initrd.img>
+  suffix="${INITRD#initrd.img}"
+  uuid_files=("${TREE}/.disk/casper-uuid${suffix}")
+fi
+for f in "${uuid_files[@]}"; do
+  printf '%s\n' "${CASPER_FS_UUID}" >"${f}"
+  echo "  wrote ${f#"${TREE}/"}"
+done
+python3 "${PATCH_INITRD_UUID}" "${TREE}/casper/${INITRD}" "${CASPER_FS_UUID}"
 
 # live-build dumps BIOS *.mod flat into /boot/grub — wrong for EFI GRUB (needs
 # /boot/grub/x86_64-efi/). Clear the flat dump and install Ubuntu-like layout.
@@ -189,6 +232,7 @@ set +e
 xorriso -as mkisofs \
   -r -J -joliet-long \
   -V "${VOLID}" \
+  --modification-date="${VOL_DATE}" \
   -o "${TMP_OUT}" \
   --grub2-mbr /usr/lib/grub/i386-pc/boot_hybrid.img \
   --protective-msdos-label \
@@ -219,6 +263,17 @@ if [[ "${xorrc}" -ne 0 && "${xorrc}" -ne 32 ]]; then
   exit "${xorrc}"
 fi
 mv -f "${TMP_OUT}" "${OUT_ISO}"
+
+# Confirm blkid volume UUID matches what casper expects.
+ISO_UUID="$(blkid -o value -s UUID "${OUT_ISO}" 2>/dev/null || true)"
+if [[ -z "${ISO_UUID}" ]]; then
+  echo "warning: could not read blkid UUID from ${OUT_ISO} (verify on write host)" >&2
+elif [[ "${ISO_UUID}" != "${CASPER_FS_UUID}" ]]; then
+  echo "error: ISO UUID mismatch after remaster: blkid=${ISO_UUID} casper=${CASPER_FS_UUID}" >&2
+  exit 1
+else
+  echo "Verified ISO UUID == casper UUID: ${ISO_UUID}"
+fi
 
 echo
 ls -lh "${OUT_ISO}"

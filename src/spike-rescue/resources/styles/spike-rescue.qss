@@ -1,0 +1,41 @@
+/* Spike Rescue — dark UI aligned with Spike Shell branding */
+* {
+  color: #ffffff;
+}
+
+QMainWindow#SpikeRescue, QWidget {
+  background-color: #1a1a2e;
+  color: #ffffff;
+}
+
+QPushButton {
+  background-color: #6d4aff;
+  color: #ffffff;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  font-weight: 600;
+}
+
+QPushButton:hover {
+  background-color: #7e63ff;
+}
+
+QPushButton:disabled {
+  background-color: #33335a;
+  color: #a0a0b8;
+}
+
+QListWidget, QTextEdit, QProgressBar {
+  background-color: #222236;
+  border: 1px solid #33335a;
+  border-radius: 4px;
+}
+
+QProgressBar::chunk {
+  background-color: #6d4aff;
+}
+
+QListWidget::item:selected {
+  background-color: #6d4aff;
+}

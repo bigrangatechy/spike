@@ -61,6 +61,13 @@ else
   echo "I: qt6 SVG icon engine present"
 fi
 
+if [ ! -x /usr/bin/spike-rescue ]; then
+  echo "E: spike-rescue missing (package spike-rescue into includes.chroot)" >&2
+  fail=1
+else
+  echo "I: spike-rescue present"
+fi
+
 if [ "$fail" -ne 0 ]; then
   exit 1
 fi

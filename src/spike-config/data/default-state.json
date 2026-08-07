@@ -17,12 +17,12 @@
     "gpu": {
       "vendor": "unknown",
       "model": "unknown",
-      "driver": "i915",
-      "va_api_driver": "iHD"
+      "driver": "unknown",
+      "va_api_driver": ""
     },
     "storage": {
       "device": "",
-      "type": "ssd",
+      "type": "unknown",
       "size_gb": 0,
       "rotational": false
     },
@@ -150,7 +150,17 @@
     "connection_log_retention_days": 7,
     "notification_retention_days": 3,
     "notification_max_count": 500,
+    "notification_dnd": false,
+    "notification_sound": true,
     "system_log_retention_days": 7
+  },
+  "accessibility": {
+    "sticky_keys": false,
+    "slow_keys": false,
+    "bounce_keys": false,
+    "mouse_keys": false,
+    "visual_bell": false,
+    "high_contrast": false
   },
   "installer": {
     "language": "en_US.UTF-8",

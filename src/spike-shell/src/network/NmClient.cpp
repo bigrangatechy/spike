@@ -460,6 +460,91 @@ bool NmClient::connectToSsid(const QString &ssid, const QString &password, bool 
   return true;
 }
 
+QVector<NmVpnConnection> NmClient::vpnConnections(QString *error) const
+{
+  QVector<NmVpnConnection> out;
+  QProcess proc;
+  proc.start(QStringLiteral("nmcli"),
+             {QStringLiteral("-t"), QStringLiteral("-f"),
+              QStringLiteral("NAME,UUID,TYPE,DEVICE"), QStringLiteral("connection"),
+              QStringLiteral("show")});
+  if (!proc.waitForStarted(3000) || !proc.waitForFinished(15000)) {
+    proc.kill();
+    if (error) {
+      *error = QStringLiteral("nmcli connection show failed");
+    }
+    return out;
+  }
+  if (proc.exitCode() != 0) {
+    if (error) {
+      *error = QString::fromUtf8(proc.readAllStandardError()).trimmed();
+    }
+    return out;
+  }
+  const QString text = QString::fromUtf8(proc.readAllStandardOutput());
+  for (const QString &line : text.split(QLatin1Char('\n'), Qt::SkipEmptyParts)) {
+    const QStringList parts = line.split(QLatin1Char(':'));
+    if (parts.size() < 3) {
+      continue;
+    }
+    const QString type = parts.at(2);
+    if (type != QLatin1String("vpn") && type != QLatin1String("wireguard") &&
+        !type.startsWith(QLatin1String("vpn-"))) {
+      continue;
+    }
+    NmVpnConnection c;
+    c.name = parts.at(0);
+    c.uuid = parts.size() > 1 ? parts.at(1) : QString();
+    c.type = type;
+    c.active = parts.size() > 3 && !parts.at(3).isEmpty() && parts.at(3) != QLatin1String("--");
+    out.append(c);
+  }
+  return out;
+}
+
+bool NmClient::activateVpn(const QString &nameOrUuid, QString *error)
+{
+  if (nameOrUuid.isEmpty()) {
+    if (error) {
+      *error = QStringLiteral("empty VPN name");
+    }
+    return false;
+  }
+  if (!runNmcli({QStringLiteral("-w"), QStringLiteral("30"), QStringLiteral("connection"),
+                 QStringLiteral("up"), QStringLiteral("id"), nameOrUuid},
+                error)) {
+    // Retry by UUID if name failed.
+    if (!runNmcli({QStringLiteral("-w"), QStringLiteral("30"), QStringLiteral("connection"),
+                   QStringLiteral("up"), QStringLiteral("uuid"), nameOrUuid},
+                  error)) {
+      return false;
+    }
+  }
+  emit changed();
+  return true;
+}
+
+bool NmClient::deactivateVpn(const QString &nameOrUuid, QString *error)
+{
+  if (nameOrUuid.isEmpty()) {
+    if (error) {
+      *error = QStringLiteral("empty VPN name");
+    }
+    return false;
+  }
+  if (!runNmcli({QStringLiteral("connection"), QStringLiteral("down"), QStringLiteral("id"),
+                 nameOrUuid},
+                error)) {
+    if (!runNmcli({QStringLiteral("connection"), QStringLiteral("down"), QStringLiteral("uuid"),
+                   nameOrUuid},
+                  error)) {
+      return false;
+    }
+  }
+  emit changed();
+  return true;
+}
+
 QString NmClient::statusLabel(QString *error) const
 {
   if (!isAvailable(error)) {

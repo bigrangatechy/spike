@@ -95,11 +95,28 @@ foot
 # Safe KCM providers (verified: no Depends on plasma-workspace / plasma-desktop):
 kscreen
 plasma-pa
+# plasma-pa Test button uses libcanberra → Pulse/PipeWire backend (Recommends only).
+# Without this: "No such driver" and the test never hits the sink.
+libcanberra-pulse
 powerdevil
 bluedevil
 print-manager
+# Accessibility (ACCESSIBILITY.md — always on ISO; idle until used)
+orca
+espeak-ng
+at-spi2-core
+maliit-keyboard
+maliit-server-qt6
+# Lightweight fallback OSK (X11/XWayland); Settings tries maliit first on Wayland
+onboard
+
+# Spike Rescue (DISASTER-RECOVERY.md) — RO mounts for Windows/macOS volumes
+ntfs-3g
+# hfsprogs may be unavailable on some Ubuntu releases; ignore if apt omits it
+hfsprogs
+
 # Network KCM (plasma-nm) deferred: Depends on QtWebEngine (~200MB) — too heavy for Tier-1 4GB.
-# Network/VPN Settings pages are Spike stubs until a lighter path exists.
+# Network/VPN Settings pages are Spike custom (not plasma-nm).
 
 # Audio stack (MULTIMEDIA.md) — required for Sound KCM / session
 pipewire

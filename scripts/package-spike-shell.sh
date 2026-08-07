@@ -6,7 +6,16 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SRC="${ROOT}/src/spike-shell"
 OUT_DIR="${ROOT}/build/packages"
-VERSION="${SPIKE_SHELL_VERSION:-0.0.18}"
+# Prefer SPIKE_SHELL_VERSION override; otherwise read CMake project VERSION.
+if [[ -n "${SPIKE_SHELL_VERSION:-}" ]]; then
+  VERSION="$SPIKE_SHELL_VERSION"
+else
+  VERSION="$(sed -n 's/^project(spike-shell VERSION \([0-9][0-9.]*\).*/\1/p' "${SRC}/CMakeLists.txt" | head -n1)"
+fi
+if [[ -z "$VERSION" ]]; then
+  echo "error: could not determine version (set SPIKE_SHELL_VERSION or fix CMakeLists.txt)" >&2
+  exit 1
+fi
 REVISION="${SPIKE_SHELL_REVISION:-1}"
 PKG_VER="${VERSION}-${REVISION}"
 ARCH=amd64

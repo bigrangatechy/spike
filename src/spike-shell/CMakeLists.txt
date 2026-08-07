@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(spike-shell VERSION 0.0.18 LANGUAGES CXX)
+project(spike-shell VERSION 0.0.21 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -71,6 +71,22 @@ add_executable(spike-shell
   src/settings/MousePage.hpp
   src/settings/KeyboardLayoutPage.cpp
   src/settings/KeyboardLayoutPage.hpp
+  src/settings/MemoryPage.cpp
+  src/settings/MemoryPage.hpp
+  src/settings/BootPage.cpp
+  src/settings/BootPage.hpp
+  src/settings/LanguagePage.cpp
+  src/settings/LanguagePage.hpp
+  src/settings/UsersPage.cpp
+  src/settings/UsersPage.hpp
+  src/settings/VpnPage.cpp
+  src/settings/VpnPage.hpp
+  src/settings/NotificationsPage.cpp
+  src/settings/NotificationsPage.hpp
+  src/settings/AccessibilityPage.cpp
+  src/settings/AccessibilityPage.hpp
+  src/settings/SoftwareSourcesPage.cpp
+  src/settings/SoftwareSourcesPage.hpp
   src/settings/InputConfig.cpp
   src/settings/InputConfig.hpp
   resources/spike-shell.qrc

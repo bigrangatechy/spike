@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Rescue My Files
+Comment=Recover personal files from a broken system (Spike Rescue)
+Exec=spike-rescue
+Icon=drive-harddisk
+Terminal=false
+Categories=System;Utility;
+Keywords=rescue;recover;backup;disaster;
+StartupNotify=true

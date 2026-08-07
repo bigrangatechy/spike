@@ -26,7 +26,7 @@ src/spike-config/
 │   ├── generate.py             → module registry + generate-all
 │   ├── changelog.py
 │   ├── paths.py                → path roots (overridable for tests)
-│   ├── detect.py               → hardware detect stub
+│   ├── detect.py               → /proc+/sys hardware detect (cpu/ram/gpu/storage/net)
 │   └── modules/                → memory, boot, network, multimedia, security
 └── tests/
 ```
@@ -76,7 +76,7 @@ python3 -m spike_config --state
 | `--state` / `--state-get` / `--state-set` | ✅ |
 | `--changelog` | ✅ |
 | `--validate` | ✅ leftover `{{}}` + required keys |
-| `--detect` | 📝 best-effort `/proc` stub (installer detectors later) |
+| `--detect` | Fill hardware from `/proc` + `/sys` (cpu/ram/gpu/storage/network) |
 | `--rollback` | ✅ basic (revert one changelog entry) |
 | `--boot-count` | ✅ get / reset / increment |
 | `.deb` + ISO inject | ✅ `package-spike-config.sh` / live hook |

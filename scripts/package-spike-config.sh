@@ -6,7 +6,16 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SRC="${ROOT}/src/spike-config"
 OUT_DIR="${ROOT}/build/packages"
-VERSION="${SPIKE_CONFIG_VERSION:-0.0.3}"
+# Prefer SPIKE_CONFIG_VERSION override; otherwise read spike_config.__version__.
+if [[ -n "${SPIKE_CONFIG_VERSION:-}" ]]; then
+  VERSION="$SPIKE_CONFIG_VERSION"
+else
+  VERSION="$(sed -n 's/^__version__ = "\([^"]*\)"/\1/p' "${SRC}/spike_config/__init__.py" | head -n1)"
+fi
+if [[ -z "$VERSION" ]]; then
+  echo "error: could not determine version (set SPIKE_CONFIG_VERSION or fix __version__)" >&2
+  exit 1
+fi
 REVISION="${SPIKE_CONFIG_REVISION:-1}"
 PKG_VER="${VERSION}-${REVISION}"
 ARCH=all

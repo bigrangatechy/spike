@@ -6,6 +6,7 @@
 #include <QVariant>
 
 class QDBusInterface;
+class QDBusVariant;
 
 namespace spike {
 
@@ -34,9 +35,16 @@ signals:
                     const QVariant &newValue);
   void configRegenerated(const QString &module, const QStringList &files);
 
+private slots:
+  void onDbusStateChanged(const QString &module, const QString &key, const QDBusVariant &oldValue,
+                          const QDBusVariant &newValue);
+  void onDbusConfigRegenerated(const QString &module, const QStringList &files);
+
 private:
+  void subscribeSignals();
   QDBusInterface *iface() const;
   mutable QDBusInterface *m_iface = nullptr;
+  bool m_subscribed = false;
 };
 
 } // namespace spike

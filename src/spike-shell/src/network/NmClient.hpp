@@ -16,6 +16,13 @@ struct NmAccessPoint {
   bool active = false;
 };
 
+struct NmVpnConnection {
+  QString name;
+  QString uuid;
+  QString type; // vpn, wireguard, …
+  bool active = false;
+};
+
 struct NmDevice {
   QString path;
   int type = 0; // 1 ethernet, 2 wifi, …
@@ -46,6 +53,10 @@ public:
   bool disconnectActive(QString *error = nullptr);
   bool connectToSsid(const QString &ssid, const QString &password, bool secured,
                      QString *error = nullptr);
+
+  QVector<NmVpnConnection> vpnConnections(QString *error = nullptr) const;
+  bool activateVpn(const QString &nameOrUuid, QString *error = nullptr);
+  bool deactivateVpn(const QString &nameOrUuid, QString *error = nullptr);
 
   /** Short status for the tray: e.g. "Wi‑Fi · Home", "Ethernet", "Offline". */
   QString statusLabel(QString *error = nullptr) const;

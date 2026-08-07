@@ -1,14 +1,21 @@
+#include "settings/AccessibilityPage.hpp"
+#include "settings/BootPage.hpp"
 #include "settings/ConfigClient.hpp"
 #include "settings/DateTimePage.hpp"
 #include "settings/KeyboardLayoutPage.hpp"
 #include "settings/KeyboardPage.hpp"
 #include "settings/KcmHost.hpp"
+#include "settings/LanguagePage.hpp"
+#include "settings/MemoryPage.hpp"
 #include "settings/MousePage.hpp"
+#include "settings/NotificationsPage.hpp"
 #include "settings/SettingsWindow.hpp"
+#include "settings/SoftwareSourcesPage.hpp"
+#include "settings/UsersPage.hpp"
+#include "settings/VpnPage.hpp"
 
 #include "network/NetworkPanelWidget.hpp"
 #include "network/NmClient.hpp"
-#include "settings/ConfigClient.hpp"
 
 #include <QCheckBox>
 #include <QComboBox>
@@ -121,8 +128,7 @@ void SettingsWindow::buildPages()
        QStringLiteral("desktop")},
       {QStringLiteral("notifications"), QStringLiteral("Notifications"), QStringLiteral("PERSONAL"),
        QStringLiteral("dnd history sound"), false, false, {},
-       QStringLiteral("History / DND / sound — Spike notification daemon (not shipped yet). "
-                      "Retention keys live under privacy in spike-config."),
+       QStringLiteral("DND / retention via privacy; daemon history later."),
        QStringLiteral("privacy")},
       {QStringLiteral("keyboard-layout"), QStringLiteral("Keyboard Layout"), QStringLiteral("PERSONAL"),
        QStringLiteral("layout switching"), false, false, {},
@@ -130,8 +136,7 @@ void SettingsWindow::buildPages()
        {}},
       {QStringLiteral("language"), QStringLiteral("Language"), QStringLiteral("PERSONAL"),
        QStringLiteral("locale language region"), false, false, {},
-       QStringLiteral("System language / region. Upstream KCM (kcm_regionandlang) lives in "
-                      "plasma-workspace — Spike stub until a Plasma-free path exists."),
+       QStringLiteral("System language via localectl (not kcm_regionandlang)."),
        {}},
       // Hardware — KCMs from standalone packages on the live ISO
       {QStringLiteral("display"), QStringLiteral("Display"), QStringLiteral("HARDWARE"),
@@ -162,14 +167,12 @@ void SettingsWindow::buildPages()
        {}},
       {QStringLiteral("vpn"), QStringLiteral("VPN"), QStringLiteral("NETWORK"),
        QStringLiteral("openvpn wireguard"), false, false, {},
-       QStringLiteral("VPN (OpenVPN / WireGuard via NetworkManager) — coming next. "
-                      "Use Network for Wi‑Fi/Ethernet for now."),
+       QStringLiteral("OpenVPN / WireGuard via NetworkManager."),
        {}},
       // System
       {QStringLiteral("users"), QStringLiteral("Users"), QStringLiteral("SYSTEM"),
        QStringLiteral("account password"), false, false, {},
-       QStringLiteral("Accounts / password. Upstream KCM (kcm_users) lives in "
-                      "plasma-workspace — Spike stub."),
+       QStringLiteral("Password + auto-login (not kcm_users)."),
        {}},
       {QStringLiteral("datetime"), QStringLiteral("Date & Time"), QStringLiteral("SYSTEM"),
        QStringLiteral("timezone ntp clock"), false, false, {},
@@ -177,12 +180,11 @@ void SettingsWindow::buildPages()
        {}},
       {QStringLiteral("accessibility"), QStringLiteral("Accessibility"), QStringLiteral("SYSTEM"),
        QStringLiteral("magnifier sticky keys"), false, false, {},
-       QStringLiteral("Magnifier, sticky keys, etc. Upstream KCM (kcm_access) lives in "
-                      "plasma-desktop — Spike stub."),
-       {}},
+       QStringLiteral("AccessX + Orca/OSK launchers (not kcm_access)."),
+       QStringLiteral("accessibility")},
       {QStringLiteral("software-sources"), QStringLiteral("Software Sources"), QStringLiteral("SYSTEM"),
        QStringLiteral("repos drivers nvidia"), false, false, {},
-       QStringLiteral("APT repos / additional drivers — Spike custom + optional KCM later."),
+       QStringLiteral("APT sources view + software-properties / drivers tools."),
        {}},
       {QStringLiteral("about"), QStringLiteral("About"), QStringLiteral("SYSTEM"),
        QStringLiteral("version system info guide"), false, false, {}, {}, {}},
@@ -217,11 +219,27 @@ void SettingsWindow::buildPages()
     if (page.id == QLatin1String("about")) {
       w = makeAboutPage();
     } else if (page.id == QLatin1String("memory")) {
-      w = makeMemoryPage();
+      w = makeMemoryPage(this, m_config, m_status);
+    } else if (page.id == QLatin1String("boot")) {
+      w = makeBootPage(this, m_config, m_status);
     } else if (page.id == QLatin1String("appearance")) {
       w = makeAppearancePage();
     } else if (page.id == QLatin1String("network")) {
       w = makeNetworkPage();
+    } else if (page.id == QLatin1String("vpn")) {
+      auto *nm = new NmClient(this);
+      w = makeVpnPage(this, nm, m_status);
+      nm->setParent(w);
+    } else if (page.id == QLatin1String("language")) {
+      w = makeLanguagePage(this, m_status);
+    } else if (page.id == QLatin1String("users")) {
+      w = makeUsersPage(this, m_config, m_status);
+    } else if (page.id == QLatin1String("notifications")) {
+      w = makeNotificationsPage(this, m_config, m_status);
+    } else if (page.id == QLatin1String("accessibility")) {
+      w = makeAccessibilityPage(this, m_config, m_status);
+    } else if (page.id == QLatin1String("software-sources")) {
+      w = makeSoftwareSourcesPage(this, m_status);
     } else if (page.id == QLatin1String("datetime")) {
       w = makeDateTimePage(this, m_status);
     } else if (page.id == QLatin1String("keyboard")) {
@@ -358,7 +376,9 @@ QWidget *SettingsWindow::makeAppearancePage()
   auto *lay = new QVBoxLayout(w);
   lay->addWidget(new QLabel(QStringLiteral("<h2>Appearance</h2>"), w));
   auto *hint = new QLabel(
-      QStringLiteral("Writes to org.spike.Config module desktop. Panel live-apply comes later."),
+      QStringLiteral(
+          "Panel position / height / auto-hide apply live. Accent, font size, and animations "
+          "are saved for later theme apply."),
       w);
   hint->setWordWrap(true);
   lay->addWidget(hint);
@@ -449,8 +469,8 @@ QWidget *SettingsWindow::makeAppearancePage()
               return;
             }
             status->setText(QStringLiteral(
-                "Saved. Panel/theme apply after session restart (live-apply later)."));
-            m_status->setText(QStringLiteral("appearance saved — restart session to apply"));
+                "Panel settings applied live. Accent / font / animations saved (theme later)."));
+            m_status->setText(QStringLiteral("appearance applied"));
           });
 
   load();
@@ -482,36 +502,6 @@ QWidget *SettingsWindow::makeAboutPage()
     }
   });
   // Initial load
-  refresh->click();
-  return w;
-}
-
-QWidget *SettingsWindow::makeMemoryPage()
-{
-  auto *w = new QWidget(this);
-  auto *lay = new QVBoxLayout(w);
-  lay->addWidget(new QLabel(QStringLiteral("<h2>Memory</h2>"), w));
-  auto *hint = new QLabel(
-      QStringLiteral("Advanced · ZRAM / swap / swappiness (via spike-config)."), w);
-  hint->setWordWrap(true);
-  lay->addWidget(hint);
-  auto *body = new QTextEdit(w);
-  body->setObjectName(QStringLiteral("MemoryState"));
-  body->setReadOnly(true);
-  lay->addWidget(body, 1);
-  auto *refresh = new QPushButton(QStringLiteral("Load memory module state"), w);
-  lay->addWidget(refresh);
-  connect(refresh, &QPushButton::clicked, this, [this, body]() {
-    QString err;
-    const QString json =
-        m_config ? m_config->getModuleState(QStringLiteral("memory"), &err) : QString();
-    if (json.isEmpty()) {
-      body->setPlainText(QStringLiteral("Error: %1").arg(err));
-    } else {
-      body->setPlainText(json);
-      m_status->setText(QStringLiteral("Loaded memory module"));
-    }
-  });
   refresh->click();
   return w;
 }

@@ -4,6 +4,48 @@ Append-only. Newest sessions at the **top**.
 
 ---
 
+## 2026-08-08 — Spike Rescue Layer 3 MVP (0.0.1)
+
+New Qt6 Widgets app `src/spike-rescue/` per DISASTER-RECOVERY.md: RO disk scan, home inventory, copy to `SpikeBackup/` with SHA256, live desktop **Rescue My Files**. Packaged via `package-spike-rescue.sh`; wired into `build-iso.sh` + hook `0600`. Live list: `ntfs-3g` / `hfsprogs`. Out of scope still: Layer 2 GRUB recovery UI, Layer 4 installer restore.
+
+---
+
+## 2026-08-08 — Live a11y packages (OSK / Orca)
+
+Settings Accessibility OSK button failed on smoke — `maliit-keyboard` / `onboard` / `orca` were not in `spike-live.list.chroot`. Added per ACCESSIBILITY.md (+ onboard fallback). spike-shell **0.0.21** prefers maliit on Wayland (starts server then keyboard).
+
+---
+
+## 2026-08-08 — Notifications / Accessibility / Software Sources started
+
+**spike-shell 0.0.20 + spike-config 0.0.4:** Real Settings pages (not placeholders). Notifications: DND/sound/retention → privacy (+ test Notify if a daemon owns the bus). Accessibility: sticky/slow/bounce/mouse keys via setxkbmap + Orca/OSK launchers; high contrast saved. Software Sources: read-only APT list + software-properties / drivers / update buttons. State merge fills new modules/keys on load. Still later: notification daemon, magnifier, APT edit/PPA UI.
+
+---
+
+## 2026-08-08 — Settings mix (fewer stubs) + casper UUID/overlay
+
+**spike-shell 0.0.19:** Appearance panel height/position/auto-hide live via `ConfigClient` `StateChanged` + layer-shell. Memory + Boot Apply forms (SetSetting/generate). Language (`localectl`), thin Users (password + auto_login), VPN (nmcli list/up/down). Still stubs: Notifications, Accessibility, Software Sources.
+
+**Also this day:** Casper UUID remaster + overlay initrd fix; A4 audio OK after `libcanberra-pulse`; N4020 still silent on sof-essx8336; hardware detect 0.0.3 confirmed on both machines; `__version__` single-sourced for spike-config.
+
+---
+
+## 2026-08-08 — Casper UUID sync on remaster (initramfs live-media miss)
+
+**Symptom:** USB stuck at `initramfs$`; writable empty — casper never found the live medium. Remaster left ISO9660 blkid UUID (volume date) ≠ initrd `conf/uuid.conf` / `.disk/casper-uuid*` (`uuidgen`).
+
+**Fix (option 3):** `spike-iso-hybridize.sh` now picks `--modification-date=YYYYMMDDhhmmsscc`, rewrites `.disk/casper-uuid*` + patches initrd via `scripts/spike-patch-initrd-uuid.py`, and verifies `blkid` == casper UUID. No full squashfs rebuild required.
+
+**Follow-up:** After UUID sync, boot reached overlay setup and panicked: `/cow format specified as 'overlay' and no support found` (modprobe overlay failed despite `overlay.ko.zst` in the modules archive). Patcher now also embeds overlay into the main initrd layer, adds `conf/modules` + `init-top/00-spike-overlay`, and makes casper’s overlay load resilient (`modprobe` → `insmod`).
+
+**Smoke:** N4020 + AMD A4 both reach spike-session as `spike`. Audio: treat **N4020 / sof-essx8336 as a bad audio reference** for now; use **AMD A4 (CX20751/2 analog-stereo)** as the audio reference machine. Hardware detect previously only filled CPU/RAM (GPU left as Intel stub defaults) — extended to gpu/storage/network in spike-config 0.0.3.
+
+**Audio (A4):** Settings Test “No such driver” was missing `libcanberra-pulse` (plasma-pa Recommends only; live list had `libcanberra-alsa`). Added to `spike-live.list.chroot`. After rebuild: **A4 analog playback confirmed working** — keep as audio reference. N4020 retest: Test button OK but **still silent** (sof-essx8336 stereo-fallback sink present; hardware/UCM path, not canberra).
+
+**Detect (captures `…T153052Z` A4 / `…T153719Z` N4020):** Full hardware fill on both (pkg `0.0.3-1`; CLI string still prints `0.0.2`). A4: AMD Mullins/`radeon`/`radeonsi`, HDD `/dev/sdb` 931G, ath10k wifi+eth+bt. N4020: UHD 600/`i915`/`iHD`, NVMe 476G, iwlwifi+bt no eth. No Intel stub leftovers on A4.
+
+---
+
 ## 2026-08-07 — Build fail: HiFi verify false positive + missing SectionVerb
 
 **Finding:** `0720-spike-verify-includes` failed on “still includes HDMI” because a *comment* contained `Include.hdmi`. Worse: that comment edit had also dropped `SectionVerb {` from the shipped HiFi.conf (UCM would be invalid).

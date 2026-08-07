@@ -1,0 +1,7 @@
+{
+	"InstallScripts" : 
+	[
+		"/home/jessie/Documents/Gitlab/spike/src/spike-rescue/build/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

@@ -16,6 +16,34 @@ constexpr const char *kIface = "org.spike.Config";
 ConfigClient::ConfigClient(QObject *parent)
   : QObject(parent)
 {
+  subscribeSignals();
+}
+
+void ConfigClient::subscribeSignals()
+{
+  if (m_subscribed) {
+    return;
+  }
+  auto bus = QDBusConnection::systemBus();
+  const QString svc = QString::fromUtf8(kService);
+  const QString path = QString::fromUtf8(kPath);
+  const QString iface = QString::fromUtf8(kIface);
+  bus.connect(svc, path, iface, QStringLiteral("StateChanged"), this,
+              SLOT(onDbusStateChanged(QString, QString, QDBusVariant, QDBusVariant)));
+  bus.connect(svc, path, iface, QStringLiteral("ConfigRegenerated"), this,
+              SLOT(onDbusConfigRegenerated(QString, QStringList)));
+  m_subscribed = true;
+}
+
+void ConfigClient::onDbusStateChanged(const QString &module, const QString &key,
+                                      const QDBusVariant &oldValue, const QDBusVariant &newValue)
+{
+  emit stateChanged(module, key, oldValue.variant(), newValue.variant());
+}
+
+void ConfigClient::onDbusConfigRegenerated(const QString &module, const QStringList &files)
+{
+  emit configRegenerated(module, files);
 }
 
 QDBusInterface *ConfigClient::iface() const

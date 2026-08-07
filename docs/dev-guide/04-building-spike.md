@@ -158,6 +158,8 @@ sudo ./scripts/spike-collect-usb-logs.sh
 
 Remaster ISO only: `./scripts/spike-iso-hybridize.sh`
 
+That remaster **syncs the casper UUID** to the ISO9660 volume date (`blkid` UUID == `.disk/casper-uuid*` == initrd `conf/uuid.conf`). Without that, casper can drop to `initramfs$` (“Unable to find a medium…”) after hybridize. Override the date with `SOURCE_DATE_EPOCH` for reproducible builds.
+
 ### Optional — QEMU
 
 ```

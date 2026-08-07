@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Rescue My Files
+Comment=Recover personal files from a broken system (Spike Rescue)
+Exec=spike-rescue
+Icon=drive-harddisk
+Terminal=false
+Categories=System;Utility;
+# Copied to the live user Desktop by the ISO hook.

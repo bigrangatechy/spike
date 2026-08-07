@@ -83,6 +83,82 @@ class SpikeConfigTests(unittest.TestCase):
 
         self.assertEqual(values(first), values(second))
 
+    def test_detect_gpu_storage_network_sysfs(self) -> None:
+        from spike_config import detect as detect_mod
+
+        fake = self.root / "fake-sys"
+        pci = fake / "bus/pci/devices/0000:00:01.0"
+        pci.mkdir(parents=True)
+        (pci / "class").write_text("0x030000\n", encoding="utf-8")
+        (pci / "vendor").write_text("0x1002\n", encoding="utf-8")
+        (pci / "device").write_text("0x9850\n", encoding="utf-8")
+        drv = fake / "bus/pci/drivers/radeon"
+        drv.mkdir(parents=True)
+        (pci / "driver").symlink_to(drv)
+
+        block = fake / "block"
+        sda = block / "sda"
+        (sda / "queue").mkdir(parents=True)
+        (sda / "size").write_text("500000000\n", encoding="utf-8")  # ~238 GiB
+        (sda / "removable").write_text("0\n", encoding="utf-8")
+        (sda / "queue" / "rotational").write_text("1\n", encoding="utf-8")
+        # Removable USB should be ignored even if larger
+        sdb = block / "sdb"
+        (sdb / "queue").mkdir(parents=True)
+        (sdb / "size").write_text("900000000\n", encoding="utf-8")
+        (sdb / "removable").write_text("1\n", encoding="utf-8")
+        (sdb / "queue" / "rotational").write_text("1\n", encoding="utf-8")
+
+        net = fake / "class/net"
+        wlan = net / "wlp1s0"
+        wlan.mkdir(parents=True)
+        (wlan / "wireless").mkdir()
+        (wlan / "type").write_text("1\n", encoding="utf-8")
+        wdrv = fake / "bus/pci/drivers/iwlwifi"
+        wdrv.mkdir(parents=True)
+        (wlan / "device").mkdir()
+        (wlan / "device" / "driver").symlink_to(wdrv)
+        eth = net / "enp2s0"
+        eth.mkdir(parents=True)
+        (eth / "type").write_text("1\n", encoding="utf-8")
+        (eth / "device").mkdir()
+
+        gpu: dict = {}
+        storage: dict = {}
+        network: dict = {}
+        detect_mod._detect_gpu(gpu, sys_pci=fake / "bus/pci/devices")
+        detect_mod._detect_storage(storage, sys_block=block)
+        detect_mod._detect_network(network, sys_net=net)
+
+        self.assertEqual(gpu["vendor"], "amd")
+        self.assertEqual(gpu["driver"], "radeon")
+        self.assertEqual(gpu["va_api_driver"], "radeonsi")
+        self.assertEqual(storage["device"], "/dev/sda")
+        self.assertEqual(storage["type"], "hdd")
+        self.assertTrue(storage["rotational"])
+        self.assertGreater(storage["size_gb"], 0)
+        self.assertTrue(network["has_wifi"])
+        self.assertEqual(network["wifi_driver"], "iwlwifi")
+        self.assertTrue(network["has_ethernet"])
+
+    def test_version_single_source(self) -> None:
+        """CLI, pyproject, and packaging must share spike_config.__version__."""
+        from spike_config import __version__
+
+        self.assertRegex(__version__, r"^\d+\.\d+\.\d+")
+        init_text = (ROOT / "spike_config" / "__init__.py").read_text(encoding="utf-8")
+        self.assertIn(f'__version__ = "{__version__}"', init_text)
+
+        pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
+        self.assertIn('dynamic = ["version"]', pyproject)
+        self.assertIn('version = { attr = "spike_config.__version__" }', pyproject)
+        self.assertNotRegex(pyproject, r'(?m)^version\s*=\s*"')
+
+        pkg = ROOT.parents[1] / "scripts" / "package-spike-config.sh"
+        script = pkg.read_text(encoding="utf-8")
+        self.assertIn("__version__", script)
+        self.assertNotRegex(script, r'VERSION="\$\{SPIKE_CONFIG_VERSION:-[0-9]')
+
 
 if __name__ == "__main__":
     unittest.main()

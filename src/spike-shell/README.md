@@ -10,23 +10,29 @@ MVP for this skeleton:
 
 | Piece | Status |
 |-------|--------|
-| Bottom panel (32px) | ✅ |
+| Bottom panel (24–48px, top/bottom, auto-hide) | ✅ live from desktop module |
 | Spike button → Kickoff-style launcher | ✅ favorites + categories + power footer |
 | Clock applet | ✅ |
 | Network tray applet | ✅ |
 | Volume tray applet | ✅ PipeWire-Pulse via pactl |
 | Battery tray applet | ✅ UPower (hidden if no battery) |
 | Session menu (Settings / logout / reboot / poweroff) | ✅ |
-| Settings window (categories + About/Memory via D-Bus) | ✅ |
-| Date & Time / Keyboard / Mouse / Layout pages | ✅ Spike-native |
+| Settings window | ✅ custom pages + KCM hosts |
+| Appearance (panel live-apply) | ✅ accent/font/animations saved only |
+| Date & Time / Keyboard / Mouse / Layout | ✅ Spike-native |
+| Language / Users / VPN | ✅ localectl / thin accounts / NM VPN |
+| Notifications (prefs) | ✅ DND/retention/sound saved; daemon later |
+| Accessibility (started) | ✅ AccessX + Orca/OSK; high contrast saved |
+| Software Sources (started) | ✅ APT list + properties/drivers/update tools |
+| Memory / Boot forms | ✅ SetSetting + generate |
 | KCM pages | ✅ in-window host (`KcmHost` + Apply/Reset); packages added as pages flesh out |
 | Theme (`spike.qss`) — white text on dark | ✅ |
 | Icons (`spike-icons` inherits Breeze Dark) | ✅ |
 | ISO / `.deb` packaging | ✅ via `scripts/package-spike-shell.sh` |
-| `wlr-layer-shell` panel anchoring | ✅ via LayerShellQt (bottom edge) |
+| `wlr-layer-shell` panel anchoring | ✅ via LayerShellQt (top or bottom) |
 | Session start (seatd + cursor) | ✅ live smoke |
 | `.desktop` app scanning + `Terminal=true` | ✅ |
-| Notification daemon / remaining tray applets | ⬜ later |
+| Notification daemon / magnifier / APT edit UI | ⬜ later |
 
 ## Build (host smoke)
 

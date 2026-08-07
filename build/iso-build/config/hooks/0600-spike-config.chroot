@@ -21,6 +21,7 @@ install_newest() {
 
 install_newest 'spike-config_*.deb'
 install_newest 'spike-shell_*.deb'
+install_newest 'spike-rescue_*.deb'
 
 if command -v spike-config >/dev/null 2>&1; then
   spike-config --version || true
@@ -43,4 +44,19 @@ if [ -x /usr/bin/spike-shell ]; then
   echo "I: spike-shell installed: /usr/bin/spike-shell"
 else
   echo "W: spike-shell still missing after install attempt" >&2
+fi
+
+if [ -x /usr/bin/spike-rescue ]; then
+  echo "I: spike-rescue installed: /usr/bin/spike-rescue"
+  # Live Desktop icon (casper user is spike)
+  for home in /home/spike /etc/skel; do
+    mkdir -p "${home}/Desktop"
+    if [ -f /usr/share/spike/live/spike-rescue.desktop ]; then
+      cp -f /usr/share/spike/live/spike-rescue.desktop "${home}/Desktop/Rescue My Files.desktop"
+      chmod 755 "${home}/Desktop/Rescue My Files.desktop" || true
+      chown -R spike:spike /home/spike/Desktop 2>/dev/null || true
+    fi
+  done
+else
+  echo "W: spike-rescue still missing after install attempt" >&2
 fi

@@ -52,7 +52,6 @@ private:
   QWidget *makeNetworkPage();
   QWidget *makeKcmPage(const PageDef &page);
   QWidget *makeAboutPage();
-  QWidget *makeMemoryPage();
   int pageIndexForId(const QString &id) const;
 
   ConfigClient *m_config = nullptr;

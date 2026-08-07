@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "spike-config"
-version = "0.0.2"
+dynamic = ["version"]
 description = "Spike Linux configuration engine (state store + templates)"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -20,3 +20,6 @@ include = ["spike_config*"]
 
 [tool.setuptools.package-data]
 spike_config = ["py.typed"]
+
+[tool.setuptools.dynamic]
+version = { attr = "spike_config.__version__" }

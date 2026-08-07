@@ -35,7 +35,32 @@ def load() -> dict[str, Any]:
         data = json.load(fh)
     if not isinstance(data, dict) or "version" not in data:
         raise ValueError(f"invalid state store: {path}")
-    return data
+    return merge_missing_defaults(data)
+
+
+def merge_missing_defaults(state: dict[str, Any]) -> dict[str, Any]:
+    """Fill missing top-level modules / keys from default-state.json (upgrade path)."""
+    defaults = load_default()
+    changed = False
+    for mod, default_section in defaults.items():
+        if mod in ("version", "last_modified", "variant", "install_date"):
+            continue
+        if not isinstance(default_section, dict):
+            continue
+        if mod not in state or not isinstance(state.get(mod), dict):
+            state[mod] = deepcopy(default_section)
+            changed = True
+            continue
+        for key, val in default_section.items():
+            if key not in state[mod]:
+                state[mod][key] = deepcopy(val)
+                changed = True
+    if changed:
+        try:
+            save(state)
+        except OSError:
+            pass
+    return state
 
 
 def save(state: dict[str, Any]) -> None:
@@ -73,8 +98,13 @@ def get_value(state: dict[str, Any], module: str, key: str) -> Any:
 
 
 def set_value(state: dict[str, Any], module: str, key: str, value: Any) -> Any:
-    """Set module.key; returns previous value."""
-    old = get_value(state, module, key)
+    """Set module.key; returns previous value (None if the key is new)."""
+    if module not in state:
+        raise KeyError(f"unknown module: {module}")
+    section = state[module]
+    if not isinstance(section, dict):
+        raise KeyError(f"module {module} is not a mapping")
+    old = section.get(key)
     # Coerce JSON-ish strings from CLI.
     if isinstance(value, str):
         lowered = value.lower()
@@ -87,7 +117,7 @@ def set_value(state: dict[str, Any], module: str, key: str, value: Any) -> Any:
                 value = json.loads(value)
             except json.JSONDecodeError:
                 pass
-    state[module][key] = value
+    section[key] = value
     return old
 
 
