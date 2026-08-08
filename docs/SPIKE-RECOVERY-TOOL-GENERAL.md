@@ -124,10 +124,11 @@ On an installed Spike system:
 ## Implementation Status
 
 ```
-├── spike-rescue: implemented (MVP on live ISO) — see src/spike-rescue/
-├── spike-migration: specification only — see SPIKE-MIGRATION.md
-└── Prefer a shared RO-mount / inventory / SHA256 engine with rescue
-    so the live image does not ship two incompatible mount stacks
+├── spike-rescue: recover + restore MVP (live ISO) — src/spike-rescue/
+├── spike-common: shared SpikeBackup layout/find/map — src/spike-common/
+├── spike-installer backup/restore: scaffold + docs hooks — src/spike-installer/
+├── spike-migration: scaffold + spec — src/spike-migration/, SPIKE-MIGRATION.md
+└── Desktop category: Spike Tools (X-Spike-Tools) for Rescue / future tools
 ```
 
 ## Related Documents

@@ -657,7 +657,30 @@ Directories scanned (per OS type):
 └── Application data
 ```
 
-Reason: These contain system-specific configs that shouldn't be restored. Personal files are in the visible directories.
+Reason: These contain system-specific configs that shouldn't be restored. Personal files are in the visible folders.
+
+### SpikeBackup layout (canonical)
+
+Recover writes (and restore reads) this tree on the destination volume root
+(`LABEL=writable` at `/run/spike-rescue/dest-writable`, or another USB):
+
+```
+SpikeBackup/
+└── <utc-stamp>/                 # e.g. 20260808-113057
+    └── <os-label>/              # Linux, Windows, …
+        ├── home/<user>/Documents/
+        ├── home/<user>/Pictures/
+        ├── … (Videos, Music, Downloads, Desktop)
+        ├── Users/<user>/…       # Windows / macOS
+        └── REPORT.txt
+```
+
+Spike Rescue also offers **Restore files from backup**: pick a session, map into a
+chosen `/home/<user>/` with SHA256 verification. Legacy backups under
+`install-logs-*/log/SpikeBackup/` (older casper `/var/log` dest) are still found.
+
+Shared helpers live in `src/spike-common/` for installer Step 7 / Layer 4 and
+Spike Migration.
 
 ### Checksum Verification
 

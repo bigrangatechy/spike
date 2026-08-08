@@ -202,20 +202,28 @@ If nothing is found: show a scan summary (partitions considered, mount failures)
 └── Layout MUST match Spike Rescue / installer restore
 ```
 
-Canonical layout:
+Canonical layout (shared with Spike Rescue and installer restore):
 
 ```
 SpikeBackup/
-├── Documents/
-├── Pictures/
-├── Videos/
-├── Music/
-├── Downloads/
-├── Desktop/
-└── (optional) REPORT.txt — counts, failures, source label
+└── <utc-stamp>/                 # e.g. 20260808-113057
+    └── <os-label>/              # Linux, Windows, macOS, …
+        ├── home/<user>/Documents/
+        ├── home/<user>/Pictures/
+        ├── home/<user>/Videos/
+        ├── home/<user>/Music/
+        ├── home/<user>/Downloads/
+        ├── home/<user>/Desktop/
+        ├── Users/<user>/…        # Windows / macOS sources
+        └── REPORT.txt
 ```
 
-If multiple source users were selected, nest under `SpikeBackup/<username>/…` or flatten into category folders with username prefixes — **must match whatever Spike Rescue and installer restore already use**; implementers keep one shared layout helper.
+Restore maps `home/<user>/Documents/…` (or `Users/…`) into the target `~/Documents/…`.
+Legacy paths under `install-logs-*/log/SpikeBackup/` are still discovered for older sticks.
+
+Multi-user backups nest under `home/<username>/` (or `Users/<username>/`) — **must match**
+the shared helper in `src/spike-common/SpikeBackupLayout.*`.
+
 
 ### Step 6: Copy with verification
 

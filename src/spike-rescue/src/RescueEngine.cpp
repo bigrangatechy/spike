@@ -334,62 +334,96 @@ bool RescueEngine::appendDestIfUsable(QVector<DestVolume> *vols, const QSet<QStr
   return true;
 }
 
+bool RescueEngine::isWritablePartitionRoot(const QString &mp) const
+{
+  if (mp.isEmpty() || mp.contains(QLatin1String("install-logs"))) {
+    return false;
+  }
+  // Casper binds a log *subdir* of writable at /var/log — never use that as SpikeBackup root.
+  if (mp == QLatin1String("/var/log") || mp.startsWith(QLatin1String("/var/log/"))) {
+    return false;
+  }
+  QStorageInfo info(mp);
+  if (!info.isValid() || !info.isReady() || info.isReadOnly() || !QDir(mp).exists()) {
+    return false;
+  }
+  const QString lab = blkidLabel(QString::fromUtf8(info.device()));
+  if (lab.compare(QLatin1String("writable"), Qt::CaseInsensitive) != 0) {
+    return false;
+  }
+  // Partition root typically has lost+found and/or install-logs-* as children.
+  const QStringList kids =
+      QDir(mp).entryList(QDir::Dirs | QDir::NoDotAndDotDot);
+  for (const QString &k : kids) {
+    if (k == QLatin1String("lost+found") || k == QLatin1String("SpikeBackup") ||
+        k.startsWith(QLatin1String("install-logs"))) {
+      return true;
+    }
+  }
+  // Explicit writable mount points without those children still count.
+  return mp == QLatin1String("/media/writable") || mp == QLatin1String("/mnt/writable") ||
+         mp == QLatin1String("/log-persistence") ||
+         mp.startsWith(QLatin1String("/run/spike-rescue/dest-"));
+}
+
+void RescueEngine::ensureSpikeBackupDir(const QString &mountRoot)
+{
+  const QString backupRoot = mountRoot + QStringLiteral("/SpikeBackup");
+  QString mkErr;
+  if (!runHelper({QStringLiteral("mkdir-dest"), backupRoot}, &mkErr)) {
+    QDir().mkpath(backupRoot);
+  }
+}
+
 QString RescueEngine::ensureLiveUsbWritableDest()
 {
-  // Prefer an already-mounted writable partition (persistence / capture paths).
-  // Casper commonly mounts LABEL=writable at /var/log on the live USB.
+  // Prefer a dedicated RW mount of LABEL=writable so SpikeBackup/ sits at the
+  // partition root — not under casper’s /var/log (install-logs-*/log).
+  const QString mnt = QStringLiteral("/run/spike-rescue/dest-writable");
+  QStorageInfo already(mnt);
+  if (already.isValid() && already.isReady() && !already.isReadOnly()) {
+    ensureSpikeBackupDir(mnt);
+    return mnt;
+  }
+
+  const QString dev = deviceByLabel(QStringLiteral("writable"));
+  if (!dev.isEmpty()) {
+    QString err;
+    if (mountRwWritable(dev, mnt, &err)) {
+      ensureSpikeBackupDir(mnt);
+      return mnt;
+    }
+    appendDebug(QStringLiteral("mount-rw writable failed: %1").arg(err));
+  }
+
   const QStringList known = {
-      QStringLiteral("/var/log"),
       QStringLiteral("/media/writable"),
       QStringLiteral("/log-persistence"),
       QStringLiteral("/mnt/writable"),
   };
   for (const QString &p : known) {
-    QStorageInfo info(p);
-    if (!info.isValid() || !info.isReady() || info.isReadOnly() || !QDir(p).exists()) {
-      continue;
-    }
-    const QString dev = QString::fromUtf8(info.device());
-    const QString lab = blkidLabel(dev);
-    if (lab.compare(QLatin1String("writable"), Qt::CaseInsensitive) == 0 ||
-        p == QLatin1String("/media/writable") || p == QLatin1String("/log-persistence") ||
-        p == QLatin1String("/mnt/writable")) {
-      // Ensure SpikeBackup is creatable by the live user.
-      QDir().mkpath(p + QStringLiteral("/SpikeBackup"));
+    if (isWritablePartitionRoot(p)) {
+      ensureSpikeBackupDir(p);
       return p;
     }
   }
 
-  const QString existing =
+  const QStringList targets =
       runCapture(QStringLiteral("findmnt"),
                  {QStringLiteral("-n"), QStringLiteral("-o"), QStringLiteral("TARGET"),
                   QStringLiteral("-S"), QStringLiteral("LABEL=writable")})
           .trimmed()
-          .split(QLatin1Char('\n'))
-          .value(0)
-          .trimmed();
-  if (!existing.isEmpty()) {
-    QStorageInfo info(existing);
-    if (info.isValid() && info.isReady() && !info.isReadOnly()) {
-      QDir().mkpath(existing + QStringLiteral("/SpikeBackup"));
+          .split(QLatin1Char('\n'), Qt::SkipEmptyParts);
+  for (QString existing : targets) {
+    existing = existing.trimmed();
+    if (isWritablePartitionRoot(existing)) {
+      ensureSpikeBackupDir(existing);
       return existing;
     }
+    appendDebug(QStringLiteral("skip non-root writable mount: %1").arg(existing));
   }
 
-  // Unmounted leftover space on the Spike live USB (LABEL=writable).
-  const QString dev = deviceByLabel(QStringLiteral("writable"));
-  if (dev.isEmpty()) {
-    return {};
-  }
-  const QString mnt = QStringLiteral("/run/spike-rescue/dest-writable");
-  if (QStorageInfo(mnt).isValid() && QStorageInfo(mnt).isReady() && !QStorageInfo(mnt).isReadOnly()) {
-    return mnt;
-  }
-  QString err;
-  if (!mountRwWritable(dev, mnt, &err)) {
-    return {};
-  }
-  return mnt;
+  return {};
 }
 
 bool RescueEngine::umountPath(const QString &mountPoint)
@@ -641,7 +675,7 @@ DetectedSystem RescueEngine::probeMounted(const BlockPartition &part, const QStr
   } else if (QDir(mnt + QStringLiteral("/home")).exists() ||
              QDir(mnt + QStringLiteral("/Users")).exists()) {
     sys.os = OsKind::Linux;
-    sys.osLabel = QStringLiteral("Linux (home found)");
+    sys.osLabel = QStringLiteral("Linux");
     listUsersUnder(mnt + QStringLiteral("/home"), &sys.users);
     if (sys.users.isEmpty()) {
       listUsersUnder(mnt + QStringLiteral("/Users"), &sys.users);
@@ -1267,9 +1301,24 @@ void RescueEngine::startCopy(int systemIndex, const QString &destMount)
 
   const QString stamp =
       QDateTime::currentDateTimeUtc().toString(QStringLiteral("yyyyMMdd-HHmmss"));
+  // Folder name under SpikeBackup/ — keep it filesystem-safe (no spaces/parens).
   QString labelPart = sys.osLabel;
-  labelPart.replace(QLatin1Char('/'), QLatin1Char('-'));
-  labelPart.replace(QLatin1Char('\\'), QLatin1Char('-'));
+  for (QChar &c : labelPart) {
+    if (c.isLetterOrNumber() || c == QLatin1Char('-') || c == QLatin1Char('_') ||
+        c == QLatin1Char('.')) {
+      continue;
+    }
+    c = QLatin1Char('-');
+  }
+  while (labelPart.contains(QLatin1String("--"))) {
+    labelPart.replace(QLatin1String("--"), QLatin1String("-"));
+  }
+  while (labelPart.startsWith(QLatin1Char('-'))) {
+    labelPart.remove(0, 1);
+  }
+  while (labelPart.endsWith(QLatin1Char('-'))) {
+    labelPart.chop(1);
+  }
   if (labelPart.isEmpty()) {
     labelPart = QStringLiteral("recovered");
   }
@@ -1413,6 +1462,244 @@ void RescueEngine::startCopy(int systemIndex, const QString &destMount)
     umountPath(sys.mountPoint);
     sys.mountPoint.clear();
   }
+  emit copyFinished(true);
+}
+
+QStringList RescueEngine::candidateBackupVolumeRoots()
+{
+  QStringList roots;
+  const QString live = ensureLiveUsbWritableDest();
+  if (!live.isEmpty()) {
+    roots.append(live);
+  }
+  // Also scan host-mounted writable / media without requiring our mount.
+  const QStringList findTargets =
+      runCapture(QStringLiteral("findmnt"),
+                 {QStringLiteral("-n"), QStringLiteral("-o"), QStringLiteral("TARGET"),
+                  QStringLiteral("-S"), QStringLiteral("LABEL=writable")})
+          .trimmed()
+          .split(QLatin1Char('\n'), Qt::SkipEmptyParts);
+  for (QString t : findTargets) {
+    t = t.trimmed();
+    if (t.isEmpty() || roots.contains(t)) {
+      continue;
+    }
+    roots.append(t);
+    QDir d(t);
+    if (d.cdUp()) {
+      const QString parent = d.absolutePath();
+      if (parent.contains(QLatin1String("install-logs"))) {
+        QDir up(parent);
+        if (up.cdUp() && !roots.contains(up.absolutePath())) {
+          roots.append(up.absolutePath());
+        }
+      }
+    }
+  }
+  for (const QString &base : {QStringLiteral("/run/media"), QStringLiteral("/media")}) {
+    QDir root(base);
+    if (!root.exists()) {
+      continue;
+    }
+    for (const QString &user : root.entryList(QDir::Dirs | QDir::NoDotAndDotDot)) {
+      QDir userDir(root.filePath(user));
+      for (const QString &vol : userDir.entryList(QDir::Dirs | QDir::NoDotAndDotDot)) {
+        const QString mp = userDir.filePath(vol);
+        if (!roots.contains(mp)) {
+          roots.append(mp);
+        }
+      }
+    }
+  }
+  return roots;
+}
+
+void RescueEngine::scanBackups()
+{
+  m_cancel = false;
+  m_lastError.clear();
+  m_backupSessions.clear();
+  appendDebug(QStringLiteral("scanBackups: start"));
+  emit scanProgress(QStringLiteral("Looking for SpikeBackup folders…"), 10);
+
+  // Ensure writable is mounted so partition-root + legacy paths are visible.
+  ensureLiveUsbWritableDest();
+  const QStringList roots = candidateBackupVolumeRoots();
+  appendDebug(QStringLiteral("scanBackups: volume roots=%1").arg(roots.join(QLatin1Char(','))));
+  m_backupSessions = discoverAllBackupSessions(roots);
+  appendDebug(QStringLiteral("scanBackups: sessions=%1").arg(m_backupSessions.size()));
+  emit scanProgress(QStringLiteral("Backup scan complete"), 100);
+  emit backupScanFinished(true);
+}
+
+void RescueEngine::refreshRestoreTargets()
+{
+  QVector<DestVolume> vols;
+  QDir home(QStringLiteral("/home"));
+  for (const QString &user : home.entryList(QDir::Dirs | QDir::NoDotAndDotDot)) {
+    const QString path = home.filePath(user);
+    QStorageInfo info(path);
+    if (!info.isValid() || !info.isReady() || info.isReadOnly()) {
+      continue;
+    }
+    DestVolume d;
+    d.path = path;
+    d.device = QString::fromUtf8(info.device());
+    d.freeBytes = info.bytesAvailable();
+    if (user == QLatin1String("spike")) {
+      d.label = QStringLiteral("Live user (spike)");
+    } else {
+      d.label = QStringLiteral("Home: %1").arg(user);
+    }
+    vols.append(d);
+  }
+  appendDebug(QStringLiteral("refreshRestoreTargets: %1 home(s)").arg(vols.size()));
+  emit restoreTargetsChanged(vols);
+}
+
+void RescueEngine::startRestore(int sessionIndex, const QString &targetHome)
+{
+  m_cancel = false;
+  m_lastError.clear();
+  m_lastCopy = CopyResult{};
+  m_debugLog.clear();
+  appendDebug(QStringLiteral("startRestore: session=%1 target=%2")
+                  .arg(sessionIndex)
+                  .arg(targetHome));
+
+  if (sessionIndex < 0 || sessionIndex >= m_backupSessions.size()) {
+    m_lastError = QStringLiteral("invalid backup session");
+    appendDebug(QStringLiteral("startRestore: FAIL %1").arg(m_lastError));
+    m_lastCopy.debugLog = m_debugLog;
+    emit copyFinished(false);
+    return;
+  }
+  if (targetHome.isEmpty() || !QDir(targetHome).exists()) {
+    m_lastError = QStringLiteral("invalid restore target home");
+    appendDebug(QStringLiteral("startRestore: FAIL %1").arg(m_lastError));
+    m_lastCopy.debugLog = m_debugLog;
+    emit copyFinished(false);
+    return;
+  }
+  QStorageInfo info(targetHome);
+  if (!info.isValid() || info.isReadOnly()) {
+    m_lastError = QStringLiteral("restore target is not writable");
+    appendDebug(QStringLiteral("startRestore: FAIL %1").arg(m_lastError));
+    m_lastCopy.debugLog = m_debugLog;
+    emit copyFinished(false);
+    return;
+  }
+
+  const BackupSession session = m_backupSessions.at(sessionIndex);
+  m_lastCopy.destRoot = targetHome;
+  const QVector<RestoreMapping> maps =
+      buildRestoreMappings(session.sessionPath, targetHome);
+  appendDebug(QStringLiteral("restore mappings=%1 session=%2")
+                  .arg(maps.size())
+                  .arg(session.sessionPath));
+
+  // Ensure target home is writable via helper mkdir (parents).
+  QString mkErr;
+  if (!runHelper({QStringLiteral("mkdir-dest"), targetHome}, &mkErr)) {
+    appendDebug(QStringLiteral("mkdir-dest target home note: %1").arg(mkErr));
+  }
+
+  const qint64 totalFiles = maps.size();
+  qint64 totalBytes = 0;
+  for (const RestoreMapping &m : maps) {
+    totalBytes += QFileInfo(m.srcAbsolute).size();
+  }
+  qint64 doneFiles = 0;
+  qint64 doneBytes = 0;
+  emit copyProgress(QStringLiteral("Starting restore…"), 0, totalFiles, 0, totalBytes);
+
+  for (const RestoreMapping &m : maps) {
+    if (m_cancel) {
+      m_lastCopy.cancelled = true;
+      appendDebug(QStringLiteral("restore cancelled"));
+      break;
+    }
+    emit copyProgress(m.relativeDisplay, doneFiles, totalFiles, doneBytes, totalBytes);
+    QString errKind;
+    QString errDetail;
+    // Ensure parent dir exists (privileged).
+    const QString parent = QFileInfo(m.destAbsolute).absolutePath();
+    QString dirErr;
+    if (!QDir().mkpath(parent)) {
+      runHelper({QStringLiteral("mkdir-dest"), parent}, &dirErr);
+    }
+    if (!copyOneFile(m.srcAbsolute, m.destAbsolute, &errKind, &errDetail)) {
+      const QString line =
+          QStringLiteral("%1 — %2%3")
+              .arg(m.relativeDisplay, errKind.isEmpty() ? QStringLiteral("error") : errKind,
+                   errDetail.isEmpty() ? QString() : (QStringLiteral(": ") + errDetail));
+      if (m_lastCopy.failureDetails.size() < 40) {
+        m_lastCopy.failureDetails.append(line);
+      }
+      appendDebug(QStringLiteral("FAIL %1").arg(line));
+      if (errKind == QLatin1String("verify")) {
+        m_lastCopy.failedVerify++;
+        m_lastCopy.verifyFails.append(m.relativeDisplay);
+      } else if (errKind == QLatin1String("write")) {
+        m_lastCopy.failedWrite++;
+      } else {
+        m_lastCopy.failedRead++;
+      }
+    } else {
+      m_lastCopy.copied++;
+      doneBytes += QFileInfo(m.srcAbsolute).size();
+    }
+    doneFiles++;
+    emit copyProgress(m.relativeDisplay, doneFiles, totalFiles, doneBytes, totalBytes);
+  }
+
+  m_lastCopy.bytesCopied = doneBytes;
+  appendDebug(QStringLiteral("restore done: ok=%1 readFail=%2 writeFail=%3 verifyFail=%4")
+                  .arg(m_lastCopy.copied)
+                  .arg(m_lastCopy.failedRead)
+                  .arg(m_lastCopy.failedWrite)
+                  .arg(m_lastCopy.failedVerify));
+
+  // Write a small restore report under the target home.
+  {
+    const QString reportPath = targetHome + QStringLiteral("/SpikeRestore-REPORT.txt");
+    QString body;
+    body += QStringLiteral("Spike Rescue RESTORE REPORT (pre-alpha)\n");
+    body += QStringLiteral("UTC: %1\n")
+                .arg(QDateTime::currentDateTimeUtc().toString(Qt::ISODate));
+    body += QStringLiteral("session: %1\n").arg(session.sessionPath);
+    body += QStringLiteral("targetHome: %1\n").arg(targetHome);
+    body += QStringLiteral("copied=%1 failedRead=%2 failedWrite=%3 failedVerify=%4 bytes=%5\n")
+                .arg(m_lastCopy.copied)
+                .arg(m_lastCopy.failedRead)
+                .arg(m_lastCopy.failedWrite)
+                .arg(m_lastCopy.failedVerify)
+                .arg(m_lastCopy.bytesCopied);
+    body += QStringLiteral("\n--- failure details ---\n");
+    for (const QString &f : m_lastCopy.failureDetails) {
+      body += f + QLatin1Char('\n');
+    }
+    QFile report(reportPath);
+    if (report.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text)) {
+      report.write(body.toUtf8());
+      report.close();
+    } else {
+      const QString tmp =
+          QStringLiteral("/run/spike-rescue/restore-report-%1.txt")
+              .arg(QDateTime::currentDateTimeUtc().toString(QStringLiteral("yyyyMMddHHmmss")));
+      runHelper({QStringLiteral("prepare")}, nullptr);
+      QFile tf(tmp);
+      if (tf.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text)) {
+        tf.write(body.toUtf8());
+        tf.close();
+        QString err;
+        privilegedCopyFile(tmp, reportPath, &err);
+        QFile::remove(tmp);
+      }
+    }
+  }
+
+  m_lastCopy.debugLog = m_debugLog;
   emit copyFinished(true);
 }
 

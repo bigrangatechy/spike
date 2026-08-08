@@ -37,7 +37,7 @@ Exact package names can vary slightly by Ubuntu series; if `live-build` pulls ad
 
 `gnupg` must also land **inside** the bootstrap chroot. Spike sets `LB_BOOTSTRAP_INCLUDE=apt-utils,ca-certificates,gnupg` in `auto/config` (Ubuntu live-build 3.0 has no `--bootstrap-include` flag). Without it, apt archive setup fails with `env: 'gpg': No such file or directory` and no ISO is produced.
 
-Host packages `cmake`, `qt6-base-dev`, and `liblayershellqtinterface-dev` are required to build `spike-shell` `.deb` during `build-iso.sh`.
+Host packages `cmake`, `qt6-base-dev`, and `liblayershellqtinterface-dev` are required to build `spike-shell` / `spike-rescue` `.deb`s during `build-iso.sh`.
 
 Optional later:
 
@@ -56,9 +56,11 @@ spike/
 ├── scripts/build-iso.sh          → wrapper (packages local .debs, runs lb)
 ├── scripts/package-spike-config.sh → builds spike-config_*.deb
 ├── scripts/package-spike-shell.sh  → builds spike-shell_*.deb
+├── scripts/package-spike-rescue.sh → builds spike-rescue_*.deb
 └── docs/dev-guide/
     ├── 03-build-environment.md  → this file
-    └── 04-building-spike.md     → how to run a build
+    ├── 04-building-spike.md     → how to run a build
+    └── 05-building-components.md → per-package .deb builds
 ```
 
 ## Verification
@@ -73,5 +75,5 @@ Before claiming the environment is ready:
 ## Out of scope
 
 - Producing a finished ISO (see `04-building-spike.md`; recipe is scaffolded until Phase 3 fills it).  
-- Installer or shell development (see `07-installer-internals.md`, `DESKTOP.md`).  
+- Installer, shell, or rescue development (see `07-installer-internals.md`, `06-spike-shell-architecture.md`, `08-rescue-tool-internals.md`).  
 - CI wiring (see future `17-release-process.md` / GitLab CI stubs).

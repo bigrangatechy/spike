@@ -21,26 +21,65 @@ require_under_run() {
   esac
 }
 
+# Sources for copy/sha256: RO rescue mounts OR SpikeBackup trees on media.
+allow_src_path() {
+  path="$1"
+  case "$path" in
+    "$RUN_ROOT"/*) ;;
+    */SpikeBackup/*) ;;
+    /run/media/*|/media/*|/mnt/*|/log-persistence/*) ;;
+    /var/log/SpikeBackup/*|/var/log/*/SpikeBackup/*) ;;
+    *) die "source not allowed: $path" ;;
+  esac
+}
+
+# findmnt -T fails for paths that do not exist yet (mkdir-dest / copy-file
+# targets). Walk up to the nearest existing ancestor before probing the mount.
+existing_ancestor() {
+  p="$1"
+  while [ -n "$p" ] && [ "$p" != "/" ]; do
+    if [ -e "$p" ]; then
+      printf '%s\n' "$p"
+      return 0
+    fi
+    p="$(dirname "$p")"
+  done
+  printf '%s\n' "/"
+}
+
+writable_label_ok() {
+  probe="$1"
+  lab="$(findmnt -n -o LABEL -T "$probe" 2>/dev/null || true)"
+  case "$lab" in
+    writable|Writable|WRITABLE) return 0 ;;
+  esac
+  src="$(findmnt -n -o SOURCE -T "$probe" 2>/dev/null || true)"
+  # SOURCE may be /dev/…[/@] for btrfs — strip subvol suffix for blkid.
+  src="${src%%\[*}"
+  lab="$(blkid -o value -s LABEL "$src" 2>/dev/null || true)"
+  case "$lab" in
+    writable|Writable|WRITABLE) return 0 ;;
+  esac
+  return 1
+}
+
 allow_dest_path() {
   path="$1"
   case "$path" in
     "$RUN_ROOT"/src-*) die "refusing write into source mount $path" ;;
     "$RUN_ROOT"/dest-*) ;;
-    /run/media/*|/media/*|/log-persistence/*|/mnt/*|/home/spike/*) ;;
+    /run/media/*|/media/*|/log-persistence/*|/mnt/*) ;;
+    /home/*)
+      # Rescue recover dests and restore into a chosen home (never source mounts).
+      ;;
     /var/log|/var/log/*)
-      # Casper often mounts LABEL=writable on /var/log (live USB free space).
-      lab="$(findmnt -n -o LABEL -T "$path" 2>/dev/null || true)"
-      case "$lab" in
-        writable|Writable|WRITABLE) ;;
-        *)
-          src="$(findmnt -n -o SOURCE -T "$path" 2>/dev/null || true)"
-          lab="$(blkid -o value -s LABEL "$src" 2>/dev/null || true)"
-          case "$lab" in
-            writable|Writable|WRITABLE) ;;
-            *) die "destination not allowed: $path (not LABEL=writable)" ;;
-          esac
-          ;;
-      esac
+      # Legacy: casper may mount LABEL=writable on /var/log (prefer dest-writable).
+      probe="$(existing_ancestor "$path")"
+      if writable_label_ok "$probe"; then
+        :
+      else
+        die "destination not allowed: $path (not LABEL=writable; probed $probe)"
+      fi
       ;;
     *) die "destination not allowed: $path" ;;
   esac
@@ -183,7 +222,7 @@ case "$cmd" in
   sha256)
     file="${1:-}"
     [ -n "$file" ] || die "usage: sha256 FILE"
-    require_under_run "$file"
+    allow_src_path "$file"
     [ -f "$file" ] || die "not a file: $file"
     sha256sum -b "$file" | awk '{print $1}'
     ;;
@@ -191,7 +230,7 @@ case "$cmd" in
     src="${1:-}"
     dst="${2:-}"
     [ -n "$src" ] && [ -n "$dst" ] || die "usage: copy-file SRC DST"
-    require_under_run "$src"
+    allow_src_path "$src"
     allow_dest_path "$dst"
     [ -f "$src" ] || die "not a file: $src"
     mkdir -p "$(dirname "$dst")"
@@ -206,10 +245,33 @@ case "$cmd" in
     [ -n "$dir" ] || die "usage: mkdir-dest DIR"
     allow_dest_path "$dir"
     mkdir -p "$dir"
+    # Make the whole SpikeBackup tree usable by the live user (parents too).
     chmod 777 "$dir" 2>/dev/null || true
     if [ -n "${SUDO_USER:-}" ]; then
       chown "${SUDO_USER}:" "$dir" 2>/dev/null || true
     fi
+    case "$dir" in
+      */SpikeBackup/*)
+        base="$dir"
+        while [ -n "$base" ] && [ "$base" != "/" ]; do
+          case "$base" in
+            */SpikeBackup)
+              chmod 777 "$base" 2>/dev/null || true
+              if [ -n "${SUDO_USER:-}" ]; then
+                chown "${SUDO_USER}:" "$base" 2>/dev/null || true
+              fi
+              break
+              ;;
+          esac
+          parent="$(dirname "$base")"
+          chmod 777 "$base" 2>/dev/null || true
+          if [ -n "${SUDO_USER:-}" ]; then
+            chown "${SUDO_USER}:" "$base" 2>/dev/null || true
+          fi
+          base="$parent"
+        done
+        ;;
+    esac
     ;;
   *)
     die "usage: spike-rescue-mount {prepare|mount|mount-rw|umount|list-dirs|find-files|sha256|copy-file|mkdir-dest} ..."

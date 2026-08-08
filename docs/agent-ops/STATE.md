@@ -12,28 +12,29 @@
 | Root `LICENSE` + `LICENSE-CC-BY-SA-4.0` | ✅ Present (also under `licences/`) |
 | `TRANSLATIONS.md` | 🔲 Not started (not a build blocker) |
 | `USER-GUIDE.md` + `user-guide/` | 🔲 Stubs — fill as the desktop ships |
-| `dev-guide/` | 📝 03/04/07 drafted; 04 updated for Stage 1 |
+| `dev-guide/` | 📝 Core filled (01–09, 12, 19); remaining stubs point at product docs |
 | agent-ops core | ✅ Written |
 | ISO / build tooling | ✅ live-build; hybrid remaster + debug capture |
 | Installer stack | ✅ Custom Qt (not built yet) — Alpha cue when this works |
 | `scripts/build-iso.sh` | ✅ Packages spike-config + spike-shell + spike-rescue + lb build |
 | Stage 1 live ISO | ✅ Hardware boot + login |
 | Stage 2 (`spike-config`) | ✅ Target detect OK (N4020 / ~4GB) |
-| Stage 3 (Spike Shell) | 📝 **0.0.22** + Rescue **0.0.7** (debug REPORT + honest errors) |
+| Stage 3 (Spike Shell) | 📝 **0.0.23** + Rescue **0.0.9** (recover+restore, Spike Tools, writable root) |
 | Stage 4 (installer) | 🔲 Pre-alpha until installer E2E — that gate opens **Alpha** |
 
 ## In Progress
 
 | Item | Notes |
 | :-: | :-: |
-| Stage 3 — desktop smoke | Rebuild ISO: shell **0.0.22** + rescue **0.0.7** |
+| Stage 3 — desktop smoke | Rebuild ISO: shell **0.0.23** + rescue **0.0.9** (SpikeBackup at writable root; Restore mode; Spike Tools) |
 
 ## Blocked / Waiting On Decision
 
 | Item | Notes |
 | :-: | :-: |
-| Layer 2 GRUB recovery screen / Layer 4 installer restore | Rescue GUI MVP only for now |
-| spike-migration (Move My Files) | Specced (`SPIKE-MIGRATION.md`); implement after rescue stable |
+| Layer 2 GRUB recovery screen | Still deferred |
+| Layer 4 installer restore | Scaffold in `src/spike-installer/restore/`; needs installer UI |
+| spike-migration (Move My Files) | Scaffold + spec; implement on shared `spike-common` |
 | Notification daemon / history tray | Prefs UI done; daemon not shipped |
 | Magnifier / high-contrast theme apply | Accessibility prefs started; visuals later |
 | APT edit / PPA / NVIDIA driver UX | Sources page lists + launches tools; in-page edit later |
@@ -47,6 +48,8 @@
 
 | Date | Item |
 | :-: | :-: |
+| 2026-08-08 | rescue **0.0.9** + shell **0.0.23**: Restore mode; SpikeBackup at writable root; Spike Tools; spike-common |
+| 2026-08-08 | rescue **0.0.8**: mkdir-dest findmnt walk-up for non-existent /var/log paths |
 | 2026-08-08 | rescue **0.0.4** + shell **0.0.22**: 700/600 file reads; Dolphin dark kdeglobals |
 | 2026-08-08 | spike-rescue **0.0.3**: dest = Spike USB `writable` partition |
 | 2026-08-08 | Docs: SPIKE-MIGRATION.md + SPIKE-RECOVERY-TOOL-GENERAL.md (spec only) |
@@ -83,10 +86,11 @@
 
 ## Next Suggested Work
 
-1. Rebuild ISO + smoke: Rescue My Files + Settings/OSK; A4 audio.  
-2. Next: installer (Alpha gate) or Layer 2/4 recovery polish.  
-3. Stage 4 (still pre-alpha): custom installer until it works E2E.  
-4. Open **Alpha** when installer E2E is confirmed (BDFL gate).
+1. Rebuild ISO + smoke: Rescue recover (SpikeBackup at stick root) + Restore into `/home/spike`.  
+2. Confirm launcher **Spike Tools** category.  
+3. Stage 4: custom installer Step 7 + Layer 4 using `spike-common`.  
+4. spike-migration detailed wizard on the same engine.  
+5. Open **Alpha** when installer E2E is confirmed (BDFL gate).
 
 ## How To Update This File
 

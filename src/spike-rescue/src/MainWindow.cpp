@@ -1,6 +1,7 @@
 #include "MainWindow.hpp"
 
 #include "RescueEngine.hpp"
+#include "SpikeBackupLayout.hpp"
 
 #include <QApplication>
 #include <QHBoxLayout>
@@ -26,7 +27,6 @@ MainWindow::MainWindow(QWidget *parent)
                      .arg(QApplication::applicationVersion()));
   resize(780, 560);
 
-  // Engine runs on a worker thread (must not have a QObject parent when moved).
   m_engine = new RescueEngine();
   auto *thread = new QThread(this);
   m_engine->moveToThread(thread);
@@ -44,13 +44,14 @@ MainWindow::MainWindow(QWidget *parent)
   connect(m_engine, &RescueEngine::scanFinished, this, &MainWindow::onScanFinished);
   connect(m_engine, &RescueEngine::inventoryFinished, this, &MainWindow::onInventoryFinished);
   connect(m_engine, &RescueEngine::destinationsChanged, this, &MainWindow::onDestinations);
+  connect(m_engine, &RescueEngine::backupScanFinished, this, &MainWindow::onBackupScanFinished);
+  connect(m_engine, &RescueEngine::restoreTargetsChanged, this, &MainWindow::onRestoreTargets);
   connect(m_engine, &RescueEngine::copyProgress, this, &MainWindow::onCopyProgress);
   connect(m_engine, &RescueEngine::copyFinished, this, &MainWindow::onCopyFinished);
 
   buildUi();
-
-  connect(thread, &QThread::started, m_engine, &RescueEngine::scanSystems);
   thread->start();
+  goMode();
 }
 
 QString MainWindow::formatBytes(qint64 n) const
@@ -75,12 +76,33 @@ void MainWindow::buildUi()
   m_stack = new QStackedWidget(central);
   root->addWidget(m_stack, 1);
 
+  // --- Mode ---
+  m_pageMode = new QWidget;
+  {
+    auto *lay = new QVBoxLayout(m_pageMode);
+    lay->addWidget(new QLabel(QStringLiteral("<h2>Spike Rescue</h2>"), m_pageMode));
+    lay->addWidget(new QLabel(
+        QStringLiteral("Recover files from a broken system, or restore a SpikeBackup "
+                       "into a home folder — without switching apps."),
+        m_pageMode));
+    lay->addSpacing(12);
+    auto *rescue = new QPushButton(QStringLiteral("Rescue my files"), m_pageMode);
+    rescue->setMinimumHeight(44);
+    auto *restore = new QPushButton(QStringLiteral("Restore files from backup"), m_pageMode);
+    restore->setMinimumHeight(44);
+    lay->addWidget(rescue);
+    lay->addWidget(restore);
+    lay->addStretch(1);
+    connect(rescue, &QPushButton::clicked, this, &MainWindow::startRescueFlow);
+    connect(restore, &QPushButton::clicked, this, &MainWindow::startRestoreFlow);
+  }
+  m_stack->addWidget(m_pageMode);
+
   // --- Scan ---
   m_pageScan = new QWidget;
   {
     auto *lay = new QVBoxLayout(m_pageScan);
-    lay->addWidget(new QLabel(QStringLiteral("<h2>Spike Rescue</h2>"), m_pageScan));
-    lay->addWidget(new QLabel(QStringLiteral("Scanning for installed systems…"), m_pageScan));
+    lay->addWidget(new QLabel(QStringLiteral("<h2>Scanning…</h2>"), m_pageScan));
     m_scanLabel = new QLabel(QStringLiteral("Starting…"), m_pageScan);
     m_scanLabel->setWordWrap(true);
     lay->addWidget(m_scanLabel);
@@ -91,7 +113,7 @@ void MainWindow::buildUi()
   }
   m_stack->addWidget(m_pageScan);
 
-  // --- Select ---
+  // --- Select system ---
   m_pageSelect = new QWidget;
   {
     auto *lay = new QVBoxLayout(m_pageSelect);
@@ -104,12 +126,15 @@ void MainWindow::buildUi()
     m_selectStatus->setWordWrap(true);
     lay->addWidget(m_selectStatus);
     auto *row = new QHBoxLayout();
+    auto *back = new QPushButton(QStringLiteral("Back"), m_pageSelect);
     auto *rescan = new QPushButton(QStringLiteral("Scan again"), m_pageSelect);
     auto *next = new QPushButton(QStringLiteral("Recover files"), m_pageSelect);
+    row->addWidget(back);
     row->addWidget(rescan);
     row->addStretch(1);
     row->addWidget(next);
     lay->addLayout(row);
+    connect(back, &QPushButton::clicked, this, &MainWindow::goMode);
     connect(rescan, &QPushButton::clicked, this, [this]() {
       m_stack->setCurrentWidget(m_pageScan);
       QMetaObject::invokeMethod(m_engine, "scanSystems", Qt::QueuedConnection);
@@ -138,14 +163,14 @@ void MainWindow::buildUi()
   }
   m_stack->addWidget(m_pageInventory);
 
-  // --- Dest ---
+  // --- Dest (rescue) ---
   m_pageDest = new QWidget;
   {
     auto *lay = new QVBoxLayout(m_pageDest);
     lay->addWidget(new QLabel(QStringLiteral("<h2>Save recovered files</h2>"), m_pageDest));
     lay->addWidget(new QLabel(
-        QStringLiteral("Choose where to save recovered files. You can use this Spike USB "
-                       "(its free “writable” space) if it has enough room, or another USB."),
+        QStringLiteral("Choose where to save recovered files. Prefer this Spike USB’s free "
+                       "“writable” space (SpikeBackup/ at the partition root), or another USB."),
         m_pageDest));
     m_destList = new QListWidget(m_pageDest);
     lay->addWidget(m_destList, 1);
@@ -175,11 +200,82 @@ void MainWindow::buildUi()
   }
   m_stack->addWidget(m_pageDest);
 
-  // --- Copy ---
+  // --- Restore: pick backup session ---
+  m_pageRestoreSessions = new QWidget;
+  {
+    auto *lay = new QVBoxLayout(m_pageRestoreSessions);
+    lay->addWidget(new QLabel(QStringLiteral("<h2>Choose a backup</h2>"), m_pageRestoreSessions));
+    lay->addWidget(new QLabel(
+        QStringLiteral("SpikeBackup folders found on connected drives "
+                       "(including older copies under install-logs):"),
+        m_pageRestoreSessions));
+    m_backupList = new QListWidget(m_pageRestoreSessions);
+    lay->addWidget(m_backupList, 1);
+    m_backupStatus = new QLabel(m_pageRestoreSessions);
+    m_backupStatus->setWordWrap(true);
+    lay->addWidget(m_backupStatus);
+    auto *row = new QHBoxLayout();
+    auto *back = new QPushButton(QStringLiteral("Back"), m_pageRestoreSessions);
+    auto *rescan = new QPushButton(QStringLiteral("Scan again"), m_pageRestoreSessions);
+    auto *next = new QPushButton(QStringLiteral("Continue"), m_pageRestoreSessions);
+    row->addWidget(back);
+    row->addWidget(rescan);
+    row->addStretch(1);
+    row->addWidget(next);
+    lay->addLayout(row);
+    connect(back, &QPushButton::clicked, this, &MainWindow::goMode);
+    connect(rescan, &QPushButton::clicked, this, [this]() {
+      m_stack->setCurrentWidget(m_pageScan);
+      m_scanLabel->setText(QStringLiteral("Looking for SpikeBackup folders…"));
+      QMetaObject::invokeMethod(m_engine, "scanBackups", Qt::QueuedConnection);
+    });
+    connect(next, &QPushButton::clicked, this, &MainWindow::goRestoreTarget);
+  }
+  m_stack->addWidget(m_pageRestoreSessions);
+
+  // --- Restore: pick target home ---
+  m_pageRestoreTarget = new QWidget;
+  {
+    auto *lay = new QVBoxLayout(m_pageRestoreTarget);
+    lay->addWidget(new QLabel(QStringLiteral("<h2>Restore into…</h2>"), m_pageRestoreTarget));
+    lay->addWidget(new QLabel(
+        QStringLiteral("Choose a home folder to receive Documents, Pictures, and other "
+                       "personal folders from the backup."),
+        m_pageRestoreTarget));
+    m_restoreTargetList = new QListWidget(m_pageRestoreTarget);
+    lay->addWidget(m_restoreTargetList, 1);
+    m_restoreTargetStatus = new QLabel(m_pageRestoreTarget);
+    m_restoreTargetStatus->setWordWrap(true);
+    lay->addWidget(m_restoreTargetStatus);
+    auto *row = new QHBoxLayout();
+    auto *back = new QPushButton(QStringLiteral("Back"), m_pageRestoreTarget);
+    auto *refresh = new QPushButton(QStringLiteral("Refresh"), m_pageRestoreTarget);
+    auto *next = new QPushButton(QStringLiteral("Start restore"), m_pageRestoreTarget);
+    row->addWidget(back);
+    row->addWidget(refresh);
+    row->addStretch(1);
+    row->addWidget(next);
+    lay->addLayout(row);
+    connect(back, &QPushButton::clicked, this, [this]() {
+      if (m_restoreTargetTimer) {
+        m_restoreTargetTimer->stop();
+      }
+      m_stack->setCurrentWidget(m_pageRestoreSessions);
+    });
+    connect(refresh, &QPushButton::clicked, this, &MainWindow::refreshRestoreTargetUi);
+    connect(next, &QPushButton::clicked, this, &MainWindow::goRestoreCopy);
+    m_restoreTargetTimer = new QTimer(this);
+    m_restoreTargetTimer->setInterval(2000);
+    connect(m_restoreTargetTimer, &QTimer::timeout, this, &MainWindow::refreshRestoreTargetUi);
+  }
+  m_stack->addWidget(m_pageRestoreTarget);
+
+  // --- Copy / restore progress ---
   m_pageCopy = new QWidget;
   {
     auto *lay = new QVBoxLayout(m_pageCopy);
-    lay->addWidget(new QLabel(QStringLiteral("<h2>Recovering files…</h2>"), m_pageCopy));
+    m_copyTitle = new QLabel(QStringLiteral("<h2>Working…</h2>"), m_pageCopy);
+    lay->addWidget(m_copyTitle);
     m_copyLabel = new QLabel(QStringLiteral("Starting…"), m_pageCopy);
     m_copyLabel->setWordWrap(true);
     lay->addWidget(m_copyLabel);
@@ -200,23 +296,55 @@ void MainWindow::buildUi()
   m_pageDone = new QWidget;
   {
     auto *lay = new QVBoxLayout(m_pageDone);
-    lay->addWidget(new QLabel(QStringLiteral("<h2>Recovery complete</h2>"), m_pageDone));
+    m_doneTitle = new QLabel(QStringLiteral("<h2>Done</h2>"), m_pageDone);
+    lay->addWidget(m_doneTitle);
     m_doneBody = new QTextEdit(m_pageDone);
     m_doneBody->setReadOnly(true);
     lay->addWidget(m_doneBody, 1);
     auto *row = new QHBoxLayout();
+    auto *again = new QPushButton(QStringLiteral("Back to start"), m_pageDone);
     auto *reinstall = new QPushButton(QStringLiteral("Reinstall Spike"), m_pageDone);
     auto *exitBtn = new QPushButton(QStringLiteral("Exit to desktop"), m_pageDone);
+    row->addWidget(again);
     row->addWidget(reinstall);
     row->addStretch(1);
     row->addWidget(exitBtn);
     lay->addLayout(row);
+    connect(again, &QPushButton::clicked, this, &MainWindow::goMode);
     connect(reinstall, &QPushButton::clicked, this, &MainWindow::finishReinstall);
     connect(exitBtn, &QPushButton::clicked, this, &MainWindow::finishExit);
   }
   m_stack->addWidget(m_pageDone);
+}
 
+void MainWindow::goMode()
+{
+  m_mode = Mode::None;
+  if (m_destTimer) {
+    m_destTimer->stop();
+  }
+  if (m_restoreTargetTimer) {
+    m_restoreTargetTimer->stop();
+  }
+  m_stack->setCurrentWidget(m_pageMode);
+}
+
+void MainWindow::startRescueFlow()
+{
+  m_mode = Mode::Rescue;
+  m_scanBar->setValue(0);
+  m_scanLabel->setText(QStringLiteral("Scanning for installed systems…"));
   m_stack->setCurrentWidget(m_pageScan);
+  QMetaObject::invokeMethod(m_engine, "scanSystems", Qt::QueuedConnection);
+}
+
+void MainWindow::startRestoreFlow()
+{
+  m_mode = Mode::Restore;
+  m_scanBar->setValue(0);
+  m_scanLabel->setText(QStringLiteral("Looking for SpikeBackup folders…"));
+  m_stack->setCurrentWidget(m_pageScan);
+  QMetaObject::invokeMethod(m_engine, "scanBackups", Qt::QueuedConnection);
 }
 
 void MainWindow::onScanFinished(bool ok)
@@ -346,8 +474,8 @@ void MainWindow::onDestinations(const QVector<DestVolume> &vols)
                        "this Spike USB’s writable partition, then Refresh."));
   } else {
     m_destStatus->setText(
-        QStringLiteral("Files will be saved under SpikeBackup/ on the selected drive.\n"
-                       "Need about %1 free.")
+        QStringLiteral("Files will be saved under SpikeBackup/<stamp>/<label>/ on the "
+                       "selected drive.\nNeed about %1 free.")
             .arg(formatBytes(m_neededBytes)));
     if (!m_destList->currentItem()) {
       for (int i = 0; i < m_destList->count(); ++i) {
@@ -373,11 +501,128 @@ void MainWindow::goCopy()
     return;
   }
   m_destTimer->stop();
+  m_copyTitle->setText(QStringLiteral("<h2>Recovering files…</h2>"));
   m_copyBar->setValue(0);
   m_copyLabel->setText(QStringLiteral("Starting…"));
   m_stack->setCurrentWidget(m_pageCopy);
   QMetaObject::invokeMethod(m_engine, "startCopy", Qt::QueuedConnection, Q_ARG(int, m_selectedSystem),
                             Q_ARG(QString, dest));
+}
+
+void MainWindow::onBackupScanFinished(bool ok)
+{
+  if (!ok) {
+    m_backupStatus->setText(QStringLiteral("Backup scan failed: %1").arg(m_engine->lastError()));
+  }
+  goRestoreSessions();
+}
+
+void MainWindow::goRestoreSessions()
+{
+  m_backupList->clear();
+  const auto sessions = m_engine->backupSessions();
+  for (int i = 0; i < sessions.size(); ++i) {
+    const BackupSession &s = sessions.at(i);
+    auto *item = new QListWidgetItem(
+        QStringLiteral("%1 / %2\n  %3 files (%4)%5\n  %6")
+            .arg(s.stamp, s.osLabel)
+            .arg(s.fileCount)
+            .arg(formatBytes(s.byteTotal))
+            .arg(s.legacyPath ? QStringLiteral("  [legacy path]") : QString())
+            .arg(s.sessionPath));
+    item->setData(Qt::UserRole, i);
+    m_backupList->addItem(item);
+  }
+  if (sessions.isEmpty()) {
+    m_backupStatus->setText(
+        QStringLiteral("No SpikeBackup folders found. Connect the USB that holds your "
+                       "backup and Scan again."));
+  } else {
+    m_backupStatus->setText(QStringLiteral("Select a backup session to restore."));
+    m_backupList->setCurrentRow(0);
+  }
+  m_stack->setCurrentWidget(m_pageRestoreSessions);
+}
+
+void MainWindow::goRestoreTarget()
+{
+  if (!m_backupList->currentItem()) {
+    m_backupStatus->setText(QStringLiteral("Select a backup first."));
+    return;
+  }
+  m_selectedSession = m_backupList->currentItem()->data(Qt::UserRole).toInt();
+  const auto sessions = m_engine->backupSessions();
+  if (m_selectedSession >= 0 && m_selectedSession < sessions.size()) {
+    m_neededBytes = sessions.at(m_selectedSession).byteTotal;
+  }
+  m_restoreTargetTimer->start();
+  refreshRestoreTargetUi();
+  m_stack->setCurrentWidget(m_pageRestoreTarget);
+}
+
+void MainWindow::refreshRestoreTargetUi()
+{
+  QMetaObject::invokeMethod(m_engine, "refreshRestoreTargets", Qt::QueuedConnection);
+}
+
+void MainWindow::onRestoreTargets(const QVector<DestVolume> &vols)
+{
+  const QString prev = m_restoreTargetList->currentItem()
+                           ? m_restoreTargetList->currentItem()->data(Qt::UserRole).toString()
+                           : QString();
+  m_restoreTargetList->clear();
+  for (const DestVolume &d : vols) {
+    const bool enough = d.freeBytes >= m_neededBytes;
+    auto *item = new QListWidgetItem(
+        QStringLiteral("%1\n  %2\n  Free: %3 %4")
+            .arg(d.label, d.path, formatBytes(d.freeBytes),
+                 enough ? QStringLiteral("✓ enough space") : QStringLiteral("✗ need more space")));
+    item->setData(Qt::UserRole, d.path);
+    item->setData(Qt::UserRole + 1, d.freeBytes);
+    item->setFlags(enough ? (Qt::ItemIsEnabled | Qt::ItemIsSelectable) : Qt::NoItemFlags);
+    m_restoreTargetList->addItem(item);
+    if (d.path == prev) {
+      m_restoreTargetList->setCurrentItem(item);
+    }
+  }
+  if (vols.isEmpty()) {
+    m_restoreTargetStatus->setText(
+        QStringLiteral("No writable home folders found under /home."));
+  } else {
+    m_restoreTargetStatus->setText(
+        QStringLiteral("Files map into Documents/, Pictures/, … under the chosen home.\n"
+                       "Need about %1 free.")
+            .arg(formatBytes(m_neededBytes)));
+    if (!m_restoreTargetList->currentItem()) {
+      for (int i = 0; i < m_restoreTargetList->count(); ++i) {
+        if (m_restoreTargetList->item(i)->flags() & Qt::ItemIsSelectable) {
+          m_restoreTargetList->setCurrentRow(i);
+          break;
+        }
+      }
+    }
+  }
+}
+
+void MainWindow::goRestoreCopy()
+{
+  if (!m_restoreTargetList->currentItem()) {
+    m_restoreTargetStatus->setText(QStringLiteral("Select a restore target."));
+    return;
+  }
+  const QString target = m_restoreTargetList->currentItem()->data(Qt::UserRole).toString();
+  const qint64 free = m_restoreTargetList->currentItem()->data(Qt::UserRole + 1).toLongLong();
+  if (free < m_neededBytes) {
+    m_restoreTargetStatus->setText(QStringLiteral("Not enough free space in that home."));
+    return;
+  }
+  m_restoreTargetTimer->stop();
+  m_copyTitle->setText(QStringLiteral("<h2>Restoring files…</h2>"));
+  m_copyBar->setValue(0);
+  m_copyLabel->setText(QStringLiteral("Starting…"));
+  m_stack->setCurrentWidget(m_pageCopy);
+  QMetaObject::invokeMethod(m_engine, "startRestore", Qt::QueuedConnection,
+                            Q_ARG(int, m_selectedSession), Q_ARG(QString, target));
 }
 
 void MainWindow::onCopyProgress(const QString &file, qint64 done, qint64 total, qint64 doneBytes,
@@ -394,10 +639,13 @@ void MainWindow::onCopyProgress(const QString &file, qint64 done, qint64 total, 
 
 void MainWindow::cancelCopy()
 {
-  const auto r = QMessageBox::question(
-      this, QStringLiteral("Stop recovery?"),
-      QStringLiteral("Stop recovery? Files already copied will remain on the USB drive."));
-  if (r == QMessageBox::Yes) {
+  const QString title = m_mode == Mode::Restore ? QStringLiteral("Stop restore?")
+                                                : QStringLiteral("Stop recovery?");
+  const QString body =
+      m_mode == Mode::Restore
+          ? QStringLiteral("Stop restore? Files already copied will remain in the home folder.")
+          : QStringLiteral("Stop recovery? Files already copied will remain on the USB drive.");
+  if (QMessageBox::question(this, title, body) == QMessageBox::Yes) {
     QMetaObject::invokeMethod(m_engine, "requestCancel", Qt::QueuedConnection);
   }
 }
@@ -405,28 +653,34 @@ void MainWindow::cancelCopy()
 void MainWindow::onCopyFinished(bool ok)
 {
   const CopyResult r = m_engine->lastCopy();
+  const bool restoring = m_mode == Mode::Restore;
   QString text;
   if (r.cancelled) {
-    text += QStringLiteral("Recovery cancelled (partial copy kept).\n\n");
+    text += restoring ? QStringLiteral("Restore cancelled (partial copy kept).\n\n")
+                      : QStringLiteral("Recovery cancelled (partial copy kept).\n\n");
   } else if (!ok) {
-    text += QStringLiteral("Recovery failed: %1\n\n").arg(m_engine->lastError());
+    text += QStringLiteral("%1 failed: %2\n\n")
+                .arg(restoring ? QStringLiteral("Restore") : QStringLiteral("Recovery"),
+                     m_engine->lastError());
   } else {
-    text += QStringLiteral("Recovery complete!\n\n");
+    text += restoring ? QStringLiteral("Restore complete!\n\n")
+                      : QStringLiteral("Recovery complete!\n\n");
   }
-  text += QStringLiteral("Files recovered: %1\n").arg(r.copied);
+  text += QStringLiteral("Files copied: %1\n").arg(r.copied);
   text += QStringLiteral("Could not read (source): %1\n").arg(r.failedRead);
   text += QStringLiteral("Could not write (destination): %1\n").arg(r.failedWrite);
   text += QStringLiteral("Verification failed: %1\n").arg(r.failedVerify);
-  text += QStringLiteral("Data recovered: %1\n").arg(formatBytes(r.bytesCopied));
-  text += QStringLiteral("\nSaved under:\n%1\n").arg(r.destRoot);
-  text += QStringLiteral("\nREPORT.txt is written next to the backup (bring that USB for debug).\n");
+  text += QStringLiteral("Data: %1\n").arg(formatBytes(r.bytesCopied));
+  text += QStringLiteral("\nDestination:\n%1\n").arg(r.destRoot);
+  if (restoring) {
+    text += QStringLiteral("\nSpikeRestore-REPORT.txt is written in the target home.\n");
+  } else {
+    text += QStringLiteral("\nREPORT.txt is written next to the backup.\n");
+  }
   if (!r.failureDetails.isEmpty()) {
     text += QStringLiteral("\nFailure details:\n");
     for (const QString &p : r.failureDetails.mid(0, 25)) {
       text += QStringLiteral("  • %1\n").arg(p);
-    }
-    if (r.failureDetails.size() > 25) {
-      text += QStringLiteral("  … and %1 more\n").arg(r.failureDetails.size() - 25);
     }
   }
   text += QStringLiteral("\n======== DEBUG LOG ========\n");
@@ -434,6 +688,8 @@ void MainWindow::onCopyFinished(bool ok)
   for (const QString &line : dbg) {
     text += line + QLatin1Char('\n');
   }
+  m_doneTitle->setText(restoring ? QStringLiteral("<h2>Restore complete</h2>")
+                                 : QStringLiteral("<h2>Recovery complete</h2>"));
   m_doneBody->setPlainText(text);
   m_stack->setCurrentWidget(m_pageDone);
 }

@@ -4,6 +4,22 @@ Append-only. Newest sessions at the **top**.
 
 ---
 
+## 2026-08-08 — dev-guide: repo map + rescue/shell docs
+
+Filled living `docs/dev-guide/` pages so implementation can track the tree as it grows: `01-getting-started`, `02-repo-structure`, `05-building-components`, `06-spike-shell-architecture`, `08-rescue-tool-internals`, `09-spike-config-internals`, `12-debugging`, `19-appendix`, plus `dev-guide/INDEX.md`. Updated `07-installer-internals` / `03-build-environment` for spike-rescue + SpikeBackup/`spike-common`. Remaining 10–11/13–18 are short stubs pointing at product docs. `docs/INDEX.md` status markers refreshed.
+
+---
+
+## 2026-08-08 — recover/restore everywhere + Spike Tools
+
+**Rescue 0.0.9:** Prefer RW mount of `LABEL=writable` at `/run/spike-rescue/dest-writable` so `SpikeBackup/` is at partition root (not under casper `/var/log` → `install-logs-*/log/`). Entry screen: Rescue my files | Restore from backup. Shared `src/spike-common/SpikeBackupLayout` finds sessions (incl. legacy), maps into target home. Helper allows `/home/*` dests and SpikeBackup/media sources for restore.
+
+**Shell 0.0.23:** Launcher category **Spike Tools** (`X-Spike-Tools`). Menu + `spike-tools.directory` in includes.chroot. Rescue `.desktop` uses that category.
+
+**Scaffold:** `src/spike-installer/{backup,restore}/` + `src/spike-migration/` for later in-installer / detailed migration on the same layout. Docs aligned (DISASTER-RECOVERY, SPIKE-MIGRATION, INSTALLER, SPIKE-RECOVERY-TOOL-GENERAL).
+
+---
+
 ## 2026-08-08 — spike-rescue 0.0.7: pre-alpha debug mode
 
 Prioritize debug over polish: window title shows version + `[pre-alpha debug]`; select/inventory/dest show paths/devices/mounts; Done screen dumps full debug log; every copy writes `REPORT.txt` beside the backup (scan summary, dest device, failure kinds, helper detail). Easy to strip later when the tool is finished.

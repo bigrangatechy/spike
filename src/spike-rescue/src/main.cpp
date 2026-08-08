@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
 {
   QApplication app(argc, argv);
   QApplication::setApplicationName(QStringLiteral("spike-rescue"));
-  QApplication::setApplicationVersion(QStringLiteral("0.0.7"));
+  QApplication::setApplicationVersion(QStringLiteral("0.0.9"));
   QApplication::setOrganizationName(QStringLiteral("BigRangaTech"));
 
   darkPalette(app);

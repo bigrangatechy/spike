@@ -1,6 +1,7 @@
 #pragma once
 
 #include "RescueTypes.hpp"
+#include "SpikeBackupLayout.hpp"
 
 #include <QObject>
 #include <QSet>
@@ -24,6 +25,7 @@ public:
   QString lastError() const { return m_lastError; }
   QString lastScanSummary() const { return m_scanSummary; }
   QStringList debugLog() const { return m_debugLog; }
+  QVector<BackupSession> backupSessions() const { return m_backupSessions; }
 
   /** Unmount any RO source mounts we created. */
   Q_INVOKABLE void cleanupMounts();
@@ -34,6 +36,9 @@ public slots:
   void inventorySystem(int systemIndex);
   void refreshDestinations();
   void startCopy(int systemIndex, const QString &destMount);
+  void scanBackups();
+  void refreshRestoreTargets();
+  void startRestore(int sessionIndex, const QString &targetHome);
   void requestCancel();
   void cleanupMountsSlot() { cleanupMounts(); }
 
@@ -42,6 +47,8 @@ signals:
   void scanFinished(bool ok);
   void inventoryFinished(bool ok);
   void destinationsChanged(const QVector<DestVolume> &vols);
+  void backupScanFinished(bool ok);
+  void restoreTargetsChanged(const QVector<DestVolume> &vols);
   void copyProgress(const QString &currentFile, qint64 doneFiles, qint64 totalFiles,
                     qint64 doneBytes, qint64 totalBytes);
   void copyFinished(bool ok);
@@ -58,6 +65,8 @@ private:
   QString blkidLabel(const QString &device) const;
   QString deviceByLabel(const QString &label) const;
   QString ensureLiveUsbWritableDest();
+  bool isWritablePartitionRoot(const QString &mp) const;
+  void ensureSpikeBackupDir(const QString &mountRoot);
   bool appendDestIfUsable(QVector<DestVolume> *vols, const QSet<QString> &seenPaths,
                           const QSet<QString> &sourceDevs, const QString &mp,
                           const QString &displayLabel) const;
@@ -75,6 +84,7 @@ private:
   QByteArray sha256Path(const QString &path, bool *ok, QString *errDetail = nullptr) const;
   static QByteArray sha256File(const QString &path, bool *ok);
   static QString mountpointsFromJson(const QJsonObject &obj);
+  QStringList candidateBackupVolumeRoots();
 
   QVector<DetectedSystem> m_systems;
   Inventory m_inventory;
@@ -83,6 +93,7 @@ private:
   QString m_scanSummary;
   QStringList m_debugLog;
   QStringList m_ourMounts;
+  QVector<BackupSession> m_backupSessions;
   bool m_cancel = false;
 };
 

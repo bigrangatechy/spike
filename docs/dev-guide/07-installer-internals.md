@@ -26,7 +26,8 @@ Live Spike Shell (read-only root)
         │         ▼
         │   spike-installer (Qt Widgets wizard, 10 steps)
         │
-        └── Spike Rescue (separate entry; see DISASTER-RECOVERY.md)
+        └── Spike Rescue (separate app: recover + restore; see DISASTER-RECOVERY.md,
+            SPIKE-RECOVERY-TOOL-GENERAL.md, dev-guide/08-rescue-tool-internals.md)
 ```
 
 The live session is for recovery and install only — not a permanent “try Spike” desktop product (see installer / desktop specs for live user constraints).
@@ -36,17 +37,25 @@ The live session is for recovery and install only — not a permanent “try Spi
 ```
 spike-installer/
 ├── ui/              → Qt Widgets screens (welcome … reboot)
-├── detect/          → Hardware detection
-│   ├── cpu.cpp
-│   ├── storage.cpp
-│   ├── gpu.cpp
-│   ├── network.cpp
-│   ├── bluetooth.cpp
-│   └── modem.cpp
+├── detect/          → Hardware detection + SpikeBackup USB scan
 ├── partition/       → Automatic partitioning / wipe confirmation
-├── backup/          → Optional USB backup before wipe
-└── restore/         → Post-reinstall data restore
+├── backup/          → Step 7 optional USB backup before wipe
+└── restore/         → Layer 4 post-reinstall restore into /home/<user>
 ```
+
+**Status:** directories exist as scaffolds/READMEs under `src/spike-installer/`; no binary yet. Alpha gate remains installer E2E (`STATE.md`).
+
+### SpikeBackup (shared with Rescue / Migration)
+
+Installer backup and restore **must** use the same layout as Spike Rescue:
+
+```
+SpikeBackup/<utc-stamp>/<os-label>/home/<user>/…
+```
+
+Implementation should link `src/spike-common/SpikeBackupLayout.*` (header also installed by the rescue package). Do not send the user out to Rescue for Step 7 or Layer 4 — those flows stay inside the installer wizard.
+
+Rescue remains the live disaster tool (recover + restore). Migration (`spike-migration`) is the detailed new-user wizard. Map: `SPIKE-RECOVERY-TOOL-GENERAL.md`.
 
 Authoritative UX and step list: **`INSTALLER.md`**. Do not invent extra installer questions (no dual boot, no encryption, no manual partitioner).
 
@@ -94,6 +103,7 @@ See `04-building-spike.md` and `build/iso-build/README.md`.
 | :-: | :-: |
 | Full installer UX | `INSTALLER.md` |
 | Variants | `VARIANT-DIFFERENCES.md` |
-| Rescue | `DISASTER-RECOVERY.md` |
+| Rescue | `DISASTER-RECOVERY.md`, `08-rescue-tool-internals.md` |
+| SpikeBackup layout | `src/spike-common/`, `SPIKE-RECOVERY-TOOL-GENERAL.md` |
 | Config engine | `CONFIGURATION.md` |
 | ISO build | `04-building-spike.md` |

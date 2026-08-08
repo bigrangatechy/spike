@@ -158,25 +158,25 @@ File names match the on-disk stubs under `docs/dev-guide/`.
 
 | **Status** | **Document** | **Description** |
 | :-: | :-: | :-: |
-| 🔲 | `dev-guide/01-getting-started.md` | Dev onboarding |
-| 🔲 | `dev-guide/02-repo-structure.md` | Repository layout |
+| 📝 | `dev-guide/01-getting-started.md` | Dev onboarding |
+| 📝 | `dev-guide/02-repo-structure.md` | Repository layout |
 | 📝 | `dev-guide/03-build-environment.md` | Host deps for live-build / ISO work |
 | 📝 | `dev-guide/04-building-spike.md` | live-build recipe, `build-iso.sh`, one-ISO rule |
-| 🔲 | `dev-guide/05-building-components.md` | Building individual Spike packages |
-| 🔲 | `dev-guide/06-spike-shell-architecture.md` | Spike Shell internals — process model, IPC, rendering |
+| 📝 | `dev-guide/05-building-components.md` | Building individual Spike packages |
+| 📝 | `dev-guide/06-spike-shell-architecture.md` | Spike Shell internals — process model, IPC, rendering |
 | 📝 | `dev-guide/07-installer-internals.md` | Custom Qt spike-installer (not Calamares) |
-| 🔲 | `dev-guide/08-rescue-tool-internals.md` | Spike Rescue internals |
-| 🔲 | `dev-guide/09-spike-config-internals.md` | state.json schema, config modules |
+| 📝 | `dev-guide/08-rescue-tool-internals.md` | Spike Rescue internals |
+| 📝 | `dev-guide/09-spike-config-internals.md` | state.json schema, config modules |
 | 🔲 | `dev-guide/10-branding-and-theming.md` | Themes, QSS, GRUB/Plymouth/SDDM assets |
 | 🔲 | `dev-guide/11-testing.md` | Test types, runners, hardware testing |
-| 🔲 | `dev-guide/12-debugging.md` | Debugging guide |
+| 📝 | `dev-guide/12-debugging.md` | Debugging guide |
 | 🔲 | `dev-guide/13-git-workflow.md` | Branches, MRs, DCO |
 | 🔲 | `dev-guide/14-contribution-phases.md` | What is accepted when |
 | 🔲 | `dev-guide/15-coding-conventions.md` | Per-language conventions (see also agent-ops/CONVENTIONS.md) |
 | 🔲 | `dev-guide/16-translation-workflow.md` | i18n contribution |
 | 🔲 | `dev-guide/17-release-process.md` | Release checklist, ISO signing, publication |
 | 🔲 | `dev-guide/18-accessibility-development.md` | A11y implementation notes |
-| 🔲 | `dev-guide/19-appendix-reference.md` | Appendix / reference |
+| 📝 | `dev-guide/19-appendix-reference.md` | Appendix / reference |
 
 ## Topic Index
 
@@ -282,7 +282,9 @@ Find documents by topic. A document may appear under multiple topics.
 ├── Creating installer USB:           MIGRATION-GUIDE.md
 ├── Booting from USB:                 MIGRATION-GUIDE.md
 ├── ISO build (live-build):           dev-guide/03-build-environment.md 📝, dev-guide/04-building-spike.md 📝
-└── Installer development:            dev-guide/07-installer-internals.md 📝
+├── Component packages:               dev-guide/05-building-components.md 📝
+├── Installer development:            dev-guide/07-installer-internals.md 📝
+└── Rescue / SpikeBackup:             dev-guide/08-rescue-tool-internals.md 📝
 ```
 
 ### Memory

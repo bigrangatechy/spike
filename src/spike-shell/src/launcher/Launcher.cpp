@@ -41,6 +41,9 @@ QString cleanExec(QString exec)
 QString categoryFor(const QString &categories)
 {
   const QString c = categories.toLower();
+  if (c.contains(QLatin1String("x-spike-tools"))) {
+    return QStringLiteral("Spike Tools");
+  }
   if (c.contains(QLatin1String("network")) || c.contains(QLatin1String("webbrowser")) ||
       c.contains(QLatin1String("email")) || c.contains(QLatin1String("chat"))) {
     return QStringLiteral("Internet");

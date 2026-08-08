@@ -355,7 +355,7 @@ Not counted in the 70 specification documents. These are operational reference f
 
 ```
 ├── 🔲 All 17 user-guide/ sub-documents (stubs — fill as desktop ships)
-└── 🔲 Remaining 16 of 19 `dev-guide/` stubs (03/04/07 drafted — build + installer)
+└── 📝 `dev-guide/` core drafted (01–09, 12, 19); remaining short stubs point at product docs
 ```
 
 **AGENT OPERATIONS:**
@@ -1625,7 +1625,7 @@ Theme engine:
 ├── ✅ agent-ops dynamic files initialized: STATE, DECISIONS, SESSION_LOG
 ├── 🔲 TRANSLATIONS.md (i18n framework)
 ├── 🔲 USER-GUIDE.md (top-level overview; sub-docs as desktop ships)
-├── 🔲 user-guide/ stubs; remaining 16 of 19 `dev-guide/` stubs (03/04/07 drafted)
+├── 📝 user-guide/ stubs; `dev-guide/` core drafted (see `dev-guide/INDEX.md`)
 └── 🔲 Remaining agent-ops static helpers (PATTERNS, GOTCHAS, etc.)
 ```
 

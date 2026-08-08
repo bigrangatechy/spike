@@ -135,7 +135,7 @@ spike/
     ├── SUPPORT.md
     ├── agent-ops/                 → Agent/contributor operational docs
     ├── user-guide/                → End-user docs (stubs — filled as desktop ships)
-    └── dev-guide/                 → Developer docs (stubs — filled as desktop ships)
+    └── dev-guide/                 → Developer docs (living — see `dev-guide/INDEX.md`)
 ```
 
 ## Getting Started
@@ -171,7 +171,7 @@ Documentation contributors (no coding required):
 Code contributors:
 - Read ARCHITECTURE.md for system overview
 - Read DESIGN-DECISIONS.md for rationale
-- Read dev-guide/ for technical specifications (to be written)
+- Read `dev-guide/` for implementation maps (`01-getting-started.md`, `02-repo-structure.md`, …)
 - All code is GPLv2+
 - DCO required (git commit -s)
 - No CLA — you retain your copyright

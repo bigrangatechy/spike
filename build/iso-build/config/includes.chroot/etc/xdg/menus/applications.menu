@@ -337,6 +337,13 @@
 		</Menu>
 	</Menu>
 	<Menu>
+		<Name>Spike Tools</Name>
+		<Directory>spike-tools.directory</Directory>
+		<Include>
+			<Category>X-Spike-Tools</Category>
+		</Include>
+	</Menu>
+	<Menu>
 		<Name>System</Name>
 		<Directory>kf5-system.directory</Directory>
 		<Include>

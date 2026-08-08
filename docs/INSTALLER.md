@@ -450,8 +450,9 @@ If the user chooses to back up:
    ├── Offer to exclude large directories (Videos, Photos)
    └── Or use a different USB drive
 5. Begin copy:
-   ├── Preserve folder structure (Documents/, Photos/, etc.)
-   ├── Copy to USB at /run/media/usb/SpikeBackup/
+   ├── Preserve folder structure under SpikeBackup/<utc-stamp>/<os-label>/…
+   ├── Canonical layout matches Spike Rescue (see DISASTER-RECOVERY.md)
+   ├── Copy to USB SpikeBackup/ (volume root, not casper log dir)
    ├── Checksum verification on every file (SHA256)
    └── Progress bar: "Backing up files... 45% (689/1,531 files)"
 6. On completion:
