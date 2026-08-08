@@ -312,7 +312,7 @@ Not counted in the 70 specification documents. These are operational reference f
 ├── ✅ INSTALLER.md             → 10-step installer, detection, partitioning
 ├── ✅ DISASTER-RECOVERY.md     → (also in Phase 2 — fully drafted)
 ├── ✅ SPIKE-RECOVERY-TOOL-GENERAL.md → Rescue vs Migration tool map
-├── 📝 SPIKE-MIGRATION.md       → Move My Files (spec; not implemented yet)
+├── 📝 SPIKE-MIGRATION.md       → Move My Files (spec + src/spike-migration scaffold)
 ├── ✅ BRANDING.md              → Logo, splash, GRUB theme, colors, typography
 ├── ✅ TROUBLESHOOTING.md       → Common problems and solutions
 ├── ✅ FAQ.md                   → Frequently asked questions
@@ -841,11 +841,13 @@ See: `DISASTER-RECOVERY.md` (complete)
 
 ```
 ├── Boot from Spike USB installer
-├── "Rescue my data" option (instead of install)
-├── Mounts broken system READ-ONLY
+├── Desktop / Spike Tools: "Rescue My Files" (spike-rescue)
+├── Entry: Rescue my files | Restore files from backup
+├── Mounts broken system READ-ONLY for recover
 ├── Scans for user data (Linux/Windows/macOS partitions)
-├── Copies to USB with SHA256 verification
-├── Preserves folder structure
+├── Copies to USB SpikeBackup/<stamp>/<label>/… with SHA256
+├── Restore: finds SpikeBackup/ (incl. legacy install-logs path) → /home/…
+├── Shared layout helper: src/spike-common/
 └── Handles filesystem errors gracefully
 ```
 
@@ -1629,15 +1631,16 @@ Theme engine:
 └── 🔲 Remaining agent-ops static helpers (PATTERNS, GOTCHAS, etc.)
 ```
 
-**Phase 3 — Prototyping** 🔲 NOT STARTED
+**Phase 3 — Prototyping** 📝 IN PROGRESS (pre-alpha)
 
 ```
-├── Build Spike base ISO (live-build; one hybrid ISO — see agent-ops/DECISIONS.md, dev-guide/04-building-spike.md)
-├── Implement spike-config
-├── Implement Spike Shell
-├── Implement installer
-├── Implement Spike Rescue
-└── Test on Celeron N4020, AMD A4, ThinkPad P50
+├── ✅ Build Spike base ISO (live-build; one hybrid ISO)
+├── ✅ Implement spike-config (packaged on ISO)
+├── ✅ Implement Spike Shell (live session shipping)
+├── 📝 Implement installer (wizard 0.0.1; Alpha gate when E2E wipe/copy/boot)
+├── ✅ Implement Spike Rescue MVP (recover + restore; spike-common)
+├── 🔲 spike-migration wizard (scaffold + spec)
+└── 📝 Hardware smoke: Celeron N4020, AMD A4 (ongoing)
 ```
 
 > **Note:** Project release label remains **pre-alpha** until the **installer works end-to-end** (then **Alpha**). Prototyping (ISO, shell, spike-config, installer) continues under pre-alpha until that gate. See `docs/agent-ops/DECISIONS.md`.

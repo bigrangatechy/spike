@@ -18,7 +18,8 @@ Onboard a developer (or agent) who already has the repo cloned. For product inte
 | Change Rescue / Restore | `src/spike-rescue/` + `src/spike-common/` → `./scripts/package-spike-rescue.sh` |
 | Change variant / detect | `src/spike-config/` → `./scripts/package-spike-config.sh` |
 | Full live image | `./scripts/build-iso.sh` (see `04-building-spike.md`) |
-| Installer / Migration | Specs only for now — `INSTALLER.md`, `SPIKE-MIGRATION.md`; scaffolds under `src/spike-installer/`, `src/spike-migration/` |
+| Installer | 📝 **0.0.1** wizard on ISO — `INSTALLER.md`, `07-installer-internals.md` (wipe engine not enabled) |
+| Migration | Spec + scaffold — `SPIKE-MIGRATION.md`; `src/spike-migration/` |
 
 ## Minimal loop (component .deb)
 

@@ -430,7 +430,11 @@ If the user doesn't have their installation USB:
 
 ```
 ├── Desktop icon: "Rescue My Files" (prominent, alongside "Install Spike")
+│   └── Also under launcher category Spike Tools (X-Spike-Tools)
 ├── Double-click to launch
+├── First screen choice:
+│   ├── Rescue my files   → recover from disk → SpikeBackup/ on USB
+│   └── Restore from backup → SpikeBackup/ → chosen /home/…
 └── Spike Rescue opens
 ```
 

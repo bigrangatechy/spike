@@ -4,7 +4,7 @@
 
 This document specifies **spike-migration** — the GUI tool that helps users move personal files when switching **to** Spike Linux from Windows, macOS, or another Linux.
 
-Status: **specification only** (not implemented). Implementation follows after Spike Rescue is stable on the live ISO. Overview of how this tool relates to Rescue and the installer: `SPIKE-RECOVERY-TOOL-GENERAL.md`.
+Status: **specification + source scaffold** (`src/spike-migration/`). Full wizard not shipped yet — implement after installer backup/restore consumes `src/spike-common/`. Spike Rescue recover+restore MVP is on the live ISO. Overview: `SPIKE-RECOVERY-TOOL-GENERAL.md`.
 
 User-facing preparation, app equivalents, and manual tips remain in `MIGRATION-GUIDE.md`. This file is the product/tech contract for the wizard.
 

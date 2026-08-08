@@ -110,27 +110,43 @@ Security fixes follow responsible disclosure. If a vulnerability is fixed before
 
 ### Unreleased
 
-Changes staged for the next release but not yet shipped.
+Pre-alpha implementation is underway (ISO, shell, spike-config, Rescue). Alpha still gated on installer E2E — see `agent-ops/STATE.md` / `DECISIONS.md`.
 
-Nothing yet. Spike is in pre-alpha documentation phase. No code has been written. All 70+ documentation files are being authored before implementation begins (see PHILOSOPHY.md — "Built To Outlast").
+**Added:**
 
-Once development begins, in-progress changes will be tracked here before being moved to a versioned release entry.
+```
+├── Live-build ISO path + spike-shell / spike-config / spike-rescue packages
+├── Spike Rescue MVP: recover + restore; SpikeBackup/<stamp>/<label>/ layout
+├── src/spike-common shared SpikeBackup helpers
+├── Spike Tools desktop category (X-Spike-Tools)
+├── Living docs/dev-guide/ (repo map, rescue/shell/build internals)
+└── spike-installer **0.0.1**: 10-step wizard + SpikeBackup session pick (no wipe yet)
+```
 
-#### Unreleased
+**Changed:**
 
-**Added:** (nothing yet)
+```
+├── Writable backups prefer LABEL=writable at partition root (not casper /var/log)
+└── Product docs aligned for recover/restore everywhere + shared layout
+```
 
-**Changed:** (nothing yet)
+**Fixed / Known:** tracked in SESSION_LOG and STATE (hardware audio, installer not yet E2E).
 
-**Fixed:** (nothing yet)
+#### Unreleased (structured)
 
-**Removed:** (nothing yet)
+**Added:** live ISO packages; Rescue recover+restore; spike-common; Spike Tools; installer wizard 0.0.1; dev-guide core
 
-**Security:** (nothing yet)
+**Changed:** SpikeBackup destination policy; docs status (prototyping in progress)
 
-**Deprecated:** (nothing yet)
+**Fixed:** (see SESSION_LOG for package-level fixes)
 
-**Known Issues:** (nothing yet)
+**Removed:** (nothing)
+
+**Security:** (nothing)
+
+**Deprecated:** (nothing)
+
+**Known Issues:** installer not E2E; migration wizard not shipped; N4020 audio reference issues
 
 ### Planned Version Milestones
 
@@ -165,10 +181,12 @@ These are target milestones, not released versions. Actual content will be deter
 ├── Translations (English only)
 ├── Plymouth smooth handoff (may flicker)
 ├── Full accessibility support
-├── Data backup/restore (stretch goal for late alpha)
-└── Spike Rescue tool (stretch goal for late alpha)
+├── Installer Layer 4 restore (stretch until installer ships)
+├── spike-migration Move My Files wizard (scaffold only in pre-alpha)
 └── Polish, animations, theme completeness
 ```
+
+Note: Spike Rescue recover+restore MVP ships on the live ISO during pre-alpha; installer-integrated restore remains alpha-gated with the installer.
 
 **Hardware validation:**
 
@@ -187,8 +205,8 @@ These are target milestones, not released versions. Actual content will be deter
 ```
 ├── All 14 tray applets functional
 ├── Plymouth smooth handoff
-├── Data backup/restore in installer
-├── Spike Rescue tool
+├── Data backup/restore in installer (Step 7 + Layer 4)
+├── spike-migration Move My Files wizard
 ├── Broad hardware testing (hardware registry opens)
 ├── Performance baselines populated with real measurements
 └── Initial translations (community-driven)

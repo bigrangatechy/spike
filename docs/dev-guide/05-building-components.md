@@ -59,13 +59,23 @@ Optional override:
 SPIKE_RESCUE_VERSION=0.0.9 ./scripts/package-spike-rescue.sh
 ```
 
+### spike-installer
+
+```
+./scripts/package-spike-installer.sh
+```
+
+- Source: `src/spike-installer/` (+ `src/spike-common/`)
+- Version: `CMakeLists.txt` / `main.cpp` (keep in sync)
+- Installs: `/usr/bin/spike-installer`, applications + live Desktop template
+- **0.0.1:** wizard only — does not wipe disks
+
 ### Not packaged yet
 
 | Tree | Notes |
 | :-: | :-: |
-| `spike-installer/` | Scaffold — no `package-spike-installer.sh` yet |
 | `spike-migration/` | Scaffold — desktop file present, `NoDisplay=true` |
-| `spike-common/` | Built **into** spike-rescue today; may become its own `.deb` later |
+| `spike-common/` | Built into rescue + installer today; may become its own `.deb` later |
 
 ## After packaging
 

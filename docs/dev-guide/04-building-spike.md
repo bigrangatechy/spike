@@ -9,7 +9,7 @@ How Spike’s **single** hybrid live ISO is built with **live-build**. This is t
 1. **Engine:** live-build (`build/iso-build/`), `--mode ubuntu`, distribution **resolute** (26.04).  
 2. **One ISO:** Do not build separate Standard and Plus ISOs. There is no `./scripts/build-iso.sh --variant standard|plus`.  
 3. **Variant at install:** Standard vs Plus is applied by the custom installer + `spike-config` after copying the system (see `INSTALLER.md`, `VARIANT-DIFFERENCES.md`).  
-4. **Installer binary:** Custom Qt `spike-installer` ships *on* the ISO later; live-build does not use Calamares.  
+4. **Installer binary:** Custom Qt `spike-installer` **0.0.1** ships on the ISO (wizard UI; wipe/copy not enabled yet). live-build does not use Calamares.  
 5. **Installed disk FS:** **ext4**. **squashfs** is only the compressed root on the ISO/live media.
 
 ## High-level flow
@@ -28,8 +28,8 @@ sudo ./scripts/build-iso.sh
 Hybrid live ISO (*.iso in build/iso-build/)
         │
         ├── Stage 1: boot → live shell / casper environment
-        ├── Later: Spike Shell + "Install Spike" + Rescue
-        └── Installer unpacks squashfs → ext4 on target disk
+        ├── Spike Shell + Install Spike + Rescue My Files
+        └── Installer (when engines land) unpacks squashfs → ext4 on target disk
 ```
 
 ## Recipe layout

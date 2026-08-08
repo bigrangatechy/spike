@@ -22,6 +22,7 @@ install_newest() {
 install_newest 'spike-config_*.deb'
 install_newest 'spike-shell_*.deb'
 install_newest 'spike-rescue_*.deb'
+install_newest 'spike-installer_*.deb'
 
 if command -v spike-config >/dev/null 2>&1; then
   spike-config --version || true
@@ -59,6 +60,20 @@ if [ -x /usr/bin/spike-rescue ]; then
   done
 else
   echo "W: spike-rescue still missing after install attempt" >&2
+fi
+
+if [ -x /usr/bin/spike-installer ]; then
+  echo "I: spike-installer installed: /usr/bin/spike-installer"
+  for home in /home/spike /etc/skel; do
+    mkdir -p "${home}/Desktop"
+    if [ -f /usr/share/spike/live/spike-installer.desktop ]; then
+      cp -f /usr/share/spike/live/spike-installer.desktop "${home}/Desktop/Install Spike.desktop"
+      chmod 755 "${home}/Desktop/Install Spike.desktop" || true
+      chown -R spike:spike /home/spike/Desktop 2>/dev/null || true
+    fi
+  done
+else
+  echo "W: spike-installer still missing after install attempt" >&2
 fi
 
 # Ensure live user gets SpikeDark-inlined kdeglobals (Dolphin/Kate chrome).

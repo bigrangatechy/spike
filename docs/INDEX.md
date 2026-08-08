@@ -32,7 +32,7 @@ Status legend:
 └── ⛔ Deprecated — document exists but is superseded (none currently)
 ```
 
-> **NOTE:** All documents are specifications (pre-alpha phase). "Complete" means the specification is written, not that the feature is implemented. Implementation begins at alpha phase.
+> **NOTE:** Spec status (“complete”) means the document is written. **Implementation** is underway in pre-alpha (ISO, shell, config, Rescue MVP); **Alpha** still opens only when the installer works end-to-end (`DECISIONS.md`).
 
 ## Document Counts
 
@@ -40,8 +40,8 @@ Status legend:
 | :-: | :-: | :-: |
 | Top-level | 36 | ✅ 34 complete + 📝 1 drafted (`SPIKE-MIGRATION.md`) + 🔲 1 pending (`TRANSLATIONS.md`); `LICENSE` at repo root |
 | User guide | 17 | 🔲 17 not started |
-| Dev guide | 19 | 📝 3 drafted (03/04/07) + 🔲 16 not started |
-| **TOTAL** | **72** |  |
+| Dev guide | 19 + INDEX | 📝 core drafted (01–09, 12, 19); short stubs for the rest — see `dev-guide/INDEX.md` |
+| **TOTAL** | **72+** |  |
 
 > **NOTE:** `AGENTS.md` is the master reference document. It is not counted in the 70 but governs all of them.
 
@@ -113,7 +113,7 @@ Status legend:
 | ✅ | `INSTALLER.md` | Installation process — hardware detection, partitioning, variant |
 | ✅ | `DISASTER-RECOVERY.md` | Recovery boot, rollback, data rescue, spike-reset, reinstall |
 | ✅ | `SPIKE-RECOVERY-TOOL-GENERAL.md` | Map of Rescue vs Migration vs installer backup/restore |
-| 📝 | `SPIKE-MIGRATION.md` | spike-migration spec (pre-install + post-install Move My Files) |
+| 📝 | `SPIKE-MIGRATION.md` | spike-migration spec + `src/spike-migration/` scaffold |
 
 ### User Support
 

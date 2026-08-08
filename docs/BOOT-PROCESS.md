@@ -1148,8 +1148,8 @@ GRUB Recovery entry boots into `rescue.target`:
 │   Since root has no password, sulogin allows passwordless root shell.
 │   This is standard Ubuntu behavior for recovery mode.
 ├── fsck (filesystem check)
-├── spike-rescue (file recovery tool — if terminal-based available)
-│   Note: GUI rescue tool is on the live ISO, not in recovery mode
+├── spike-rescue (GUI on live ISO — not in recovery mode)
+│   Note: Layer 3 Rescue My Files is the live desktop app (recover + restore)
 ├── apt (repair broken packages, if network available)
 ├── dpkg (repair interrupted installations)
 └── Reboot option

@@ -1,0 +1,31 @@
+---
+description: Keep product/dev-guide docs current when code or packaging changes
+alwaysApply: true
+---
+
+# Docs stay current with code
+
+When you change Spike **behaviour, layout, packaging, or versions**, update the matching docs in the **same change** (or immediately after). Do not leave product/dev-guide status stale.
+
+## What to update (pick what applies)
+
+| Change area | Update |
+| --- | --- |
+| `src/spike-rescue/` / helper / SpikeBackup | `DISASTER-RECOVERY.md`, `SPIKE-RECOVERY-TOOL-GENERAL.md`, `dev-guide/08-rescue-tool-internals.md` |
+| `src/spike-common/` layout | Same + `SPIKE-MIGRATION.md` / `INSTALLER.md` layout notes |
+| `src/spike-shell/` / launcher categories | `DESKTOP.md` (if UX), `dev-guide/06-spike-shell-architecture.md` |
+| `src/spike-installer/` | `INSTALLER.md` (status only if UX unchanged), `dev-guide/07-installer-internals.md` |
+| `src/spike-migration/` | `SPIKE-MIGRATION.md`, `SPIKE-RECOVERY-TOOL-GENERAL.md` |
+| Package versions / ISO hooks / scripts | `docs/agent-ops/STATE.md`, `SESSION_LOG.md`, `dev-guide/05-building-components.md` if scripts change |
+| New top-level `src/*` package | `dev-guide/02-repo-structure.md`, `docs/INDEX.md` if needed |
+
+## Always touch ops when shipping a package bump
+
+- `docs/agent-ops/STATE.md` — Summary / In Progress / Recently Completed versions  
+- `docs/agent-ops/SESSION_LOG.md` — short newest entry  
+
+## Do not
+
+- Rewrite historical SESSION_LOG entries  
+- Edit user-attached plan files unless asked  
+- Invent behaviour in code that contradicts specs — fix the spec first (docs-first)

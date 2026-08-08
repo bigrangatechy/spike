@@ -28,7 +28,7 @@ spike/
 | `spike-config/` | ✅ Shipping | Variant / hardware profile engine (Python) |
 | `spike-rescue/` | ✅ Shipping | Rescue My Files — recover + restore GUI |
 | `spike-common/` | ✅ Used by rescue | Shared SpikeBackup layout / find / path map |
-| `spike-installer/` | 🔲 Scaffold | Custom Qt installer (backup/ + restore/ stubs) |
+| `spike-installer/` | 📝 **0.0.1** wizard UI | Custom Qt installer (wipe engine not enabled yet) |
 | `spike-migration/` | 🔲 Scaffold | Move My Files (detailed migration wizard) |
 | `spike-branding/` | 📝 Partial | Themes / assets (includes.chroot also holds live branding) |
 
@@ -68,18 +68,11 @@ SpikeBackup/<utc-stamp>/<os-label>/home/<user>/Documents/…
 
 Consumed today by `spike-rescue`. Installer Step 7 / Layer 4 and `spike-migration` must reuse this — do not invent a second tree format.
 
-### spike-installer / spike-migration (scaffolds)
+### spike-installer / spike-migration
 
 ```
-src/spike-installer/
-├── README.md
-├── ui/ backup/ restore/ detect/   → README placeholders only
-└── (no binary yet)
-
-src/spike-migration/
-├── README.md
-├── CMakeLists.txt                 → scaffold message only
-└── data/spike-migration.desktop   → X-Spike-Tools; NoDisplay until shipped
+src/spike-installer/          → 0.0.1 wizard (see README); package-spike-installer.sh
+src/spike-migration/          → scaffold + spec only
 ```
 
 Specs: `INSTALLER.md`, `SPIKE-MIGRATION.md`, `SPIKE-RECOVERY-TOOL-GENERAL.md`.

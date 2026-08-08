@@ -372,13 +372,17 @@ The live USB lets you test Spike before committing:
 
 ## Transferring Files
 
-Preferred path when the tools are available: use **Move My Files** (`spike-migration`) for a guided copy. Spec: `SPIKE-MIGRATION.md`. Overview vs Rescue: `SPIKE-RECOVERY-TOOL-GENERAL.md`.
+Preferred path when the tools are available:
 
 ```
-├── Before install (live USB): Move My Files → SpikeBackup/ on a second USB
+├── Disaster / broken system: Rescue My Files (spike-rescue) — recover and/or restore
+├── Before install (live USB): Move My Files → SpikeBackup/ (when spike-migration ships)
 ├── After install: Move My Files → import from SpikeBackup/ or an old disk
+├── Install-time: Installer Step 7 backup / Layer 4 restore (same SpikeBackup/ layout)
 └── Manual fallback: drag-and-drop in Files (steps below still apply)
 ```
+
+Specs: `SPIKE-MIGRATION.md`, `SPIKE-RECOVERY-TOOL-GENERAL.md`, `DISASTER-RECOVERY.md`. Until Move My Files ships, Rescue restore + installer restore (when built) cover bringing files back.
 
 ### From Windows
 

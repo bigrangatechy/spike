@@ -43,7 +43,12 @@ spike-installer/
 └── restore/         → Layer 4 post-reinstall restore into /home/<user>
 ```
 
-**Status:** directories exist as scaffolds/READMEs under `src/spike-installer/`; no binary yet. Alpha gate remains installer E2E (`STATE.md`).
+**Status (0.0.1):** Qt wizard ships on the live ISO and walks all 10 steps collecting
+`InstallState`. Step 7 can discover existing `SpikeBackup/` sessions (spike-common).
+**Disk wipe / system copy / bootloader are not implemented** — the progress step is
+explicitly a dry-run plan dump. Alpha gate remains installer E2E (`STATE.md`).
+
+Package: `./scripts/package-spike-installer.sh` → Desktop **Install Spike**.
 
 ### SpikeBackup (shared with Rescue / Migration)
 

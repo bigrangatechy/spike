@@ -37,7 +37,7 @@ Anyone. No exceptions.
 
 ### Documentation
 
-Documentation is the most valuable contribution you can make to Spike right now. The project is in the documentation phase — code has not begun. Every document improvement shapes the system that will be built.
+Documentation remains first-class. The project is in **pre-alpha implementation**: live ISO, shell, spike-config, and Rescue MVP exist under `src/`, but behaviour still follows docs-first rules (`AGENTS.md`, `DECISIONS.md`). Doc fixes that correct specs still shape what gets built next.
 
 **Types of documentation contributions:**
 
@@ -69,34 +69,19 @@ Documentation is the most valuable contribution you can make to Spike right now.
 
 ### Code
 
-Code contributions will become central once the documentation phase completes and the alpha phase begins. Until then, code contributions are limited to:
+Code contributions are open on a **case-by-case** basis during pre-alpha (coordinate via issues / BDFL). Prefer matching existing packages and `docs/dev-guide/` maps. Alpha (full contribution openness) still waits on installer E2E.
+
+In scope today (with review):
 
 ```
-├── Tooling (build scripts, CI configuration, deployment automation)
-├── Spike documentation site (if a website is built for docs)
-├── Infrastructure (Dockerfiles for CI, GitLab CI pipelines)
-└── Experimental prototypes (if explicitly sanctioned by the BDFL
-    — do not start building Spike Shell, the installer, or other
-    core components without coordination)
+├── spike-shell, spike-config, spike-rescue, spike-common
+├── live-build recipe / hooks / includes.chroot
+├── package scripts under scripts/
+├── Tooling (CI, USB helpers, capture)
+└── Docs + spike-installer **0.0.1** wizard; spike-migration still scaffold
 ```
 
-When the alpha phase begins, code contributions will include:
-
-```
-├── Spike Shell (Qt6 desktop components)
-├── spike-config (configuration system)
-├── Installer (custom Qt Widgets — spike-installer; not Calamares)
-├── KWin configuration and window decoration
-├── SDDM theme
-├── GRUB theme and configuration
-├── Plymouth themes
-├── Qt stylesheet (spike.qss)
-├── Icon theme modifications
-├── Build system (live-build ISO recipe under build/iso-build/)
-├── CI/CD pipelines
-├── Automated tests
-└── Packaging scripts
-```
+Do not start large parallel rewrites of Shell, installer, or packaging without coordination. When Alpha opens, the contribution surface expands (installer, branding, applets, themes, tests, …) under the same review rules.
 
 Code must match the specification in the documentation. If the specification is wrong, fix the specification first, then write code that matches the corrected specification. This is the docs-first principle: the docs are the source of truth, not the code.
 

@@ -99,7 +99,10 @@ This file defines every Spike-specific term an AI agent (or human contributor) n
 | **GRUB2** | Bootloader. Theme: dark background, Spike emblem, BigRangaTech branding, purple/cyan accents. Hidden by default, 3–5 second ESC window. | `BOOT-PROCESS.md` |
 | **Boot failure counter** | Initramfs counter incremented on each boot. After 3 consecutive failures, GRUB menu shows automatically with recovery entry highlighted (10–15 second timeout). Successful boot resets to 0. | `BOOT-PROCESS.md`, `DISASTER-RECOVERY.md` |
 | **Recovery mode** | GRUB entry that boots minimal single-user root shell (no graphics, no network). `spike-config --rollback` available here. | `DISASTER-RECOVERY.md` |
-| **Spike Rescue** | GUI tool on live ISO. "Rescue my data" option mounts broken system READ-ONLY, copies user data to USB with SHA256 verification, preserves folder structure. | `DISASTER-RECOVERY.md` |
+| **Spike Rescue** | Live-ISO GUI (`spike-rescue`). Recover personal files RO → `SpikeBackup/`; also restore from backup into `/home/…`. Spike Tools category. | `DISASTER-RECOVERY.md`, `dev-guide/08-rescue-tool-internals.md` |
+| **SpikeBackup/** | Canonical backup tree `SpikeBackup/<stamp>/<os-label>/…` shared by Rescue, installer, Migration. Helper: `src/spike-common/`. | `SPIKE-RECOVERY-TOOL-GENERAL.md` |
+| **Spike Tools** | Desktop/launcher category (`X-Spike-Tools`) for Spike-owned tools. | `dev-guide/02-repo-structure.md` |
+| **spike-migration** | Move My Files wizard (spec + scaffold). Detailed migration UX. | `SPIKE-MIGRATION.md` |
 | **spike-reset** | Factory reset tool (reinstall + restore workflow). | `DISASTER-RECOVERY.md` |
 
 
@@ -177,7 +180,7 @@ This file defines every Spike-specific term an AI agent (or human contributor) n
 | **BDFL-level decision** | A decision requiring explicit approval from the project creator. Logged in `DECISIONS.md`. | `GOVERNANCE.md` |
 | **Phase 1** | Architecture design (complete). All major decisions resolved. | `AGENTS.md` |
 | **Phase 2** | Specification documents (in progress). 8 core tech specs drafted + 14 additional top-level docs formatted. | `AGENTS.md` |
-| **Phase 3** | Prototyping (not started). Build SPIKE base ISO, implement spike-config, Spike Shell, installer, Spike Rescue, test on target hardware. | `AGENTS.md` |
+| **Phase 3** | Prototyping (in progress under pre-alpha). ISO + shell + config + Rescue MVP shipping; installer/migration scaffolds. Alpha when installer E2E. | `AGENTS.md`, `STATE.md` |
 | **Alpha release** | Target: 8 months from start. Functional system on target hardware. Public read-only repo. Bug reports/hardware submissions accepted. | `ROADMAP.md` |
 | **Beta release** | Target: 18 months from start. Feature-complete. Full contributions accepted. Translation contributions accepted. | `ROADMAP.md` |
 | **Living docs** | Specifications evolve with implementation. Discoveries made during coding are added to specs as [IMPLEMENTATION NOTE]. | `AGENTS.md` |

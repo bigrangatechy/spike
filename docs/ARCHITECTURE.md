@@ -734,7 +734,7 @@ build/iso-build/
 
 There is **no** `--variant standard|plus` build flag. One hybrid live ISO ships both variants’ *capability*; the installer applies Standard or Plus at install time via `spike-config` (see `VARIANT-DIFFERENCES.md`, `INSTALLER.md`).
 
-**Live session:** Boot ISO → Spike Shell (read-only live) → “Install Spike” or Spike Rescue.
+**Live session:** Boot ISO → Spike Shell (read-only live) → **Install Spike**, **Rescue My Files** (recover + restore), and later **Move My Files**. Shared `SpikeBackup/` layout via `src/spike-common/`. See `SPIKE-RECOVERY-TOOL-GENERAL.md` and `dev-guide/08-rescue-tool-internals.md`.
 
 **Installer:** Custom Qt Widgets (`spike-installer`) — not Calamares. Live-build only produces the live environment and squashfs; install UX is Spike-owned.
 

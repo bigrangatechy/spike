@@ -1258,7 +1258,7 @@ Firmware packages receive updates through Ubuntu's standard security channel:
 
 ### Purpose
 
-When a Spike installation breaks (failed update, corrupted filesystem, misconfiguration), the user needs a way to recover their personal files before reinstalling. Spike Rescue is a tool that runs from the live ISO to extract user data from a broken system.
+When a Spike installation breaks (failed update, corrupted filesystem, misconfiguration), the user needs a way to recover their personal files before reinstalling. Spike Rescue (`spike-rescue`) runs from the live ISO to extract user data from a broken system **and** can restore a `SpikeBackup/` into a home folder. Full Layer 3 UX: `DISASTER-RECOVERY.md`. Internals: `dev-guide/08-rescue-tool-internals.md`.
 
 ### How It Works
 
@@ -1269,14 +1269,14 @@ User boots from Spike ISO (same ISO used for installation)
 Live environment starts
     │
     ▼
-Desktop icon: "Install Spike" (normal install)
-Desktop icon: "Rescue My Files" (rescue tool)
+Desktop: "Install Spike" | "Rescue My Files" (+ Move My Files when migration ships)
+Launcher: Spike Tools category
     │
     ▼
-User clicks "Rescue My Files"
+User opens Rescue My Files
     │
-    ▼
-Spike Rescue tool starts
+    ├── Rescue my files → RO scan → SpikeBackup/<stamp>/<label>/ on writable USB
+    └── Restore from backup → pick session → copy into /home/…
 ```
 
 ### Rescue Flow
@@ -1316,7 +1316,8 @@ Spike Rescue Recovery:
    ├── Wait for USB insertion
    └── Verify sufficient free space
 4. Copy files to USB
-   ├── Destination: /run/media/usb/SpikeBackup/
+   ├── Destination: SpikeBackup/<utc-stamp>/<os-label>/ on USB
+   │   (prefer LABEL=writable partition root / This Spike USB)
    ├── Preserve folder structure
    ├── Checksum verification (SHA256)
    └── Progress bar with file count

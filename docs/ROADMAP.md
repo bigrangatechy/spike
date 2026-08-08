@@ -471,17 +471,18 @@ Polish the system. Broaden hardware testing. Add translations. Finalize all docu
 ```
 ├── Plymouth smooth handoff (no flicker)
 ├── All 14 tray applets functional (including 4th conditional)
-├── Spike Rescue tool:
-│   ├── Live ISO desktop icon
-│   ├── Scans for installed operating systems
-│   ├── Mounts read-only
-│   ├── Copies files with SHA256 verification
-│   └── Reports summary
-├── Data restore in installer:
+├── Spike Rescue tool:                          ✅ MVP on live ISO (recover + restore)
+│   ├── Live ISO desktop icon + Spike Tools category
+│   ├── Scans for installed operating systems (RO mounts)
+│   ├── Copies to SpikeBackup/<stamp>/<label>/… with SHA256
+│   ├── Restore mode: SpikeBackup → chosen /home/…
+│   └── Shared layout: src/spike-common/
+├── Data restore in installer:                  📝 (wizard can pick session; engine TBD)
 │   ├── Detects SpikeBackup/ on USB
 │   ├── Restores to /home/[user]/
 │   ├── Sets ownership correctly
 │   └── Verifies with SHA256
+├── spike-migration (Move My Files):            🔲 scaffold + SPIKE-MIGRATION.md
 ├── Performance optimized to meet all baselines:
 │   ├── Boot time < 40s on Tier 1 SSD
 │   ├── Idle memory < 400MB on Standard
@@ -731,9 +732,9 @@ Potential future work (not committed, evaluated based on adoption):
 ├── Tablet/touch mode (if touch hardware demand emerges)
 ├── Printing system (CUPS integration, if not already done)
 ├── Backup scheduling (automated data backup beyond installer)
-├── spike-migration implementation (Move My Files — specced in
-│   SPIKE-MIGRATION.md; after rescue stable + installer restore)
-│   └── Pre-install + post-install modes; shared SpikeBackup/ layout
+├── spike-migration implementation (Move My Files — scaffold in
+│   `src/spike-migration/`; full wizard after installer restore lands)
+│   └── Pre-install + post-install modes; shared `src/spike-common/` SpikeBackup layout
 └── Community-driven themes
 ```
 
@@ -817,12 +818,13 @@ Scope creep is the biggest risk to Spike. The BDFL is responsible for guarding a
 
 | **Component** | **Depends on** | **Status** |
 | :-: | :-: | :-: |
-| Spike Shell | KWin, Qt6, systemd | Skeleton (`src/spike-shell/`) |
-| Spike Installer | spike-config, hardware detect | Not started |
-| Spike Rescue | Live ISO, Qt6 | Not started |
+| Spike Shell | KWin, Qt6, systemd | Shipping live ISO (`src/spike-shell/` — see STATE.md) |
+| Spike Installer | spike-config, hardware detect | Wizard **0.0.1** on ISO (`src/spike-installer/` — wipe/copy TBD) |
+| Spike Rescue | Live ISO, Qt6 | Shipping MVP recover+restore (`src/spike-rescue/` + `spike-common/`) |
+| spike-migration | spike-common, Qt6 | Scaffold + spec (`src/spike-migration/`, `SPIKE-MIGRATION.md`) |
 | spike-config | Templates, sysctl, modprobe | Packaged (`src/spike-config/` + `.deb` ISO inject) |
-| spike-branding | Artist assets, GRUB, Plymouth | Not started |
-| ISO build system | All above | Not started |
+| spike-branding | Artist assets, GRUB, Plymouth | Partial (`src/spike-branding/` + includes.chroot) |
+| ISO build system | All above | live-build working (`build/iso-build/`, `scripts/build-iso.sh`) |
 | CI/CD | GitLab CE, Docker | Scaffolded |
 
 ## Community Milestones

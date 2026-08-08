@@ -78,6 +78,13 @@ else
   echo "I: spike-rescue mount helper + sudoers present"
 fi
 
+if [ ! -x /usr/bin/spike-installer ]; then
+  echo "E: spike-installer missing (package spike-installer into includes.chroot)" >&2
+  fail=1
+else
+  echo "I: spike-installer present"
+fi
+
 if [ "$fail" -ne 0 ]; then
   exit 1
 fi

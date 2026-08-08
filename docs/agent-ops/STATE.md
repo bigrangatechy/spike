@@ -15,25 +15,26 @@
 | `dev-guide/` | 📝 Core filled (01–09, 12, 19); remaining stubs point at product docs |
 | agent-ops core | ✅ Written |
 | ISO / build tooling | ✅ live-build; hybrid remaster + debug capture |
-| Installer stack | ✅ Custom Qt (not built yet) — Alpha cue when this works |
-| `scripts/build-iso.sh` | ✅ Packages spike-config + spike-shell + spike-rescue + lb build |
+| Installer stack | 📝 **0.0.1** wizard UI on ISO (no wipe/copy yet) — Alpha cue when install E2E works |
+| `scripts/build-iso.sh` | ✅ Packages config + shell + rescue + **installer** + lb build |
 | Stage 1 live ISO | ✅ Hardware boot + login |
 | Stage 2 (`spike-config`) | ✅ Target detect OK (N4020 / ~4GB) |
 | Stage 3 (Spike Shell) | 📝 **0.0.23** + Rescue **0.0.9** (recover+restore, Spike Tools, writable root) |
-| Stage 4 (installer) | 🔲 Pre-alpha until installer E2E — that gate opens **Alpha** |
+| Stage 4 (installer) | 📝 Wizard started (**0.0.1**); wipe/copy/bootloader still missing — Alpha when E2E |
 
 ## In Progress
 
 | Item | Notes |
 | :-: | :-: |
-| Stage 3 — desktop smoke | Rebuild ISO: shell **0.0.23** + rescue **0.0.9** (SpikeBackup at writable root; Restore mode; Spike Tools) |
+| Stage 3 — desktop smoke | Rebuild ISO: shell **0.0.23** + rescue **0.0.9** + installer **0.0.1** (SpikeBackup root; Restore; Spike Tools; Install Spike UI) |
+| Stage 4 — installer engines | Wi‑Fi, Step 7 backup, wipe/partition/squashfs, bootloader, Layer 4 restore |
 
 ## Blocked / Waiting On Decision
 
 | Item | Notes |
 | :-: | :-: |
 | Layer 2 GRUB recovery screen | Still deferred |
-| Layer 4 installer restore | Scaffold in `src/spike-installer/restore/`; needs installer UI |
+| Layer 4 installer restore | Wizard can pick SpikeBackup session; copy-into-home engine not wired |
 | spike-migration (Move My Files) | Scaffold + spec; implement on shared `spike-common` |
 | Notification daemon / history tray | Prefs UI done; daemon not shipped |
 | Magnifier / high-contrast theme apply | Accessibility prefs started; visuals later |
@@ -48,6 +49,8 @@
 
 | Date | Item |
 | :-: | :-: |
+| 2026-08-08 | installer **0.0.1**: 10-step Qt wizard + spike-common session scan; ISO/desktop wired; no disk wipe |
+| 2026-08-08 | Docs catch-up: ROADMAP/AGENTS/CHANGELOG/GLOSSARY/INDEX aligned to Rescue 0.0.9 + shell 0.0.23 + spike-common |
 | 2026-08-08 | rescue **0.0.9** + shell **0.0.23**: Restore mode; SpikeBackup at writable root; Spike Tools; spike-common |
 | 2026-08-08 | rescue **0.0.8**: mkdir-dest findmnt walk-up for non-existent /var/log paths |
 | 2026-08-08 | rescue **0.0.4** + shell **0.0.22**: 700/600 file reads; Dolphin dark kdeglobals |

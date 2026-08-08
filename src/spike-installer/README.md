@@ -1,26 +1,47 @@
-# Spike Installer (scaffold)
+# Spike Installer
 
-Custom Qt installer — not implemented yet. Alpha gate: live → install → reboot.
+Custom Qt Widgets installer per `docs/INSTALLER.md`. **Not Calamares.**
 
-## Backup / restore modules
+## Status (0.0.1)
 
-These directories will call the shared SpikeBackup engine (`src/spike-common/`):
-
-| Path | Role |
+| Area | State |
 | --- | --- |
-| `backup/` | Step 7 optional backup of the *target* drive → `SpikeBackup/<stamp>/…` |
-| `restore/` | Layer 4 “Fresh install and restore my data” after install, into `/home/<newuser>/` |
-| `detect/` | Existing Spike install + USB `SpikeBackup/` scan |
-| `ui/` | Wizard pages (backup/restore stay **inside** the installer) |
+| 10-step wizard UI | ✅ Collects answers (language → finish) |
+| Hardware / disk listing | ✅ Lightweight probes |
+| SpikeBackup session scan | ✅ via `src/spike-common/` (Layer 4 choice) |
+| Step 7 backup copy | 🔲 Stub (checkbox only) |
+| Partition / wipe / squashfs copy | 🔲 **Not enabled** — will not erase disks |
+| Bootloader / first boot | 🔲 |
+| Layer 4 restore into new home | 🔲 Uses selected session path when engine lands |
 
-Do not send the user out to Spike Rescue for install-time backup/restore. Rescue remains
-the disaster live tool; Migration is the detailed new-user wizard.
+Alpha gate remains: live → **real** install → reboot to installed desktop.
 
-Include:
+## Build
 
-```cpp
-#include <spike/SpikeBackupLayout.hpp>
-// or relative: #include "../../spike-common/SpikeBackupLayout.hpp"
+```
+./scripts/package-spike-installer.sh
+# → build/packages/spike-installer_0.0.1-1_amd64.deb
 ```
 
-Layout must match Rescue (see `docs/DISASTER-RECOVERY.md`, `docs/INSTALLER.md`).
+ISO: `build-iso.sh` packages + stages this deb; hook installs Desktop **Install Spike**.
+
+## Layout
+
+```
+src/spike-installer/
+├── src/
+│   ├── main.cpp
+│   ├── InstallWizard.*     → 10-step stacked wizard
+│   ├── InstallState.hpp    → collected answers
+│   └── detect/             → HardwareProbe + BackupScanner
+├── data/*.desktop          → X-Spike-Tools
+└── CMakeLists.txt
+```
+
+Shared SpikeBackup helpers: `../spike-common/`.
+
+## Related
+
+- Spec: `docs/INSTALLER.md`
+- Internals: `docs/dev-guide/07-installer-internals.md`
+- Recovery map: `docs/SPIKE-RECOVERY-TOOL-GENERAL.md`

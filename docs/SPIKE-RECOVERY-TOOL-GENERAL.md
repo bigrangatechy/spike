@@ -106,13 +106,15 @@ Rationale matches the recovery promise in `DISASTER-RECOVERY.md` and `PHILOSOPHY
 
 ## Live Desktop Layout
 
-On the Spike live ISO desktop, both icons should be visible alongside Install Spike:
+On the Spike live ISO desktop, tools appear alongside Install Spike:
 
 ```
 ├── Install Spike
-├── Rescue My Files   → spike-rescue
-└── Move My Files     → spike-migration (pre-install mode)
+├── Rescue My Files   → spike-rescue (recover + restore; Spike Tools)
+└── Move My Files     → spike-migration (pre-install mode; when shipped)
 ```
+
+Launcher category **Spike Tools** (`X-Spike-Tools`) groups Rescue and future Spike tooling.
 
 On an installed Spike system:
 
@@ -126,9 +128,9 @@ On an installed Spike system:
 ```
 ├── spike-rescue: recover + restore MVP (live ISO) — src/spike-rescue/
 ├── spike-common: shared SpikeBackup layout/find/map — src/spike-common/
-├── spike-installer backup/restore: scaffold + docs hooks — src/spike-installer/
+├── spike-installer: wizard **0.0.1** (Step 7/Layer 4 engines TBD) — src/spike-installer/
 ├── spike-migration: scaffold + spec — src/spike-migration/, SPIKE-MIGRATION.md
-└── Desktop category: Spike Tools (X-Spike-Tools) for Rescue / future tools
+└── Desktop category: Spike Tools (X-Spike-Tools) for Rescue / Installer / future tools
 ```
 
 ## Related Documents

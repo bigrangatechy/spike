@@ -4,6 +4,18 @@ Append-only. Newest sessions at the **top**.
 
 ---
 
+## 2026-08-08 — spike-installer 0.0.1 started (wizard before rebuild)
+
+Started the installer ahead of the next ISO rebuild (after Rescue restore smoke). Qt 10-step wizard collects language/timezone/user/hostname/variant/optional backup + SpikeBackup session pick (spike-common); storage confirm is dry-run — **does not wipe**. Packaged via `package-spike-installer.sh`; `build-iso.sh` + hooks install Desktop **Install Spike**; verify hook requires `/usr/bin/spike-installer`. Docs: installer README, `07-installer-internals`, repo map, building-components, STATE. Next engines: Wi‑Fi, Step 7 copy, wipe/squashfs/bootloader, Layer 4 restore.
+
+---
+
+## 2026-08-08 — docs catch-up (status + product refs)
+
+Aligned ROADMAP internal deps, AGENTS Phase 3 / Layer 3, CHANGELOG Unreleased, GLOSSARY, INSTALLER/DISASTER-RECOVERY/ARCHITECTURE/BOOT-PROCESS/MIGRATION-GUIDE/SPIKE-MIGRATION/INDEX with current shipping: Rescue recover+restore, spike-common, Spike Tools, installer/migration scaffolds. Session earlier: living `dev-guide/` fill.
+
+---
+
 ## 2026-08-08 — dev-guide: repo map + rescue/shell docs
 
 Filled living `docs/dev-guide/` pages so implementation can track the tree as it grows: `01-getting-started`, `02-repo-structure`, `05-building-components`, `06-spike-shell-architecture`, `08-rescue-tool-internals`, `09-spike-config-internals`, `12-debugging`, `19-appendix`, plus `dev-guide/INDEX.md`. Updated `07-installer-internals` / `03-build-environment` for spike-rescue + SpikeBackup/`spike-common`. Remaining 10–11/13–18 are short stubs pointing at product docs. `docs/INDEX.md` status markers refreshed.
