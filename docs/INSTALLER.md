@@ -18,6 +18,20 @@ The installer follows one principle: minimize user decisions. Every question ask
 └── No technical terminology without plain-language explanation
 ```
 
+### Related data tools (not the installer itself)
+
+```
+├── Move My Files (spike-migration) — guided pre-install copy to SpikeBackup/
+│   or post-install import; spec: SPIKE-MIGRATION.md
+├── Rescue My Files (spike-rescue) — disaster recovery from a broken system;
+│   spec: DISASTER-RECOVERY.md Layer 3
+├── Installer Step 7 — optional backup of the *target* drive during install
+│   (same SpikeBackup/ layout)
+└── Reinstall with restore — Layer 4; consumes SpikeBackup/ after a fresh install
+```
+
+Overview map: `SPIKE-RECOVERY-TOOL-GENERAL.md`.
+
 ## Installer Flow Overview
 
 ```

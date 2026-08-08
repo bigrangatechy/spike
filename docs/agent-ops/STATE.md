@@ -19,20 +19,21 @@
 | `scripts/build-iso.sh` | ✅ Packages spike-config + spike-shell + spike-rescue + lb build |
 | Stage 1 live ISO | ✅ Hardware boot + login |
 | Stage 2 (`spike-config`) | ✅ Target detect OK (N4020 / ~4GB) |
-| Stage 3 (Spike Shell) | 📝 0.0.21 + a11y OSK packages; Spike Rescue 0.0.1 MVP packaged for next ISO |
+| Stage 3 (Spike Shell) | 📝 **0.0.22** + Rescue **0.0.7** (debug REPORT + honest errors) |
 | Stage 4 (installer) | 🔲 Pre-alpha until installer E2E — that gate opens **Alpha** |
 
 ## In Progress
 
 | Item | Notes |
 | :-: | :-: |
-| Stage 3 — desktop smoke | Rebuild ISO: shell 0.0.21 + rescue 0.0.1 + a11y packages |
+| Stage 3 — desktop smoke | Rebuild ISO: shell **0.0.22** + rescue **0.0.7** |
 
 ## Blocked / Waiting On Decision
 
 | Item | Notes |
 | :-: | :-: |
 | Layer 2 GRUB recovery screen / Layer 4 installer restore | Rescue GUI MVP only for now |
+| spike-migration (Move My Files) | Specced (`SPIKE-MIGRATION.md`); implement after rescue stable |
 | Notification daemon / history tray | Prefs UI done; daemon not shipped |
 | Magnifier / high-contrast theme apply | Accessibility prefs started; visuals later |
 | APT edit / PPA / NVIDIA driver UX | Sources page lists + launches tools; in-page edit later |
@@ -46,6 +47,10 @@
 
 | Date | Item |
 | :-: | :-: |
+| 2026-08-08 | rescue **0.0.4** + shell **0.0.22**: 700/600 file reads; Dolphin dark kdeglobals |
+| 2026-08-08 | spike-rescue **0.0.3**: dest = Spike USB `writable` partition |
+| 2026-08-08 | Docs: SPIKE-MIGRATION.md + SPIKE-RECOVERY-TOOL-GENERAL.md (spec only) |
+| 2026-08-08 | spike-rescue **0.0.2**: passwordless RO helper + Fedora btrfs home subvols |
 | 2026-08-08 | spike-rescue 0.0.1: Layer 3 Rescue My Files (RO copy + SHA256) |
 | 2026-08-08 | spike-shell 0.0.20 + config 0.0.4: Notifications / Accessibility / Software Sources started |
 | 2026-08-08 | spike-shell 0.0.19: Appearance live panel; Memory/Boot forms; Language/Users/VPN pages |

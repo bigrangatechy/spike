@@ -13,7 +13,8 @@ cmake --build build -j"$(nproc)"
 ./build/spike-rescue
 ```
 
-Needs: `cmake`, `qt6-base-dev`. Mount/umount use `sudo -n` (same pattern as spike-shell power actions).
+Needs: `cmake`, `qt6-base-dev`. RO mounts go through `/usr/lib/spike/spike-rescue-mount`
+(passwordless for live user `spike` via `/etc/sudoers.d/spike-rescue`).
 
 ## Package
 
@@ -21,6 +22,8 @@ Needs: `cmake`, `qt6-base-dev`. Mount/umount use `sudo -n` (same pattern as spik
 ./scripts/package-spike-rescue.sh
 ```
 
+Ships the GUI, the mount helper, and sudoers. Destinations include the live USB
+`writable` partition when it has enough free space (no second stick required).
 ## Live ISO
 
 `build-iso.sh` packages this `.deb` with spike-config/shell. Desktop entry:

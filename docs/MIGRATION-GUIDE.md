@@ -334,7 +334,8 @@ The Spike installer does the following:
 
 ```
 ├── Does not preserve your old operating system
-├── Does not migrate files automatically (see "Transferring Files" below)
+├── Does not migrate files automatically (use Move My Files /
+│   spike-migration — see SPIKE-MIGRATION.md — or Transferring Files below)
 ├── Does not install additional software beyond the base system
 ├── Does not require an internet connection (but recommends one)
 └── Does not ask technical questions (partition sizes, filesystem types, etc.)
@@ -370,6 +371,14 @@ The live USB lets you test Spike before committing:
 ```
 
 ## Transferring Files
+
+Preferred path when the tools are available: use **Move My Files** (`spike-migration`) for a guided copy. Spec: `SPIKE-MIGRATION.md`. Overview vs Rescue: `SPIKE-RECOVERY-TOOL-GENERAL.md`.
+
+```
+├── Before install (live USB): Move My Files → SpikeBackup/ on a second USB
+├── After install: Move My Files → import from SpikeBackup/ or an old disk
+└── Manual fallback: drag-and-drop in Files (steps below still apply)
+```
 
 ### From Windows
 

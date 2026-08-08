@@ -15,7 +15,7 @@ Finding what you need:
 ├── Know the topic? → Check the "Topic Index" at the end
 ├── Know who you are?
 │   ├── New user exploring Spike → README.md → PHILOSOPHY.md → FAQ.md
-│   ├── Switching from Windows/macOS → MIGRATION-GUIDE.md
+│   ├── Switching from Windows/macOS → MIGRATION-GUIDE.md, SPIKE-MIGRATION.md
 │   ├── Having a problem → TROUBLESHOOTING.md → FAQ.md → SUPPORT.md
 │   ├── Want to contribute → CONTRIBUTING.md → AGENTS.md → CODE_OF_CONDUCT.md
 │   ├── Developer building Spike → ARCHITECTURE.md → dev-guide/
@@ -38,10 +38,10 @@ Status legend:
 
 | **Tier** | **Documents** | **Status** |
 | :-: | :-: | :-: |
-| Top-level | 34 | ✅ 33 complete + 🔲 1 pending (`TRANSLATIONS.md`); `LICENSE` at repo root |
+| Top-level | 36 | ✅ 34 complete + 📝 1 drafted (`SPIKE-MIGRATION.md`) + 🔲 1 pending (`TRANSLATIONS.md`); `LICENSE` at repo root |
 | User guide | 17 | 🔲 17 not started |
 | Dev guide | 19 | 📝 3 drafted (03/04/07) + 🔲 16 not started |
-| **TOTAL** | **70** |  |
+| **TOTAL** | **72** |  |
 
 > **NOTE:** `AGENTS.md` is the master reference document. It is not counted in the 70 but governs all of them.
 
@@ -112,6 +112,8 @@ Status legend:
 | :-: | :-: | :-: |
 | ✅ | `INSTALLER.md` | Installation process — hardware detection, partitioning, variant |
 | ✅ | `DISASTER-RECOVERY.md` | Recovery boot, rollback, data rescue, spike-reset, reinstall |
+| ✅ | `SPIKE-RECOVERY-TOOL-GENERAL.md` | Map of Rescue vs Migration vs installer backup/restore |
+| 📝 | `SPIKE-MIGRATION.md` | spike-migration spec (pre-install + post-install Move My Files) |
 
 ### User Support
 
@@ -358,7 +360,9 @@ Find documents by topic. A document may appear under multiple topics.
 ├── Disaster recovery overview:       DISASTER-RECOVERY.md
 ├── Recovery boot:                   DISASTER-RECOVERY.md, BOOT-PROCESS.md
 ├── Rollback (snapshot):             DISASTER-RECOVERY.md
-├── Data rescue:                     DISASTER-RECOVERY.md
+├── Data rescue:                     DISASTER-RECOVERY.md, SPIKE-RECOVERY-TOOL-GENERAL.md
+├── Spike Rescue vs Migration tools: SPIKE-RECOVERY-TOOL-GENERAL.md
+├── spike-migration (Move My Files): SPIKE-MIGRATION.md
 ├── spike-reset:                     DISASTER-RECOVERY.md
 ├── Reinstallation:                  DISASTER-RECOVERY.md, INSTALLER.md
 └── User guide (updates):            user-guide/updates.md 🔲
@@ -416,7 +420,8 @@ Find documents by topic. A document may appear under multiple topics.
 ### Migration
 
 ```
-├── Migration overview:               MIGRATION-GUIDE.md
+├── Migration overview:               MIGRATION-GUIDE.md, SPIKE-MIGRATION.md
+├── Guided Move My Files tool:       SPIKE-MIGRATION.md, SPIKE-RECOVERY-TOOL-GENERAL.md
 ├── From Windows:                    MIGRATION-GUIDE.md
 ├── From macOS:                      MIGRATION-GUIDE.md
 ├── From another Linux:              MIGRATION-GUIDE.md
@@ -580,8 +585,25 @@ Legend:
 `DISASTER-RECOVERY.md`
 
 ```
-├── → BOOT-PROCESS.md, INSTALLER.md, CONFIGURATION.md
+├── → BOOT-PROCESS.md, INSTALLER.md, CONFIGURATION.md,
+│      SPIKE-RECOVERY-TOOL-GENERAL.md, SPIKE-MIGRATION.md
 └── (referenced by: SUPPORT.md, MIGRATION-GUIDE.md)
+```
+
+`SPIKE-RECOVERY-TOOL-GENERAL.md`
+
+```
+├── → DISASTER-RECOVERY.md, SPIKE-MIGRATION.md, INSTALLER.md,
+│      MIGRATION-GUIDE.md
+└── (referenced by: INDEX.md, ROADMAP.md)
+```
+
+`SPIKE-MIGRATION.md`
+
+```
+├── → SPIKE-RECOVERY-TOOL-GENERAL.md, DISASTER-RECOVERY.md,
+│      INSTALLER.md, MIGRATION-GUIDE.md, ROADMAP.md
+└── (referenced by: INDEX.md, MIGRATION-GUIDE.md)
 ```
 
 `PERFORMANCE-BASELINES.md`
@@ -629,7 +651,9 @@ Legend:
 ├── → INSTALLER.md, HARDWARE.md, VARIANT-DIFFERENCES.md,
 │      PERFORMANCE-BASELINES.md, TROUBLESHOOTING.md, FAQ.md,
 │      SUPPORT.md, PRIVACY.md, DESKTOP.md, CONFIGURATION.md,
-│      DISASTER-RECOVERY.md, ACCESSIBILITY.md, END-OF-LIFE-POLICY.md
+│      DISASTER-RECOVERY.md, SPIKE-MIGRATION.md,
+│      SPIKE-RECOVERY-TOOL-GENERAL.md, ACCESSIBILITY.md,
+│      END-OF-LIFE-POLICY.md
 └── (referenced by: README.md, SUPPORT.md)
 ```
 

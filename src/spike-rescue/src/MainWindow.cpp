@@ -22,8 +22,9 @@ MainWindow::MainWindow(QWidget *parent)
   : QMainWindow(parent)
 {
   setObjectName(QStringLiteral("SpikeRescue"));
-  setWindowTitle(QStringLiteral("Spike Rescue"));
-  resize(720, 520);
+  setWindowTitle(QStringLiteral("Spike Rescue %1 [pre-alpha debug]")
+                     .arg(QApplication::applicationVersion()));
+  resize(780, 560);
 
   // Engine runs on a worker thread (must not have a QObject parent when moved).
   m_engine = new RescueEngine();
@@ -143,8 +144,8 @@ void MainWindow::buildUi()
     auto *lay = new QVBoxLayout(m_pageDest);
     lay->addWidget(new QLabel(QStringLiteral("<h2>Save recovered files</h2>"), m_pageDest));
     lay->addWidget(new QLabel(
-        QStringLiteral("Connect a USB drive to save your recovered files "
-                       "(not the Spike live USB)."),
+        QStringLiteral("Choose where to save recovered files. You can use this Spike USB "
+                       "(its free “writable” space) if it has enough room, or another USB."),
         m_pageDest));
     m_destList = new QListWidget(m_pageDest);
     lay->addWidget(m_destList, 1);
@@ -242,11 +243,16 @@ void MainWindow::goSelect()
     m_systemList->addItem(item);
   }
   if (systems.isEmpty()) {
+    const QString detail = m_engine->lastScanSummary();
     m_selectStatus->setText(
-        QStringLiteral("No recoverable systems found. Check the disk is connected "
-                       "and try Scan again. (Needs sudo -n mount for RO access.)"));
+        QStringLiteral("No recoverable systems found.\n%1")
+            .arg(detail.isEmpty()
+                     ? QStringLiteral("Check the disk is connected and try Scan again.")
+                     : detail));
   } else {
-    m_selectStatus->setText(QStringLiteral("Select a system to recover files from."));
+    m_selectStatus->setText(
+        QStringLiteral("Select a system to recover files from.\n\n[debug] %1")
+            .arg(m_engine->lastScanSummary()));
     m_systemList->setCurrentRow(0);
   }
   m_stack->setCurrentWidget(m_pageSelect);
@@ -276,9 +282,11 @@ void MainWindow::onInventoryFinished(bool ok)
   QString text;
   const auto systems = m_engine->systems();
   if (m_selectedSystem >= 0 && m_selectedSystem < systems.size()) {
-    text += QStringLiteral("Files found on %1 (%2):\n\n")
-                .arg(systems.at(m_selectedSystem).osLabel,
-                     systems.at(m_selectedSystem).partition.path);
+    const DetectedSystem &s = systems.at(m_selectedSystem);
+    text += QStringLiteral("Files found on %1 (%2):\n").arg(s.osLabel, s.partition.path);
+    text += QStringLiteral("[debug] fstype=%1 mount=%2 homeMount=%3 users=%4\n\n")
+                .arg(s.partition.fstype, s.mountPoint, s.homeMountPoint,
+                     s.users.join(QLatin1Char(',')));
   }
   for (const CategorySummary &c : inv.categories) {
     text += QStringLiteral("  %1 — %2 files, %3\n")
@@ -290,6 +298,13 @@ void MainWindow::onInventoryFinished(bool ok)
   if (!inv.unreadable.isEmpty()) {
     text += QStringLiteral("\n⚠️ %1 paths could not be read during scan.\n").arg(inv.unreadable.size());
   }
+  if (!inv.files.isEmpty()) {
+    text += QStringLiteral("\n[debug] sample source paths:\n");
+    for (const QString &p : inv.files.mid(0, 8)) {
+      text += QStringLiteral("  %1\n").arg(p);
+    }
+  }
+  text += QStringLiteral("\n[debug] scan: %1\n").arg(m_engine->lastScanSummary());
   m_invBody->setPlainText(text);
 }
 
@@ -314,8 +329,8 @@ void MainWindow::onDestinations(const QVector<DestVolume> &vols)
   for (const DestVolume &d : vols) {
     const bool enough = d.freeBytes >= m_neededBytes;
     auto *item = new QListWidgetItem(
-        QStringLiteral("%1\n  Free: %2 %3")
-            .arg(d.label, formatBytes(d.freeBytes),
+        QStringLiteral("%1\n  path: %2\n  device: %3\n  Free: %4 %5")
+            .arg(d.label, d.path, d.device, formatBytes(d.freeBytes),
                  enough ? QStringLiteral("✓ enough space") : QStringLiteral("✗ need more space")));
     item->setData(Qt::UserRole, d.path);
     item->setData(Qt::UserRole + 1, d.freeBytes);
@@ -326,7 +341,9 @@ void MainWindow::onDestinations(const QVector<DestVolume> &vols)
     }
   }
   if (vols.isEmpty()) {
-    m_destStatus->setText(QStringLiteral("Waiting for USB drive… Insert a drive now."));
+    m_destStatus->setText(
+        QStringLiteral("No writable destination found. Insert another USB, or free space on "
+                       "this Spike USB’s writable partition, then Refresh."));
   } else {
     m_destStatus->setText(
         QStringLiteral("Files will be saved under SpikeBackup/ on the selected drive.\n"
@@ -397,21 +414,25 @@ void MainWindow::onCopyFinished(bool ok)
     text += QStringLiteral("Recovery complete!\n\n");
   }
   text += QStringLiteral("Files recovered: %1\n").arg(r.copied);
-  text += QStringLiteral("Could not read: %1\n").arg(r.failedRead);
+  text += QStringLiteral("Could not read (source): %1\n").arg(r.failedRead);
+  text += QStringLiteral("Could not write (destination): %1\n").arg(r.failedWrite);
   text += QStringLiteral("Verification failed: %1\n").arg(r.failedVerify);
   text += QStringLiteral("Data recovered: %1\n").arg(formatBytes(r.bytesCopied));
   text += QStringLiteral("\nSaved under:\n%1\n").arg(r.destRoot);
-  if (!r.unreadables.isEmpty()) {
-    text += QStringLiteral("\nUnreadable:\n");
-    for (const QString &p : r.unreadables.mid(0, 20)) {
+  text += QStringLiteral("\nREPORT.txt is written next to the backup (bring that USB for debug).\n");
+  if (!r.failureDetails.isEmpty()) {
+    text += QStringLiteral("\nFailure details:\n");
+    for (const QString &p : r.failureDetails.mid(0, 25)) {
       text += QStringLiteral("  • %1\n").arg(p);
+    }
+    if (r.failureDetails.size() > 25) {
+      text += QStringLiteral("  … and %1 more\n").arg(r.failureDetails.size() - 25);
     }
   }
-  if (!r.verifyFails.isEmpty()) {
-    text += QStringLiteral("\nVerify failures:\n");
-    for (const QString &p : r.verifyFails.mid(0, 20)) {
-      text += QStringLiteral("  • %1\n").arg(p);
-    }
+  text += QStringLiteral("\n======== DEBUG LOG ========\n");
+  const QStringList dbg = r.debugLog.isEmpty() ? m_engine->debugLog() : r.debugLog;
+  for (const QString &line : dbg) {
+    text += line + QLatin1Char('\n');
   }
   m_doneBody->setPlainText(text);
   m_stack->setCurrentWidget(m_pageDone);

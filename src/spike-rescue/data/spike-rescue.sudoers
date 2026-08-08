@@ -1,0 +1,3 @@
+# Spike Rescue — passwordless RO mounts for live user (DISASTER-RECOVERY.md).
+# Only the constrained helper may run; it refuses RW and paths outside /run/spike-rescue/.
+spike ALL=(root) NOPASSWD: /usr/lib/spike/spike-rescue-mount

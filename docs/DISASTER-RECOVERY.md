@@ -23,6 +23,8 @@ This means:
 └── If the hardware is dying: files can be recovered before it dies
 ```
 
+> **Not migration:** Planned switches *to* Spike (copying off a healthy Windows/macOS/Linux install) are **Spike Migration** (`spike-migration`, desktop **Move My Files**), not Spike Rescue. See `SPIKE-RECOVERY-TOOL-GENERAL.md` and `SPIKE-MIGRATION.md`. Both tools share the `SpikeBackup/` layout so installer restore works the same way.
+
 The recovery path is always:
 
 1. Boot from Spike USB (live ISO) 
@@ -392,10 +394,12 @@ To use Spike Rescue, the user needs:
 
 ```
 ├── A Spike USB drive (the same one used for installation)
-├── A separate USB drive (or the same one, if large enough)
-│   for storing recovered files
+├── Free space on that USB (LABEL=writable partition) and/or
+│   a separate USB drive large enough for recovered files
 └── The broken laptop
 ```
+
+If the Spike live USB has a large enough `writable` leftover partition, Spike Rescue offers **This Spike USB (writable)** as the destination — a second stick is not required.
 
 If the user doesn't have their installation USB:
 
@@ -517,16 +521,16 @@ Scan process:
 │  files. The drive must have at least 8.2 GB        │
 │  of free space.                                   │
 │                                                  │
-│  Waiting for USB drive...                         │
-│  [Insert USB drive now]                           │
+│  Waiting for a place to save files...             │
+│  (This Spike USB’s free space, or another USB.)   │
 │                                                  │
-│  ── USB drive detected ──                         │
-│  Drive: SanDisk Ultra 32GB                        │
-│  Free space: 28.4 GB                             │
-│  ✓ Sufficient space                               │
+│  ── Destination detected ──                       │
+│  ● This Spike USB (writable)                      │
+│    Free space: 27.1 GB  ✓ enough space            │
 │                                                  │
-│  Files will be saved to:                          │
-│  /run/media/usb/SpikeBackup/                      │
+│  ○ Other USB (if plugged in)                      │
+│                                                  │
+│  Files will be saved to SpikeBackup/              │
 │                                                  │
 │  [Back]  [Start recovery]                          │
 │                                                  │
@@ -1198,6 +1202,7 @@ Referenced in:
 ```
 ├── INSTALLER.md (brief mention, "Rescue My Files" desktop icon)
 ├── BOOT-PROCESS.md (initramfs recovery screen mentions live USB)
+├── SPIKE-RECOVERY-TOOL-GENERAL.md (Rescue vs Migration map)
 └── This document (full specification)
 ```
 
@@ -1207,7 +1212,8 @@ Disaster Recovery relationship:
 ├── Spike Rescue is Layer 3 of recovery
 ├── Primary tool for non-technical users
 ├── Runs from live ISO (same ISO as installer)
-└── Specified in full detail here
+├── Specified in full detail here
+└── Planned OS switch (Move My Files): SPIKE-MIGRATION.md — not this layer
 ```
 
 ### Installer Restore
@@ -1249,6 +1255,8 @@ Disaster Recovery relationship:
 - Privacy of recovered files: See `PRIVACY.md` 
 
 - User guide recovery instructions: See `docs/user-guide/14-recovery.md` 
+
+- Planned migration wizard (Move My Files): See `SPIKE-MIGRATION.md` and `SPIKE-RECOVERY-TOOL-GENERAL.md` 
 
 🐕 BigRangaTech
 

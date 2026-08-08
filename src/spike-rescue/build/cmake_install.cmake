@@ -59,6 +59,14 @@ if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT
 endif()
 
 if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
+  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/spike" TYPE PROGRAM FILES "/home/jessie/Documents/Gitlab/spike/src/spike-rescue/data/spike-rescue-mount")
+endif()
+
+if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
+  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/etc/sudoers.d" TYPE FILE PERMISSIONS OWNER_READ GROUP_READ RENAME "spike-rescue" FILES "/home/jessie/Documents/Gitlab/spike/src/spike-rescue/data/spike-rescue.sudoers")
+endif()
+
+if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
   file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/share/applications" TYPE FILE FILES "/home/jessie/Documents/Gitlab/spike/src/spike-rescue/data/spike-rescue.desktop")
 endif()
 

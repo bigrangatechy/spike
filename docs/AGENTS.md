@@ -148,9 +148,9 @@ Everything NOT listed above is identical between variants.
 
 ## 5. Documentation Structure
 
-70 total documents across three tiers, plus agent operations:
+72 total documents across three tiers, plus agent operations:
 
-### TIER 1 — Top-Level Specifications (34 files)
+### TIER 1 — Top-Level Specifications (36 files)
 
 ```
 ├── README.md                 → Project introduction and quick start
@@ -175,6 +175,8 @@ Everything NOT listed above is identical between variants.
 │
 ├── INSTALLER.md              → 10-step installer, detection, partitioning, backup
 ├── DISASTER-RECOVERY.md      → 4-layer recovery model, Spike Rescue, restore
+├── SPIKE-RECOVERY-TOOL-GENERAL.md → Rescue vs Migration vs installer map
+├── SPIKE-MIGRATION.md        → spike-migration (Move My Files) product/tech spec
 ├── CONFIGURATION.md          → spike-config: state store, templates, changelog
 │
 ├── SECURITY.md               → Threat model, AppArmor, firewall, updates, hardening
@@ -309,6 +311,8 @@ Not counted in the 70 specification documents. These are operational reference f
 ├── ✅ PERFORMANCE-BASELINES.md → Benchmarks (estimates until alpha)
 ├── ✅ INSTALLER.md             → 10-step installer, detection, partitioning
 ├── ✅ DISASTER-RECOVERY.md     → (also in Phase 2 — fully drafted)
+├── ✅ SPIKE-RECOVERY-TOOL-GENERAL.md → Rescue vs Migration tool map
+├── 📝 SPIKE-MIGRATION.md       → Move My Files (spec; not implemented yet)
 ├── ✅ BRANDING.md              → Logo, splash, GRUB theme, colors, typography
 ├── ✅ TROUBLESHOOTING.md       → Common problems and solutions
 ├── ✅ FAQ.md                   → Frequently asked questions
@@ -1517,6 +1521,7 @@ Theme engine:
 | Clipboard (no persistence) | `PRIVACY.md` |
 | Configuration system (spike-config) | `CONFIGURATION.md` |
 | Data backup (installer) | `INSTALLER.md`, `DISASTER-RECOVERY.md` |
+| Data migration (Move My Files) | `SPIKE-MIGRATION.md`, `SPIKE-RECOVERY-TOOL-GENERAL.md` |
 | Data retention policies | `PRIVACY.md` |
 | Data sources | `CONFIGURATION.md` |
 | Desktop shell | `DESKTOP.md` |
@@ -1553,7 +1558,8 @@ Theme engine:
 | Screen capture | `MULTIMEDIA.md` |
 | Screen locking | `SECURITY.md` |
 | Secure Boot | `SECURITY.md` |
-| Spike Rescue tool | `DISASTER-RECOVERY.md` |
+| Spike Rescue tool | `DISASTER-RECOVERY.md`, `SPIKE-RECOVERY-TOOL-GENERAL.md` |
+| Spike Migration tool | `SPIKE-MIGRATION.md`, `SPIKE-RECOVERY-TOOL-GENERAL.md` |
 | Spike Shell | `DESKTOP.md` |
 | State store | `CONFIGURATION.md` |
 | Swappiness | `MEMORY.md`, `CONFIGURATION.md` |

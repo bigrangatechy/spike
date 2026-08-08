@@ -1,0 +1,217 @@
+#!/bin/sh
+# Privileged helper for spike-rescue.
+# - RO mounts of source disks under /run/spike-rescue/
+# - RW mount of the Spike live USB "writable" partition only (backup dest)
+# - list/find/copy/sha256 for files the live user cannot read (700/600 homes)
+# Invoked via sudo -n from the GUI (see /etc/sudoers.d/spike-rescue).
+set -eu
+
+RUN_ROOT="/run/spike-rescue"
+
+die() {
+  echo "spike-rescue-mount: $*" >&2
+  exit 1
+}
+
+require_under_run() {
+  path="$1"
+  case "$path" in
+    "$RUN_ROOT"/*) ;;
+    *) die "path must be under $RUN_ROOT/ (got $path)" ;;
+  esac
+}
+
+allow_dest_path() {
+  path="$1"
+  case "$path" in
+    "$RUN_ROOT"/src-*) die "refusing write into source mount $path" ;;
+    "$RUN_ROOT"/dest-*) ;;
+    /run/media/*|/media/*|/log-persistence/*|/mnt/*|/home/spike/*) ;;
+    /var/log|/var/log/*)
+      # Casper often mounts LABEL=writable on /var/log (live USB free space).
+      lab="$(findmnt -n -o LABEL -T "$path" 2>/dev/null || true)"
+      case "$lab" in
+        writable|Writable|WRITABLE) ;;
+        *)
+          src="$(findmnt -n -o SOURCE -T "$path" 2>/dev/null || true)"
+          lab="$(blkid -o value -s LABEL "$src" 2>/dev/null || true)"
+          case "$lab" in
+            writable|Writable|WRITABLE) ;;
+            *) die "destination not allowed: $path (not LABEL=writable)" ;;
+          esac
+          ;;
+      esac
+      ;;
+    *) die "destination not allowed: $path" ;;
+  esac
+}
+
+parse_mount_args() {
+  fstype=""
+  opts=""
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      -t)
+        fstype="${2:-}"
+        shift 2 || die "missing -t value"
+        ;;
+      -o)
+        opts="${2:-}"
+        shift 2 || die "missing -o value"
+        ;;
+      *)
+        break
+        ;;
+    esac
+  done
+  device="${1:-}"
+  mnt="${2:-}"
+  [ -n "$device" ] && [ -n "$mnt" ] || return 1
+  case "$device" in
+    /dev/*) ;;
+    *) die "device must be under /dev/" ;;
+  esac
+  case "$mnt" in
+    "$RUN_ROOT"/*) ;;
+    *) die "mountpoint must be under $RUN_ROOT/" ;;
+  esac
+}
+
+cmd="${1:-}"
+shift || true
+
+case "$cmd" in
+  prepare)
+    mkdir -p "$RUN_ROOT"
+    chmod 755 "$RUN_ROOT"
+    if command -v vgchange >/dev/null 2>&1; then
+      vgchange -ay >/dev/null 2>&1 || true
+    fi
+    ;;
+  mount)
+    parse_mount_args "$@" || die "usage: mount [-t type] [-o opts] DEVICE MOUNTPOINT"
+    case ",$opts," in
+      *,ro,*) ;;
+      *)
+        echo "$opts" | grep -Eq '(^|,)ro($|,)' || die "options must include ro"
+        ;;
+    esac
+    mkdir -p "$mnt"
+    if [ -n "$fstype" ]; then
+      exec /bin/mount -t "$fstype" -o "$opts" "$device" "$mnt"
+    fi
+    exec /bin/mount -o "$opts" "$device" "$mnt"
+    ;;
+  mount-rw)
+    parse_mount_args "$@" || die "usage: mount-rw [-t type] [-o opts] DEVICE MOUNTPOINT"
+    case "$mnt" in
+      "$RUN_ROOT"/dest-*) ;;
+      *) die "RW mountpoint must be under $RUN_ROOT/dest-*" ;;
+    esac
+    label="$(blkid -o value -s LABEL "$device" 2>/dev/null || true)"
+    type="$(blkid -o value -s TYPE "$device" 2>/dev/null || true)"
+    case "$label" in
+      writable|Writable|WRITABLE) ;;
+      *) die "RW mount only allowed for LABEL=writable (got '${label:-none}')" ;;
+    esac
+    case "$type" in
+      iso9660|udf) die "refusing RW mount of optical/ISO filesystem" ;;
+    esac
+    opts="$(echo "$opts" | sed 's/\bro\b/rw/g')"
+    case ",$opts," in
+      *,rw,*) ;;
+      *)
+        if [ -n "$opts" ]; then
+          opts="rw,$opts"
+        else
+          opts="rw"
+        fi
+        ;;
+    esac
+    mkdir -p "$mnt"
+    if [ -n "$fstype" ]; then
+      /bin/mount -t "$fstype" -o "$opts" "$device" "$mnt"
+    elif [ -n "$type" ]; then
+      /bin/mount -t "$type" -o "$opts" "$device" "$mnt"
+    else
+      /bin/mount -o "$opts" "$device" "$mnt"
+    fi
+    chmod 777 "$mnt" 2>/dev/null || true
+    mkdir -p "$mnt/SpikeBackup"
+    chmod 777 "$mnt/SpikeBackup" 2>/dev/null || true
+    if [ -n "${SUDO_USER:-}" ]; then
+      chown -R "${SUDO_USER}:" "$mnt/SpikeBackup" 2>/dev/null || true
+    fi
+    exit 0
+    ;;
+  umount)
+    mnt="${1:-}"
+    [ -n "$mnt" ] || die "usage: umount MOUNTPOINT"
+    require_under_run "$mnt"
+    /bin/umount "$mnt" 2>/dev/null || /bin/umount -l "$mnt"
+    rmdir "$mnt" 2>/dev/null || true
+    ;;
+  list-dirs)
+    # One directory name per line (no paths), for /home user discovery.
+    dir="${1:-}"
+    [ -n "$dir" ] || die "usage: list-dirs DIR"
+    require_under_run "$dir"
+    [ -d "$dir" ] || exit 0
+    # shellcheck disable=SC2012
+    ls -1A "$dir" 2>/dev/null | while IFS= read -r name; do
+      case "$name" in
+        .*|lost+found) continue ;;
+      esac
+      [ -d "$dir/$name" ] || continue
+      printf '%s\n' "$name"
+    done
+    ;;
+  find-files)
+    # Absolute file paths under DIR (skip hidden path components).
+    # Optional 2nd arg: maxdepth (find -maxdepth N).
+    dir="${1:-}"
+    maxdepth="${2:-}"
+    [ -n "$dir" ] || die "usage: find-files DIR [MAXDEPTH]"
+    require_under_run "$dir"
+    [ -d "$dir" ] || exit 0
+    if [ -n "$maxdepth" ]; then
+      find "$dir" -maxdepth "$maxdepth" -type f ! -path '*/.*' -print 2>/dev/null || true
+    else
+      find "$dir" -type f ! -path '*/.*' -print 2>/dev/null || true
+    fi
+    ;;
+  sha256)
+    file="${1:-}"
+    [ -n "$file" ] || die "usage: sha256 FILE"
+    require_under_run "$file"
+    [ -f "$file" ] || die "not a file: $file"
+    sha256sum -b "$file" | awk '{print $1}'
+    ;;
+  copy-file)
+    src="${1:-}"
+    dst="${2:-}"
+    [ -n "$src" ] && [ -n "$dst" ] || die "usage: copy-file SRC DST"
+    require_under_run "$src"
+    allow_dest_path "$dst"
+    [ -f "$src" ] || die "not a file: $src"
+    mkdir -p "$(dirname "$dst")"
+    cp -f -- "$src" "$dst"
+    if [ -n "${SUDO_USER:-}" ]; then
+      chown "${SUDO_USER}:" "$dst" 2>/dev/null || true
+    fi
+    chmod a+r "$dst" 2>/dev/null || true
+    ;;
+  mkdir-dest)
+    dir="${1:-}"
+    [ -n "$dir" ] || die "usage: mkdir-dest DIR"
+    allow_dest_path "$dir"
+    mkdir -p "$dir"
+    chmod 777 "$dir" 2>/dev/null || true
+    if [ -n "${SUDO_USER:-}" ]; then
+      chown "${SUDO_USER}:" "$dir" 2>/dev/null || true
+    fi
+    ;;
+  *)
+    die "usage: spike-rescue-mount {prepare|mount|mount-rw|umount|list-dirs|find-files|sha256|copy-file|mkdir-dest} ..."
+    ;;
+esac

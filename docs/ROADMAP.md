@@ -731,7 +731,9 @@ Potential future work (not committed, evaluated based on adoption):
 ├── Tablet/touch mode (if touch hardware demand emerges)
 ├── Printing system (CUPS integration, if not already done)
 ├── Backup scheduling (automated data backup beyond installer)
-├── System migration tool (import settings from Windows/macOS)
+├── spike-migration implementation (Move My Files — specced in
+│   SPIKE-MIGRATION.md; after rescue stable + installer restore)
+│   └── Pre-install + post-install modes; shared SpikeBackup/ layout
 └── Community-driven themes
 ```
 

@@ -3,7 +3,9 @@
 #include "RescueTypes.hpp"
 
 #include <QObject>
+#include <QSet>
 #include <QString>
+#include <QVector>
 
 namespace spike {
 
@@ -20,9 +22,12 @@ public:
   Inventory inventory() const { return m_inventory; }
   CopyResult lastCopy() const { return m_lastCopy; }
   QString lastError() const { return m_lastError; }
+  QString lastScanSummary() const { return m_scanSummary; }
+  QStringList debugLog() const { return m_debugLog; }
 
   /** Unmount any RO source mounts we created. */
   Q_INVOKABLE void cleanupMounts();
+  void appendDebug(const QString &line);
 
 public slots:
   void scanSystems();
@@ -42,21 +47,41 @@ signals:
   void copyFinished(bool ok);
 
 private:
-  bool runPrivileged(const QStringList &args, QString *error = nullptr) const;
+  bool runHelper(const QStringList &args, QString *error = nullptr) const;
+  QString runHelperCapture(const QStringList &args, QString *error = nullptr) const;
   bool mountRo(const QString &device, const QString &mountPoint, const QString &fstype,
-               QString *error);
+               const QString &extraOpts, QString *error);
+  bool mountRwWritable(const QString &device, const QString &mountPoint, QString *error);
   bool umountPath(const QString &mountPoint);
   bool isLiveDevice(const QString &devName, const QString &label, const QString &mountpoints) const;
+  QString blkidType(const QString &device) const;
+  QString blkidLabel(const QString &device) const;
+  QString deviceByLabel(const QString &label) const;
+  QString ensureLiveUsbWritableDest();
+  bool appendDestIfUsable(QVector<DestVolume> *vols, const QSet<QString> &seenPaths,
+                          const QSet<QString> &sourceDevs, const QString &mp,
+                          const QString &displayLabel) const;
+  QStringList privilegedListDirs(const QString &dir) const;
+  QStringList privilegedFindFiles(const QString &dir) const;
+  QStringList privilegedFindFiles(const QString &dir, int maxDepth) const;
+  bool privilegedCopyFile(const QString &src, const QString &dst, QString *error) const;
+  QByteArray privilegedSha256(const QString &path, bool *ok, QString *error = nullptr) const;
   DetectedSystem probeMounted(const BlockPartition &part, const QString &mnt);
+  void enrichBtrfsHome(DetectedSystem *sys);
+  void listUsersUnder(const QString &homeRoot, QStringList *users) const;
   Inventory buildInventory(const DetectedSystem &sys);
   QStringList categoryDirs(OsKind os) const;
-  bool copyOneFile(const QString &src, const QString &dst, QString *errKind);
+  bool copyOneFile(const QString &src, const QString &dst, QString *errKind, QString *errDetail);
+  QByteArray sha256Path(const QString &path, bool *ok, QString *errDetail = nullptr) const;
   static QByteArray sha256File(const QString &path, bool *ok);
+  static QString mountpointsFromJson(const QJsonObject &obj);
 
   QVector<DetectedSystem> m_systems;
   Inventory m_inventory;
   CopyResult m_lastCopy;
   QString m_lastError;
+  QString m_scanSummary;
+  QStringList m_debugLog;
   QStringList m_ourMounts;
   bool m_cancel = false;
 };

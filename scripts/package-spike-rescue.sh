@@ -29,6 +29,8 @@ Builds ${DEB_NAME} from src/spike-rescue/ (Qt6 Widgets).
 
 Install paths:
   /usr/bin/spike-rescue
+  /usr/lib/spike/spike-rescue-mount
+  /etc/sudoers.d/spike-rescue
   /usr/share/applications/spike-rescue.desktop
   /usr/share/spike/live/spike-rescue.desktop
 EOF
@@ -71,11 +73,17 @@ DEST="${STAGE}/${PKG_NAME}"
 mkdir -p \
   "${DEST}/DEBIAN" \
   "${DEST}/usr/bin" \
+  "${DEST}/usr/lib/spike" \
+  "${DEST}/etc/sudoers.d" \
   "${DEST}/usr/share/applications" \
   "${DEST}/usr/share/spike/live" \
   "${DEST}/usr/share/doc/${PKG_NAME}"
 
 install -m 755 "${BUILD}/spike-rescue" "${DEST}/usr/bin/spike-rescue"
+install -m 755 "${SRC}/data/spike-rescue-mount" \
+  "${DEST}/usr/lib/spike/spike-rescue-mount"
+install -m 440 "${SRC}/data/spike-rescue.sudoers" \
+  "${DEST}/etc/sudoers.d/spike-rescue"
 install -m 644 "${SRC}/data/spike-rescue.desktop" \
   "${DEST}/usr/share/applications/spike-rescue.desktop"
 install -m 644 "${SRC}/data/spike-rescue-desktop.desktop" \
@@ -99,8 +107,8 @@ Section: utils
 Priority: optional
 Architecture: ${ARCH}
 Maintainer: BigRangaTech <spike@bigrangatech.com>
-Depends: libqt6widgets6 | libqt6widgets6t64, libqt6gui6 | libqt6gui6t64, libqt6core6t64 | libqt6core6, util-linux, sudo
-Recommends: ntfs-3g, hfsprogs
+Depends: libqt6widgets6 | libqt6widgets6t64, libqt6gui6 | libqt6gui6t64, libqt6core6t64 | libqt6core6, util-linux, sudo, mount
+Recommends: ntfs-3g, hfsprogs, lvm2
 Description: Spike Rescue — recover personal files from a live USB
  GUI tool (DISASTER-RECOVERY.md Layer 3): read-only mount broken disks,
  copy home Documents/Pictures/… to another USB with SHA256 verification.
@@ -110,6 +118,9 @@ EOF
 cat >"${DEST}/DEBIAN/postinst" <<'EOF'
 #!/bin/sh
 set -e
+if [ -f /etc/sudoers.d/spike-rescue ]; then
+  chmod 440 /etc/sudoers.d/spike-rescue
+fi
 # Seed Desktop shortcut for live user skel if present.
 for skel in /etc/skel/Desktop /usr/share/spike/skel/Desktop; do
   if [ -d "$(dirname "$skel")" ] || mkdir -p "$skel" 2>/dev/null; then
@@ -125,7 +136,8 @@ EOF
 chmod 755 "${DEST}/DEBIAN/postinst"
 
 find "${DEST}" -type d -exec chmod 755 {} +
-chmod 755 "${DEST}/usr/bin/spike-rescue"
+chmod 755 "${DEST}/usr/bin/spike-rescue" "${DEST}/usr/lib/spike/spike-rescue-mount"
+chmod 440 "${DEST}/etc/sudoers.d/spike-rescue"
 
 mkdir -p "$OUT_DIR"
 dpkg-deb --root-owner-group --build "$DEST" "${OUT_DIR}/${DEB_NAME}"

@@ -114,6 +114,7 @@ onboard
 ntfs-3g
 # hfsprogs may be unavailable on some Ubuntu releases; ignore if apt omits it
 hfsprogs
+lvm2
 
 # Network KCM (plasma-nm) deferred: Depends on QtWebEngine (~200MB) — too heavy for Tier-1 4GB.
 # Network/VPN Settings pages are Spike custom (not plasma-nm).

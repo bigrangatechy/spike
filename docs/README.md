@@ -122,6 +122,8 @@ spike/
     ├── ACCESSIBILITY.md
     ├── BRANDING.md
     ├── DISASTER-RECOVERY.md
+    ├── SPIKE-RECOVERY-TOOL-GENERAL.md
+    ├── SPIKE-MIGRATION.md
     ├── PERFORMANCE-BASELINES.md
     ├── GOVERNANCE.md
     ├── END-OF-LIFE-POLICY.md

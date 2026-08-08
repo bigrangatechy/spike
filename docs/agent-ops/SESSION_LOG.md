@@ -4,6 +4,56 @@ Append-only. Newest sessions at the **top**.
 
 ---
 
+## 2026-08-08 — spike-rescue 0.0.7: pre-alpha debug mode
+
+Prioritize debug over polish: window title shows version + `[pre-alpha debug]`; select/inventory/dest show paths/devices/mounts; Done screen dumps full debug log; every copy writes `REPORT.txt` beside the backup (scan summary, dest device, failure kinds, helper detail). Easy to strip later when the tool is finished.
+
+---
+
+## 2026-08-08 — spike-rescue 0.0.6: honest copy error kinds
+
+Completion report now splits **source read** vs **destination write** vs **verify**, and lists `path — kind: helper detail` (e.g. `destination not allowed`) instead of dumping write failures into “Could not read”.
+
+---
+
+## 2026-08-08 — spike-rescue 0.0.5: /var/log writable dest
+
+**Root cause (capture `…T102649Z`):** Casper mounts live USB `LABEL=writable` at **`/var/log`**. Rescue correctly offered it as dest and tried `copy-file` → `/var/log/SpikeBackup/…/Untitled 1.odt`, but the helper **rejected** `/var/log` (not in allow list) → reported as “Could not read”. Fix: allow `/var/log` when LABEL=writable; `mkdir-dest`; prefer `/var/log` in ensureLiveUsbWritableDest.
+
+---
+
+## 2026-08-08 — rescue 0.0.4 (700/600 reads) + Dolphin dark chrome
+
+**Rescue:** Test doc on installed OS unreadable — mounts as root but inventory/copy as `spike` misses `700` homes / `600` files. Helper gains `list-dirs` / `find-files` / `sha256` / `copy-file`; engine uses them under `/run/spike-rescue/`.
+
+**Dolphin:** White window + white text — SpikeDark scheme name alone; plasma-integration falls back to BreezeLight backgrounds. Inlined Colors:* into `/etc/xdg/kdeglobals` + skel; `QT_QUICK_CONTROLS_STYLE=org.kde.desktop`; shell **0.0.22**.
+
+SanDisk writable had install-logs/capture only (no SpikeBackup from this host mount).
+
+---
+
+## 2026-08-08 — spike-rescue 0.0.3: save to live USB writable
+
+Smoke: OS detect worked. Dest UI still pushed a second stick; Spike stick’s unmounted `LABEL=writable` (~27GB on 28GB SanDisk) was not offered. 0.0.3 RW-mounts that partition via helper `mount-rw` (writable-only) and lists **This Spike USB (writable)**. 2TB HDD unchanged (user off-limits; only appears if mounted under /run/media like any other volume).
+
+---
+
+## 2026-08-08 — spike-migration docs (spec)
+
+Filled `SPIKE-RECOVERY-TOOL-GENERAL.md` (Rescue vs Migration vs installer map) and wrote `SPIKE-MIGRATION.md` (Move My Files: pre-install live + post-install import, shared `SpikeBackup/`). Cross-linked INDEX, AGENTS, MIGRATION-GUIDE, DISASTER-RECOVERY, INSTALLER, ROADMAP. **No app code** — implementation after rescue is stable.
+
+---
+
+## 2026-08-08 — Spike Rescue 0.0.2: detect systems (sudo + btrfs)
+
+**Symptom:** Rescue My Files opened but found **no installed systems** on Fedora (N4020) or Kubuntu (A4).
+
+**Causes:** (1) `sudo -n mount` failed on the live image (no passwordless RO path) and failures were skipped silently; (2) Fedora btrfs often has `/` and `/home` as separate subvols — empty `/home` on the root subvol caused systems to be dropped.
+
+**Fix:** Constrained helper `/usr/lib/spike/spike-rescue-mount` + `/etc/sudoers.d/spike-rescue` for user `spike`; btrfs `subvol=root/@/@root` + separate `home/@home` mount; keep systems without users; scan summary shown when empty; LVM `vgchange -ay` in prepare. Rebuild ISO to smoke.
+
+---
+
 ## 2026-08-08 — Spike Rescue Layer 3 MVP (0.0.1)
 
 New Qt6 Widgets app `src/spike-rescue/` per DISASTER-RECOVERY.md: RO disk scan, home inventory, copy to `SpikeBackup/` with SHA256, live desktop **Rescue My Files**. Packaged via `package-spike-rescue.sh`; wired into `build-iso.sh` + hook `0600`. Live list: `ntfs-3g` / `hfsprogs`. Out of scope still: Layer 2 GRUB recovery UI, Layer 4 installer restore.

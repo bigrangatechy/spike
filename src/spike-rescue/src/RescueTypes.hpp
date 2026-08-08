@@ -30,7 +30,9 @@ struct DetectedSystem {
   BlockPartition partition;
   OsKind os = OsKind::Unknown;
   QString osLabel;    // "Spike Linux", "Windows 10", …
-  QString mountPoint; // temporary RO mount during scan/copy
+  QString mountPoint; // temporary RO mount during scan/copy (root / OS)
+  /** If set, personal files live here (e.g. btrfs subvol=home) instead of mountPoint/home. */
+  QString homeMountPoint;
   QStringList users;  // home usernames found
   qint64 fileCount = 0;
   qint64 byteTotal = 0;
@@ -61,10 +63,14 @@ struct DestVolume {
 struct CopyResult {
   qint64 copied = 0;
   qint64 failedRead = 0;
+  qint64 failedWrite = 0;
   qint64 failedVerify = 0;
   qint64 bytesCopied = 0;
-  QStringList unreadables;
+  /** "relative/path — kind: detail" lines for the report (capped by UI). */
+  QStringList failureDetails;
   QStringList verifyFails;
+  /** Pre-alpha: verbose lines for REPORT.txt / Done screen (not user-beauty). */
+  QStringList debugLog;
   bool cancelled = false;
   QString destRoot; // …/SpikeBackup
 };

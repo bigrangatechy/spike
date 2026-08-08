@@ -60,3 +60,12 @@ if [ -x /usr/bin/spike-rescue ]; then
 else
   echo "W: spike-rescue still missing after install attempt" >&2
 fi
+
+# Ensure live user gets SpikeDark-inlined kdeglobals (Dolphin/Kate chrome).
+if [ -f /etc/xdg/kdeglobals ]; then
+  for home in /home/spike /etc/skel; do
+    mkdir -p "${home}/.config"
+    cp -f /etc/xdg/kdeglobals "${home}/.config/kdeglobals"
+  done
+  chown -R spike:spike /home/spike/.config 2>/dev/null || true
+fi
