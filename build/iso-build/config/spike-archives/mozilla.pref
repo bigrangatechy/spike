@@ -1,0 +1,12 @@
+# Prefer Mozilla .debs over Ubuntu transitional Snap stubs.
+Package: *
+Pin: origin packages.mozilla.org
+Pin-Priority: 1001
+
+Package: firefox*
+Pin: release o=Ubuntu
+Pin-Priority: -1
+
+Package: thunderbird*
+Pin: release o=Ubuntu
+Pin-Priority: -1

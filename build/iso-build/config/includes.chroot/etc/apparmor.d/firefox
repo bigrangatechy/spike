@@ -1,0 +1,12 @@
+# Spike: Mozilla .deb Firefox must not use Ubuntu Snap-oriented AppArmor.
+# Stub unconfined profile (same idea as Ubuntu's naming stub, expanded paths).
+abi <abi/5.0>,
+include <tunables/global>
+
+profile firefox /{usr/bin/firefox,usr/lib/firefox{,-esr,-beta,-devedition,-nightly}/firefox{,-esr,-bin},opt/firefox/firefox{,-bin}} flags=(unconfined) {
+  userns,
+
+  @{exec_path} mr,
+
+  include if exists <local/firefox>
+}

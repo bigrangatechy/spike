@@ -303,7 +303,10 @@ That matches Spike’s rule: anything user-facing gets a GUI. A half-supported �
 
 ### Default Desktop Apps (Alpha)
 
-**Decision:** Preinstalled defaults (prefer `.deb` on Tier‑1): **Firefox** (browser), **Thunderbird** (email), **VLC** (media). LibreOffice follows after RAM/ISO budget allows. System tools (Dolphin, Kate, Konsole, Discover) remain `.deb` as today.
+**Decision:** Preinstalled defaults as real **`.deb`s**: **Firefox** and **Thunderbird** from **packages.mozilla.org** (suites `mozilla` + `thunderbird-deb` — never Ubuntu Snap transitional packages), **VLC** and **LibreOffice** from Ubuntu universe (with Qt/KF6/Plasma integration packages). Discover remains available for Flatpak + apt. Snap stays forbidden / stripped.
+
+**Future (BDFL, 2026-08-09):** These packages fill the roles for Alpha. Spike intends to eventually ship **lighter-weight replacements** for preinstalled apps where that helps Tier‑1 machines — same roles (browser, email, media, office), not a permanent commitment to this exact stack. See `agent-ops/DECISIONS.md`.
+
 
 ### Pre-Seeded Flatpak Runtimes
 

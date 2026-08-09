@@ -31,9 +31,8 @@ QWidget *makeMousePage(QWidget *parent, QLabel *statusBar)
   auto *lay = new QVBoxLayout(w);
   lay->addWidget(new QLabel(QStringLiteral("<h2>Mouse / Touchpad</h2>"), w));
   auto *hint = new QLabel(
-      QStringLiteral("Pointer speed and tap-to-click. Settings are written for KWin "
-                     "(device-specific Libinput sections). Live apply is best-effort — "
-                     "if feel does not change, restart spike-session."),
+      QStringLiteral("Pointer speed and tap-to-click. Saved for KWin and applied live "
+                     "via KWin InputDevice (Wayland)."),
       w);
   hint->setWordWrap(true);
   lay->addWidget(hint);

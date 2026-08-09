@@ -1,0 +1,11 @@
+# Spike: Mozilla .deb Thunderbird must not use Ubuntu Snap-oriented AppArmor.
+abi <abi/5.0>,
+include <tunables/global>
+
+profile thunderbird /{usr/bin/thunderbird,usr/lib/thunderbird/thunderbird{,-bin},opt/thunderbird/thunderbird{,-bin}} flags=(unconfined) {
+  userns,
+
+  @{exec_path} mr,
+
+  include if exists <local/thunderbird>
+}

@@ -1,0 +1,78 @@
+#!/bin/bash
+# Discover needs AppStream metadata + Flatpak (Flathub). Snap backend stays out.
+# Spec: DESIGN-DECISIONS.md (Flatpak + .deb via Discover; no Snap).
+set -euo pipefail
+
+echo "I: Spike Discover / AppStream / Flatpak setup"
+
+mkdir -p /etc/flatpak/remotes.d /var/cache/swcatalog /var/lib/swcatalog
+
+# Prefer Flatpak backend; never ship Snap Discover backend on Spike.
+if command -v apt-get >/dev/null 2>&1; then
+	DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+		appstream \
+		apt-config-icons \
+		packagekit \
+		flatpak \
+		plasma-discover-backend-flatpak \
+		xdg-user-dirs \
+		qml6-module-qtquick-controls \
+		qml6-module-qtquick-layouts \
+		2>/dev/null || echo "W: apt install Discover stack soft-failed (packages may already be in list)"
+	DEBIAN_FRONTEND=noninteractive apt-get purge -y plasma-discover-backend-snap 2>/dev/null || true
+fi
+
+# System Flathub remote (official .flatpakrepo staged under includes or fetched).
+if command -v flatpak >/dev/null 2>&1; then
+	if [[ -f /etc/flatpak/remotes.d/flathub.flatpakrepo ]]; then
+		flatpak remote-add --system --if-not-exists flathub \
+			/etc/flatpak/remotes.d/flathub.flatpakrepo 2>/dev/null \
+			|| flatpak remote-add --system --if-not-exists flathub \
+				https://dl.flathub.org/repo/flathub.flatpakrepo 2>/dev/null \
+			|| echo "W: could not add Flathub remote (offline build?)"
+	else
+		flatpak remote-add --system --if-not-exists flathub \
+			https://dl.flathub.org/repo/flathub.flatpakrepo 2>/dev/null \
+			|| echo "W: could not add Flathub remote (offline build?)"
+	fi
+fi
+
+# Populate AppStream cache from apt DEP-11 (fixes Discover “appstream is properly set up”).
+if command -v appstreamcli >/dev/null 2>&1; then
+	appstreamcli refresh-cache --force 2>/dev/null \
+		|| appstreamcli refresh --force 2>/dev/null \
+		|| echo "W: appstreamcli refresh soft-failed"
+fi
+
+# Powerdevil autostart fights Spike Power + can race the locker; KCMs stay installable.
+mkdir -p /etc/xdg/autostart
+if [[ -f /etc/xdg/autostart/powerdevil.desktop ]]; then
+	# Hide from Spike sessions; keep file for reference.
+	if ! grep -q '^Hidden=true' /etc/xdg/autostart/powerdevil.desktop 2>/dev/null; then
+		printf '\n# Spike: shell owns power UI / lock (SECURITY.md)\nHidden=true\nOnlyShowIn=KDE;\n' \
+			>>/etc/xdg/autostart/powerdevil.desktop
+	fi
+fi
+if command -v systemctl >/dev/null 2>&1; then
+	systemctl --global disable plasma-powerdevil.service 2>/dev/null || true
+	# Mask may fail in chroot without user bus — ignore.
+	systemctl --global mask plasma-powerdevil.service 2>/dev/null || true
+fi
+
+# Ensure breeze LNF is selected so our lockscreen QML is found.
+mkdir -p /etc/xdg
+if [[ -f /etc/xdg/kdeglobals ]]; then
+	if grep -q '^LookAndFeelPackage=' /etc/xdg/kdeglobals; then
+		sed -i 's/^LookAndFeelPackage=.*/LookAndFeelPackage=org.kde.breeze.desktop/' /etc/xdg/kdeglobals
+	else
+		printf '\n[KDE]\nLookAndFeelPackage=org.kde.breeze.desktop\n' >>/etc/xdg/kdeglobals
+	fi
+fi
+
+# Seed skel XDG dirs for newly created users (installer useradd -m).
+for d in Desktop Documents Downloads Music Pictures Videos Templates Public \
+	.mozilla/firefox .thunderbird .config/libreoffice/4/user; do
+	mkdir -p "/etc/skel/${d}"
+done
+
+echo "I: Spike Discover / AppStream / Flatpak setup finished"

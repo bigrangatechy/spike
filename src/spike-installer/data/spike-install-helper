@@ -185,6 +185,110 @@ cmd_fstab() {
   log "Wrote /etc/fstab"
 }
 
+# Fill XDG user dirs + Mozilla/LibreOffice roots for the installed user.
+seed_installed_home() {
+  user="$1"
+  home="$MNT/home/$user"
+  [ -n "$user" ] || return 0
+  [ -d "$home" ] || mkdir -p "$home"
+
+  for d in Desktop Documents Downloads Music Pictures Videos Templates Public \
+    .mozilla/firefox .thunderbird .config/libreoffice/4/user .cache/mozilla .cache/thunderbird; do
+    mkdir -p "$home/$d"
+  done
+
+  # user-dirs.dirs so apps see the folders before first graphical login
+  mkdir -p "$home/.config"
+  cat >"$home/.config/user-dirs.dirs" <<'EOF'
+XDG_DESKTOP_DIR="$HOME/Desktop"
+XDG_DOWNLOAD_DIR="$HOME/Downloads"
+XDG_TEMPLATES_DIR="$HOME/Templates"
+XDG_PUBLICSHARE_DIR="$HOME/Public"
+XDG_DOCUMENTS_DIR="$HOME/Documents"
+XDG_MUSIC_DIR="$HOME/Music"
+XDG_PICTURES_DIR="$HOME/Pictures"
+XDG_VIDEOS_DIR="$HOME/Videos"
+EOF
+  echo "en_US" >"$home/.config/user-dirs.locale" 2>/dev/null || true
+
+  if chroot "$MNT" sh -c "command -v xdg-user-dirs-update >/dev/null"; then
+    chroot "$MNT" runuser -u "$user" -- env HOME="/home/$user" xdg-user-dirs-update >/dev/null 2>&1 \
+      || log "WARN: xdg-user-dirs-update failed for $user"
+  fi
+
+  chroot "$MNT" chown -R "$user:$user" "/home/$user" 2>/dev/null \
+    || chown -R --reference="$home" "$home" 2>/dev/null \
+    || true
+  log "Seeded XDG + app profile dirs under /home/$user"
+}
+
+# Copy live Wi‑Fi/Ethernet NetworkManager profiles into the installed root so
+# credentials from installer Step 3 survive reboot (INSTALLER.md).
+copy_network_connections() {
+  dest="$MNT/etc/NetworkManager/system-connections"
+  mkdir -p "$dest"
+  copied=0
+
+  # 1) Keyfiles already on the live system
+  if [ -d /etc/NetworkManager/system-connections ]; then
+    for f in /etc/NetworkManager/system-connections/*; do
+      [ -f "$f" ] || continue
+      base="$(basename "$f")"
+      case "$base" in
+        .*|README*|default) continue ;;
+      esac
+      cp -a "$f" "$dest/" && copied=$((copied + 1)) || true
+    done
+  fi
+
+  # 2) Export active / known wifi+ethernet via nmcli (covers user-scoped connects)
+  if command -v nmcli >/dev/null 2>&1; then
+    nmcli -t -f UUID,TYPE,NAME connection show 2>/dev/null | while IFS=: read -r uuid type name; do
+      [ -n "$uuid" ] || continue
+      case "$type" in
+        802-11-wireless|wifi|802-3-ethernet|ethernet) ;;
+        *) continue ;;
+      esac
+      safe="$(printf '%s' "$name" | tr -c 'A-Za-z0-9._-' '_')"
+      [ -n "$safe" ] || safe="$uuid"
+      out="$dest/${safe}.nmconnection"
+      if [ -f "$out" ]; then
+        continue
+      fi
+      tmp="$(mktemp)"
+      if nmcli connection export "$uuid" >"$tmp" 2>/dev/null && [ -s "$tmp" ]; then
+        # Ensure autoconnect for post-install first boot
+        if ! grep -q '^autoconnect=' "$tmp" 2>/dev/null; then
+          if grep -q '^\[connection\]' "$tmp"; then
+            sed -i '/^\[connection\]/a autoconnect=true' "$tmp" 2>/dev/null || true
+          fi
+        else
+          sed -i 's/^autoconnect=.*/autoconnect=true/' "$tmp" 2>/dev/null || true
+        fi
+        # Clear per-user permissions so the new user can use it
+        sed -i '/^permissions=/d' "$tmp" 2>/dev/null || true
+        mv -f "$tmp" "$out"
+        copied=$((copied + 1))
+      else
+        rm -f "$tmp"
+      fi
+    done
+  fi
+
+  # Fix ownership/mode for NM
+  find "$dest" -type f -exec chmod 600 {} \; 2>/dev/null || true
+  find "$dest" -type f -exec chown root:root {} \; 2>/dev/null || true
+
+  # Re-count (subshell may have lost copied for nmcli loop)
+  n="$(find "$dest" -type f 2>/dev/null | wc -l | tr -d ' ')"
+  n="${n:-0}"
+  if [ "$n" -gt 0 ]; then
+    log "Copied NetworkManager connections → installed system ($n file(s))"
+  else
+    log "WARN: no NetworkManager connections to copy (Wi‑Fi may need re-entry after install)"
+  fi
+}
+
 cmd_configure() {
   user="${SPIKE_INSTALL_USER:?}"
   host="${SPIKE_INSTALL_HOSTNAME:?}"
@@ -234,6 +338,10 @@ BACKSPACE="guess"
 EOF
   log "Wrote /etc/default/keyboard XKBLAYOUT=$keyboard"
 
+  # Copy live NetworkManager Wi‑Fi/Ethernet profiles into the installed system
+  # so credentials from installer Step 3 work after reboot (INSTALLER.md).
+  copy_network_connections
+
   mount --bind /dev "$MNT/dev" 2>/dev/null || true
   mount --bind /proc "$MNT/proc" 2>/dev/null || true
   mount --bind /sys "$MNT/sys" 2>/dev/null || true
@@ -262,6 +370,9 @@ EOF
   chroot "$MNT" usermod -aG \
     sudo,audio,video,input,render,plugdev,netdev,pipewire "$user" 2>/dev/null \
     || log "WARN: usermod groups failed for $user"
+
+  # Fill XDG home (Documents/Pictures/…) + app profile roots for the new user.
+  seed_installed_home "$user"
 
   if [ -n "$pwfile" ] && [ -f "$pwfile" ]; then
     pw="$(cat "$pwfile")"

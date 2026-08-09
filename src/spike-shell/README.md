@@ -6,7 +6,7 @@ Stage 3 skeleton — **Alpha**. Spec: `docs/DESKTOP.md`.
 
 Spike Shell is the custom desktop shell (Qt6 **Widgets**, not QML) that runs as a Wayland client under **standalone KWin**. It does **not** use Plasma (`plasma-workspace`, Akonadi, Baloo, etc.).
 
-MVP for this skeleton (**0.0.32**):
+MVP for this skeleton (**0.0.35**):
 
 | Piece | Status |
 |-------|--------|
@@ -23,7 +23,8 @@ MVP for this skeleton (**0.0.32**):
 | Removable / Updates / Night Light | ✅ conditional / optional |
 | Bluetooth / Airplane / Keyboard Layout | ✅ conditional |
 | Session menu | ✅ Spike lock screen + suspend confirm if inhibit on |
-| Lock screen | ✅ `SpikeLockScreen` + PAM (`/etc/pam.d/spike-lock`) |
+| Lock screen | ✅ `SpikeLockScreen` + PAM + breeze LNF `LockScreen.qml` for KWin greeter |
+| Home seed | ✅ `spike-seed-home` (XDG dirs, Mozilla, LibreOffice) |
 | Settings → PANEL | ✅ Panel / Tray Applets / Night Light (live Apply) |
 | Settings window | ✅ custom pages + KCM hosts |
 | Power (Settings) | ✅ spike-config + logind + same block-sleep switch |
@@ -42,7 +43,7 @@ cd src/spike-shell
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
 cmake --build build -j"$(nproc)"
 ./scripts/package-spike-shell.sh
-# → build/packages/spike-shell_0.0.32-1_amd64.deb
+# → build/packages/spike-shell_0.0.35-1_amd64.deb
 ```
 
 ## First-run

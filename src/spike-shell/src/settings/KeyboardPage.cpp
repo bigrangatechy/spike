@@ -30,8 +30,8 @@ QWidget *makeKeyboardPage(QWidget *parent, QLabel *statusBar)
   auto *lay = new QVBoxLayout(w);
   lay->addWidget(new QLabel(QStringLiteral("<h2>Keyboard</h2>"), w));
   auto *hint = new QLabel(
-      QStringLiteral("Key repeat delay and rate. Saved for KWin; live apply is best-effort "
-                     "(XWayland via xset + KWin reconfigure). Shortcuts editor comes later."),
+      QStringLiteral("Key repeat delay and rate. Saved for KWin and applied live via "
+                     "KWin InputDevice when available (also xset for XWayland)."),
       w);
   hint->setWordWrap(true);
   lay->addWidget(hint);

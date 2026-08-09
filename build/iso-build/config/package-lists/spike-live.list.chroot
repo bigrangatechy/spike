@@ -76,9 +76,9 @@ rtkit
 
 # Stage-3 live apps — KDE standalone set from CONSTRAINTS.md / DESIGN-DECISIONS.md.
 # Spike Shell owns the shell; these are the application layer (not full Plasma).
-# Alpha (2026-08): seed default apps as .deb where possible
-# (firefox, vlc, thunderbird); Flatpak also via Discover. No Snap.
-# See docs/agent-ops/STATE.md “Default apps” and DESIGN-DECISIONS.md.
+# Alpha default apps: Mozilla .deb repo (config/spike-archives → archives/) for Firefox /
+# Thunderbird — never Ubuntu Snap stubs. VLC + LibreOffice from Ubuntu universe.
+# Flatpak also via Discover. No Snap. See STATE.md “Default apps”.
 # Do not pull QtWebEngine browsers for Tier-1 RAM.
 dolphin
 konsole
@@ -87,6 +87,26 @@ ark
 kcalc
 kde-spectacle
 plasma-discover
+# Discover backends: Flatpak + apt/PackageKit. Never Snap.
+flatpak
+plasma-discover-backend-flatpak
+appstream
+apt-config-icons
+packagekit
+xdg-user-dirs
+# Lockscreen greeter QML (Spike minimal LockScreen under breeze LNF)
+qml6-module-qtquick-controls
+qml6-module-qtquick-layouts
+# Default user apps (Alpha)
+firefox
+thunderbird
+vlc
+libreoffice
+libreoffice-qt6
+libreoffice-kf6
+libreoffice-plasma
+libreoffice-style-breeze
+libreoffice-gtk3
 # Live/debug extras (not in the shipped app list, but useful on USB smoke tests)
 htop
 gparted

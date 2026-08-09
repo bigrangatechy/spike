@@ -1,0 +1,40 @@
+#!/bin/bash
+# After Mozilla .debs install, replace Ubuntu AppArmor profiles that break
+# profile creation ("Your Firefox/Thunderbird profile cannot be loaded").
+# Spec: SECURITY.md / DESIGN-DECISIONS (Mozilla .deb, no Snap).
+set -euo pipefail
+
+echo "I: Spike Mozilla AppArmor fix"
+
+# Conflicting confined profiles from Ubuntu / mozillateam leftovers
+rm -f /etc/apparmor.d/usr.bin.firefox \
+	/etc/apparmor.d/usr.bin.thunderbird \
+	/etc/apparmor.d/usr.bin.firefox.* \
+	/etc/apparmor.d/usr.bin.thunderbird.* \
+	2>/dev/null || true
+
+# Disable snap-era abstractions if present as disable symlinks are fine
+mkdir -p /etc/apparmor.d/disable
+for p in usr.bin.firefox usr.bin.thunderbird; do
+	if [[ -e "/etc/apparmor.d/$p" ]]; then
+		ln -sfn "/etc/apparmor.d/$p" "/etc/apparmor.d/disable/$p" 2>/dev/null || true
+	fi
+done
+
+# Ensure our unconfined stubs exist (includes.chroot should already have them)
+if [[ ! -f /etc/apparmor.d/firefox ]]; then
+	echo "W: /etc/apparmor.d/firefox missing — Mozilla Firefox may be confined incorrectly"
+fi
+if [[ ! -f /etc/apparmor.d/thunderbird ]]; then
+	echo "W: /etc/apparmor.d/thunderbird missing — Mozilla Thunderbird may be confined incorrectly"
+fi
+
+if command -v apparmor_parser >/dev/null 2>&1; then
+	apparmor_parser -r /etc/apparmor.d/firefox 2>/dev/null || true
+	apparmor_parser -r /etc/apparmor.d/thunderbird 2>/dev/null || true
+fi
+if command -v systemctl >/dev/null 2>&1; then
+	systemctl reload apparmor.service 2>/dev/null || true
+fi
+
+echo "I: Spike Mozilla AppArmor fix finished"

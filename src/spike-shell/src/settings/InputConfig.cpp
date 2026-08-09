@@ -4,11 +4,13 @@
 #include <QDBusInterface>
 #include <QDBusMessage>
 #include <QDBusReply>
+#include <QDBusVariant>
 #include <QDir>
 #include <QFile>
 #include <QProcess>
 #include <QSettings>
 #include <QStandardPaths>
+#include <QVariant>
 
 namespace spike {
 
@@ -20,9 +22,106 @@ QString kcminputPath()
          QStringLiteral("/kcminputrc");
 }
 
+bool setKwinProperty(const QString &objectPath, const char *property, const QVariant &value)
+{
+  QDBusInterface props(QStringLiteral("org.kde.KWin"), objectPath,
+                       QStringLiteral("org.freedesktop.DBus.Properties"),
+                       QDBusConnection::sessionBus());
+  if (!props.isValid()) {
+    return false;
+  }
+  const QDBusMessage reply =
+      props.call(QStringLiteral("Set"), QStringLiteral("org.kde.KWin.InputDevice"),
+                 QString::fromUtf8(property), QVariant::fromValue(QDBusVariant(value)));
+  return reply.type() != QDBusMessage::ErrorMessage;
+}
+
+QVariant getKwinProperty(const QString &objectPath, const char *property)
+{
+  QDBusInterface props(QStringLiteral("org.kde.KWin"), objectPath,
+                       QStringLiteral("org.freedesktop.DBus.Properties"),
+                       QDBusConnection::sessionBus());
+  if (!props.isValid()) {
+    return {};
+  }
+  const QDBusReply<QVariant> reply =
+      props.call(QStringLiteral("Get"), QStringLiteral("org.kde.KWin.InputDevice"),
+                 QString::fromUtf8(property));
+  return reply.isValid() ? reply.value() : QVariant();
+}
+
+/** Apply pointer accel / tap to every KWin pointer or touchpad device. */
+int applyPointerViaKwin(double acceleration, bool tapToClick)
+{
+  int ok = 0;
+  for (int i = 0; i < 64; ++i) {
+    const QString path =
+        QStringLiteral("/org/kde/KWin/InputDevice/event%1").arg(i);
+    const QVariant supportsPointer = getKwinProperty(path, "supportsPointerAcceleration");
+    const QVariant isPointer = getKwinProperty(path, "pointer");
+    const QVariant isTouchpad = getKwinProperty(path, "touchpad");
+    const bool pointerish =
+        (isPointer.isValid() && isPointer.toBool()) ||
+        (isTouchpad.isValid() && isTouchpad.toBool()) ||
+        (supportsPointer.isValid() && supportsPointer.toBool());
+    if (!pointerish) {
+      // Device path may not exist — Get returns invalid.
+      if (!isPointer.isValid() && !isTouchpad.isValid() && !supportsPointer.isValid()) {
+        continue;
+      }
+      continue;
+    }
+
+    bool deviceOk = false;
+    if (supportsPointer.isValid() ? supportsPointer.toBool() : true) {
+      if (setKwinProperty(path, "pointerAcceleration", acceleration)) {
+        deviceOk = true;
+      }
+      setKwinProperty(path, "pointerAccelerationProfileAdaptive", true);
+      setKwinProperty(path, "pointerAccelerationProfileFlat", false);
+    }
+    const QVariant supportsTap = getKwinProperty(path, "supportsTapToClick");
+    if ((isTouchpad.isValid() && isTouchpad.toBool()) ||
+        (supportsTap.isValid() && supportsTap.toBool())) {
+      if (setKwinProperty(path, "tapToClick", tapToClick)) {
+        deviceOk = true;
+      }
+    }
+    if (deviceOk) {
+      ++ok;
+    }
+  }
+  return ok;
+}
+
+int applyKeyboardRepeatViaKwin(int delayMs, int ratePerSec)
+{
+  int ok = 0;
+  for (int i = 0; i < 64; ++i) {
+    const QString path =
+        QStringLiteral("/org/kde/KWin/InputDevice/event%1").arg(i);
+    const QVariant isKeyboard = getKwinProperty(path, "keyboard");
+    if (!isKeyboard.isValid() || !isKeyboard.toBool()) {
+      continue;
+    }
+    bool deviceOk = false;
+    if (setKwinProperty(path, "repeatDelay", uint(delayMs))) {
+      deviceOk = true;
+    }
+    // KWin uses characters-per-second style rate on some builds; try both names.
+    if (setKwinProperty(path, "repeatRate", ratePerSec) ||
+        setKwinProperty(path, "keyboardRepeatRate", ratePerSec)) {
+      deviceOk = true;
+    }
+    if (deviceOk) {
+      ++ok;
+    }
+  }
+  return ok;
+}
+
 bool tryKwinReconfigure()
 {
-  // Best-effort: KWin may reload kcminputrc; many builds only pick input up at start.
   QDBusInterface kwin(QStringLiteral("org.kde.KWin"), QStringLiteral("/KWin"),
                       QStringLiteral("org.kde.KWin"), QDBusConnection::sessionBus());
   if (kwin.isValid()) {
@@ -31,18 +130,7 @@ bool tryKwinReconfigure()
       return true;
     }
   }
-
-  QProcess proc;
-  proc.start(QStringLiteral("qdbus6"),
-             {QStringLiteral("org.kde.KWin"), QStringLiteral("/KWin"),
-              QStringLiteral("org.kde.KWin.reconfigure")});
-  if (proc.waitForFinished(3000) && proc.exitCode() == 0) {
-    return true;
-  }
-  proc.start(QStringLiteral("qdbus"),
-             {QStringLiteral("org.kde.KWin"), QStringLiteral("/KWin"),
-              QStringLiteral("org.kde.KWin.reconfigure")});
-  return proc.waitForFinished(3000) && proc.exitCode() == 0;
+  return false;
 }
 
 int hexIdToDecimal(const QByteArray &raw)
@@ -72,25 +160,21 @@ QVector<PointerDevice> listPointerDevices()
                        lower.contains(QLatin1String("synaptics")) ||
                        lower.contains(QLatin1String("trackpad")) ||
                        lower.contains(QLatin1String("clickpad")) ||
-                       lower.contains(QLatin1String("htix")) || // Gemini Lake laptop pads
+                       lower.contains(QLatin1String("htix")) ||
                        lower.startsWith(QLatin1String("elan")) ||
-                       lower.contains(QLatin1String("dll")); // Dell pads
+                       lower.contains(QLatin1String("dll"));
     const bool isMouse = lower.contains(QLatin1String("mouse")) ||
                          lower.contains(QLatin1String("trackpoint")) ||
                          lower.contains(QLatin1String("pointer"));
     if (!isPad && !isMouse) {
-      // Many laptop pads are named oddly (e.g. HTIX5288) — include if it has relative axes
-      // via capabilities; fallback: skip non-obvious names except known HID pads.
       QFile caps(base + QStringLiteral("/capabilities/rel"));
       if (!caps.exists()) {
         continue;
       }
-      // Still skip pure keyboards / switches by requiring "rel" non-empty and not "keyboard"
       if (lower.contains(QLatin1String("keyboard")) || lower.contains(QLatin1String("button")) ||
           lower.contains(QLatin1String("lid")) || lower.contains(QLatin1String("video bus"))) {
         continue;
       }
-      // Accept devices with relative movement (mice/pads)
       if (!caps.open(QIODevice::ReadOnly | QIODevice::Text)) {
         continue;
       }
@@ -102,6 +186,7 @@ QVector<PointerDevice> listPointerDevices()
 
     PointerDevice d;
     d.name = name;
+    d.eventName = eventName;
     d.touchpad = isPad;
     QFile vend(base + QStringLiteral("/id/vendor"));
     QFile prod(base + QStringLiteral("/id/product"));
@@ -111,7 +196,6 @@ QVector<PointerDevice> listPointerDevices()
     if (prod.open(QIODevice::ReadOnly | QIODevice::Text)) {
       d.productId = hexIdToDecimal(prod.readAll());
     }
-    // Deduplicate by vid/pid
     bool dup = false;
     for (const PointerDevice &e : out) {
       if (e.vendorId == d.vendorId && e.productId == d.productId && e.name == d.name) {
@@ -141,7 +225,6 @@ QString applyPointerSettings(double acceleration, bool tapToClick, bool *liveApp
   const QVector<PointerDevice> devices = listPointerDevices();
   int written = 0;
   for (const PointerDevice &d : devices) {
-    // Plasma format: [Libinput][vendor][product]
     s.beginGroup(QStringLiteral("Libinput"));
     s.beginGroup(QString::number(d.vendorId));
     s.beginGroup(QString::number(d.productId));
@@ -155,25 +238,25 @@ QString applyPointerSettings(double acceleration, bool tapToClick, bool *liveApp
     s.endGroup();
     ++written;
   }
-  // Also keep a flat fallback key for readers that expect it.
   s.beginGroup(QStringLiteral("Libinput"));
   s.setValue(QStringLiteral("TapToClick"), tapToClick);
   s.endGroup();
   s.sync();
 
-  const bool reconfigured = tryKwinReconfigure();
+  const int liveCount = applyPointerViaKwin(acceleration, tapToClick);
+  tryKwinReconfigure();
   if (liveApplied) {
-    *liveApplied = reconfigured;
+    *liveApplied = liveCount > 0;
   }
 
-  QString msg = QStringLiteral("Saved to %1 (%2 pointer device section(s)).")
+  QString msg = QStringLiteral("Saved to %1 (%2 device section(s)).")
                     .arg(kcminputPath())
                     .arg(written);
-  if (reconfigured) {
-    msg += QStringLiteral(" Asked KWin to reconfigure (may need a new session if feel unchanged).");
+  if (liveCount > 0) {
+    msg += QStringLiteral(" Applied live to %1 KWin input device(s).").arg(liveCount);
   } else {
-    msg += QStringLiteral(" KWin did not reconfigure — log out/in or restart spike-session for "
-                          "pointer changes to take effect.");
+    msg += QStringLiteral(" KWin InputDevice D-Bus apply failed — try again or restart "
+                          "spike-session.");
   }
   return msg;
 }
@@ -193,21 +276,22 @@ QString applyKeyboardRepeat(int delayMs, int ratePerSec, bool *liveApplied)
   s.endGroup();
   s.sync();
 
-  // XWayland clients only — harmless if it fails under pure Wayland.
   QProcess::execute(QStringLiteral("xset"),
                     {QStringLiteral("r"), QStringLiteral("rate"), QString::number(delayMs),
                      QString::number(ratePerSec)});
 
-  const bool reconfigured = tryKwinReconfigure();
+  const int liveCount = applyKeyboardRepeatViaKwin(delayMs, ratePerSec);
+  tryKwinReconfigure();
   if (liveApplied) {
-    *liveApplied = reconfigured;
+    *liveApplied = liveCount > 0;
   }
 
   QString msg = QStringLiteral("Saved keyboard repeat to %1.").arg(kcminputPath());
-  if (reconfigured) {
-    msg += QStringLiteral(" Asked KWin to reconfigure.");
+  if (liveCount > 0) {
+    msg += QStringLiteral(" Applied live to %1 keyboard device(s).").arg(liveCount);
   } else {
-    msg += QStringLiteral(" Restart spike-session if repeat feel is unchanged.");
+    msg += QStringLiteral(" Live KWin apply unavailable — XWayland xset tried; restart "
+                          "session if needed.");
   }
   return msg;
 }

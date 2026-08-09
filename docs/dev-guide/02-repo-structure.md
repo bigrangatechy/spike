@@ -121,8 +121,10 @@ Important Spike-owned bits:
 ```
 config/
 ├── package-lists/spike-live.list.chroot
+├── spike-archives/             → Mozilla APT (staged → archives/ by build-iso.sh)
 ├── hooks/                      → e.g. 0600 inject debs + Desktop shortcuts
 ├── includes.chroot/
+│   ├── etc/apt/…               → Mozilla sources/prefs/key (installed + live)
 │   ├── etc/xdg/menus/applications.menu
 │   ├── usr/share/desktop-directories/spike-tools.directory
 │   └── … branding, kdeglobals, session drop-ins

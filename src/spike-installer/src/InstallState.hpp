@@ -11,7 +11,8 @@ struct InstallState {
   QString timezone = QStringLiteral("UTC");
   QString keyboard = QStringLiteral("us"); // XKBLAYOUT
   QString wifiSsid;
-  QString wifiConnected; // display only for now
+  QString wifiConnected; // installer UI + logged; NM profiles copied by helper
+
   QString username = QStringLiteral("spike");
   QString password; // kept in memory only; never logged
   QString hostname = QStringLiteral("spike");

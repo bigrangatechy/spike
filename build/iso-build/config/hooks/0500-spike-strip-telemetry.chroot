@@ -47,5 +47,14 @@ systemctl disable snapd.service 2>/dev/null || true
 systemctl disable snapd.socket 2>/dev/null || true
 systemctl mask snapd.service 2>/dev/null || true
 
+# Guard: Ubuntu transitional firefox/thunderbird packages pull Snap. If they
+# somehow landed, purge them so the next apt pass can install Mozilla .debs.
+for stub in firefox thunderbird; do
+	if dpkg-query -W -f='${Version}' "$stub" 2>/dev/null | grep -qi snap; then
+		echo "W: Purging Snap-stub package: $stub"
+		apt-get purge -y "$stub" || true
+	fi
+done
+
 apt-get clean || true
 echo "I: Spike strip hook finished"

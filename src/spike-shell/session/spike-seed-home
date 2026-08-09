@@ -1,0 +1,67 @@
+#!/bin/bash
+# Seed a usable home for Spike sessions (installed + live).
+# Creates XDG user dirs, Mozilla profile roots, and LibreOffice user config
+# so apps do not fail with missing/inaccessible profiles.
+# Called from spike-session (unprivileged).
+set -euo pipefail
+
+[[ "$(id -u)" -ne 0 ]] || exit 0
+[[ -n "${HOME:-}" && -d "$HOME" ]] || exit 0
+
+ensure_dir() {
+  local d="$1"
+  if [[ -e "$d" ]]; then
+    if [[ ! -w "$d" ]] || [[ ! -O "$d" ]]; then
+      mv -f "$d" "${d}.spike-inaccessible.$$" 2>/dev/null || rm -rf "$d" 2>/dev/null || true
+      mkdir -p "$d"
+    fi
+  else
+    mkdir -p "$d"
+  fi
+}
+
+fix_profiles_ini() {
+  local base="$1"
+  local ini="${base}/profiles.ini"
+  [[ -f "$ini" ]] || return 0
+  local path=""
+  path="$(awk -F= '/^\[Profile/{p=1} p && /^Path=/{print $2; exit}' "$ini" 2>/dev/null || true)"
+  [[ -n "$path" ]] || return 0
+  local full="$path"
+  if [[ "$path" != /* ]]; then
+    full="${base}/${path}"
+  fi
+  if [[ ! -d "$full" ]]; then
+    echo "spike: resetting broken Mozilla profiles.ini under ${base}" >&2
+    rm -f "$ini" "${base}/installs.ini" 2>/dev/null || true
+  fi
+}
+
+# XDG well-known folders (Documents, Pictures, …)
+if command -v xdg-user-dirs-update >/dev/null 2>&1; then
+  xdg-user-dirs-update >/dev/null 2>&1 || true
+fi
+for d in Desktop Documents Downloads Music Pictures Videos Templates Public; do
+  ensure_dir "${HOME}/${d}"
+done
+
+# Mozilla Firefox / Thunderbird
+ensure_dir "${HOME}/.mozilla"
+ensure_dir "${HOME}/.mozilla/firefox"
+ensure_dir "${HOME}/.thunderbird"
+ensure_dir "${HOME}/.cache"
+ensure_dir "${HOME}/.cache/mozilla"
+ensure_dir "${HOME}/.cache/thunderbird"
+fix_profiles_ini "${HOME}/.mozilla/firefox"
+fix_profiles_ini "${HOME}/.thunderbird"
+
+# LibreOffice user installation (avoids silent “User installation could not be completed”)
+ensure_dir "${HOME}/.config"
+ensure_dir "${HOME}/.config/libreoffice"
+ensure_dir "${HOME}/.config/libreoffice/4"
+ensure_dir "${HOME}/.config/libreoffice/4/user"
+
+# Compat: older sessions may still call spike-fix-mozilla-home
+if [[ "$(basename "$0")" == "spike-fix-mozilla-home" ]]; then
+  :
+fi

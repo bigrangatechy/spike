@@ -7,6 +7,7 @@ namespace spike {
 
 struct PointerDevice {
   QString name;
+  QString eventName; // e.g. "event5" — matches KWin InputDevice path
   int vendorId = 0;  // decimal, as Plasma kcminputrc uses
   int productId = 0;
   bool touchpad = false;
@@ -16,15 +17,15 @@ struct PointerDevice {
 QVector<PointerDevice> listPointerDevices();
 
 /**
- * Write mouse/touchpad prefs the way KWin expects:
- *   [Mouse] PointerAcceleration=…
- *   [Libinput][<vendor>][<product>] TapToClick=… / PointerAcceleration=…
- * Then ask KWin to reconfigure (best-effort live apply).
- * Returns a short human status string.
+ * Persist mouse/touchpad prefs for KWin (kcminputrc) and apply live via
+ * org.kde.KWin.InputDevice D-Bus properties (Wayland).
  */
 QString applyPointerSettings(double acceleration /* -1..1 */, bool tapToClick, bool *liveApplied);
 
-/** Write [Keyboard] RepeatDelay / RepeatRate and ask KWin to reconfigure. */
+/**
+ * Persist keyboard repeat and apply live via KWin InputDevice keyboardRepeat*
+ * properties when available; also xset for XWayland.
+ */
 QString applyKeyboardRepeat(int delayMs, int ratePerSec, bool *liveApplied);
 
 } // namespace spike

@@ -103,6 +103,101 @@ else
   echo "I: spike-migration present"
 fi
 
+# Default apps must be real .debs (Mozilla), not Ubuntu Snap stubs.
+for app in firefox thunderbird vlc; do
+  if ! command -v "$app" >/dev/null 2>&1 && [ ! -x "/usr/bin/$app" ]; then
+    echo "E: default app missing: $app" >&2
+    fail=1
+  else
+    echo "I: default app present: $app"
+  fi
+done
+if ! dpkg-query -W -f='${Status}' firefox 2>/dev/null | grep -q "install ok installed"; then
+  echo "E: firefox package not installed" >&2
+  fail=1
+elif dpkg-query -W -f='${Version}' firefox 2>/dev/null | grep -qi snap; then
+  echo "E: firefox is Ubuntu Snap stub — need packages.mozilla.org" >&2
+  fail=1
+else
+  echo "I: firefox is non-Snap .deb ($(dpkg-query -W -f='${Version}' firefox))"
+fi
+if ! dpkg-query -W -f='${Status}' thunderbird 2>/dev/null | grep -q "install ok installed"; then
+  echo "E: thunderbird package not installed" >&2
+  fail=1
+elif dpkg-query -W -f='${Version}' thunderbird 2>/dev/null | grep -qi snap; then
+  echo "E: thunderbird is Ubuntu Snap stub — need packages.mozilla.org" >&2
+  fail=1
+else
+  echo "I: thunderbird is non-Snap .deb ($(dpkg-query -W -f='${Version}' thunderbird))"
+fi
+if ! dpkg-query -W -f='${Status}' libreoffice-writer 2>/dev/null | grep -q "install ok installed" \
+   && ! dpkg-query -W -f='${Status}' libreoffice 2>/dev/null | grep -q "install ok installed"; then
+  echo "E: libreoffice missing" >&2
+  fail=1
+else
+  echo "I: libreoffice present"
+fi
+if [ ! -f /etc/apt/sources.list.d/mozilla.list ] && [ ! -f /etc/apt/sources.list.d/mozilla.list.chroot ]; then
+  # live-build may name it mozilla.list from archives
+  if ! ls /etc/apt/sources.list.d/mozilla* >/dev/null 2>&1; then
+    echo "E: Mozilla APT source missing under /etc/apt/sources.list.d/" >&2
+    fail=1
+  else
+    echo "I: Mozilla APT source present"
+  fi
+else
+  echo "I: Mozilla APT source present"
+fi
+
+# Mozilla .deb AppArmor stubs (profile-cannot-be-loaded if Ubuntu confined profiles win).
+if [ ! -f /etc/apparmor.d/firefox ]; then
+  echo "E: /etc/apparmor.d/firefox missing (Mozilla AppArmor stub)" >&2
+  fail=1
+else
+  echo "I: apparmor firefox stub present"
+fi
+if [ ! -f /etc/apparmor.d/thunderbird ]; then
+  echo "E: /etc/apparmor.d/thunderbird missing (Mozilla AppArmor stub)" >&2
+  fail=1
+else
+  echo "I: apparmor thunderbird stub present"
+fi
+if [ -f /etc/apparmor.d/usr.bin.firefox ] || [ -f /etc/apparmor.d/usr.bin.thunderbird ]; then
+  echo "W: confined usr.bin.firefox/thunderbird still present — 0730 hook should remove"
+fi
+
+# Discover / AppStream / Flatpak
+if ! command -v flatpak >/dev/null 2>&1; then
+  echo "E: flatpak missing (Discover Flatpak backend)" >&2
+  fail=1
+else
+  echo "I: flatpak present"
+fi
+if ! dpkg-query -W -f='${Status}' plasma-discover-backend-flatpak 2>/dev/null | grep -q "install ok installed"; then
+  echo "E: plasma-discover-backend-flatpak missing" >&2
+  fail=1
+else
+  echo "I: plasma-discover-backend-flatpak present"
+fi
+if ! command -v appstreamcli >/dev/null 2>&1; then
+  echo "E: appstreamcli missing" >&2
+  fail=1
+else
+  echo "I: appstreamcli present"
+fi
+if [ ! -f /usr/share/plasma/look-and-feel/org.kde.breeze.desktop/contents/lockscreen/LockScreen.qml ]; then
+  echo "E: Spike lockscreen QML missing under breeze LNF" >&2
+  fail=1
+else
+  echo "I: Spike lockscreen QML present"
+fi
+if command -v xdg-user-dirs-update >/dev/null 2>&1; then
+  echo "I: xdg-user-dirs present"
+else
+  echo "E: xdg-user-dirs missing" >&2
+  fail=1
+fi
+
 if [ "$fail" -ne 0 ]; then
   exit 1
 fi

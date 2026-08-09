@@ -1,0 +1,3 @@
+#!/bin/bash
+# Compat wrapper — prefer spike-seed-home.
+exec /usr/bin/spike-seed-home "$@"

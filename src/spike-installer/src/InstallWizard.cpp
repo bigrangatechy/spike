@@ -562,6 +562,13 @@ void InstallWizard::connectWifi()
   m_state.wifiSsid = ssid;
   m_state.wifiConnected = QStringLiteral("connected:%1").arg(ssid);
   m_wifiStatus->setText(QStringLiteral("Connected to %1.").arg(ssid));
+  // Prefer a system-wide connection so install helper can copy credentials.
+  runNmcli({QStringLiteral("connection"), QStringLiteral("modify"), ssid,
+            QStringLiteral("connection.permissions"), QString()},
+           8000);
+  runNmcli({QStringLiteral("connection"), QStringLiteral("modify"), ssid,
+            QStringLiteral("connection.autoconnect"), QStringLiteral("yes")},
+           8000);
   refreshWifiUi();
 }
 

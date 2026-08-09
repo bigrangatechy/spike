@@ -1,6 +1,6 @@
 # Spike Agent Ops — Current State
 
-**Last updated:** 2026-08-09  
+**Last updated:** 2026-08-10  
 **Phase label:** **Alpha** (installer E2E met — live → install → reboot to installed desktop)  
 **Note:** Pre-alpha gate from `DECISIONS.md` is closed. Alpha focus: Tier‑1 desktop completeness (preinstalled apps, first-run polish, hardware matrix). Beta is still later. See `ROADMAP.md` Phase 2.
 
@@ -15,21 +15,20 @@
 | `dev-guide/` | 📝 Core filled (01–09, 12, 19); remaining stubs point at product docs |
 | agent-ops core | ✅ Written |
 | ISO / build tooling | ✅ live-build; hybrid remaster + debug capture |
-| Installer stack | ✅ **0.0.11** E2E smoke green; first-boot markers; shell **0.0.32** lock/inhibit |
+| Installer stack | ✅ **0.0.13** home seed + Wi‑Fi handoff; shell **0.0.35** |
 | `scripts/build-iso.sh` | ✅ Packages config + shell + rescue + installer + **migration** + lb build |
 | Stage 1 live ISO | ✅ Hardware boot + login |
-| Stage 2 (`spike-config`) | ✅ **0.0.11** (KERNEL.md module blacklist from detect) |
-| Stage 3 (Spike Shell) | 📝 **0.0.32** lock + sleep inhibit + brightness live + Rescue **0.0.12** + migration **0.0.3** |
-| Stage 4 (installer) | ✅ **0.0.11** — E2E install + blacklist + locale; first-run on next ISO |
-| Preinstalled apps | 🔲 Alpha next — Firefox / media / email (see below) |
+| Stage 2 (`spike-config`) | ✅ **0.0.12** power profile live apply (governor + Wi‑Fi powersave) |
+| Stage 3 (Spike Shell) | 📝 **0.0.35** home seed + lockscreen QML; Rescue **0.0.12** |
+| Stage 4 (installer) | ✅ **0.0.13** — XDG/app home seed + NM connection copy |
+| Preinstalled apps | 📝 Seeded: Mozilla FF/TB `.deb` + VLC + LibreOffice; Discover Flatpak/AppStream |
 
 ## In Progress
 
 | Item | Notes |
 | :-: | :-: |
-| Alpha — preinstalled software | Seed browser, media player, email (Flatpak per AGENTS.md); see Default apps |
+| Rebuild smoke | shell **0.0.35** + installer **0.0.13**: home dirs, Discover, LO, lock; config **0.0.12** power/Wi‑Fi |
 | Stage 3 — first-run polish | Wizard shipped **0.0.31**; tour/a11y/Flatpak/update hooks still placeholders |
-| Rebuild smoke | Shell **0.0.32**: lock, block-sleep switch, brightness via logind; first-run still needs ISO smoke |
 
 ## Default apps (Alpha — planned)
 
@@ -39,15 +38,17 @@ Spec sources: `AGENTS.md`, `DESKTOP.md` (VLC, Discover, Internet/Media categorie
 
 | Role | Spec intent | On ISO today | Alpha plan |
 | :-: | :-: | :-: | :-: |
-| Browser | Firefox + Spike prefs | ❌ | Prefer **`.deb`** `firefox` on Tier‑1; Flatpak still available in Discover |
-| Media player | VLC in Media category | ❌ | Prefer **`.deb`** `vlc` (or Flatpak if deb too heavy) |
-| Email | **Thunderbird** (locked) | ❌ | Prefer **`.deb`** `thunderbird` |
-| Office | LibreOffice | ❌ | Flatpak or `.deb`; seed after browser works on 4GB |
+| Browser | Firefox + Spike prefs | 📝 next ISO — Mozilla `.deb` | Seeded via `packages.mozilla.org` (not Ubuntu Snap stub) |
+| Media player | VLC in Media category | 📝 next ISO — Ubuntu `.deb` | Seeded |
+| Email | **Thunderbird** (locked) | 📝 next ISO — Mozilla `.deb` | Suite `thunderbird-deb` on packages.mozilla.org |
+| Office | LibreOffice | 📝 next ISO — Ubuntu `.deb` + qt6/kf6/plasma | Seeded (size accepted) |
 | Files / editor / terminal | Dolphin, Kate, Konsole | ✅ `.deb` | Keep |
 | Software center | Discover | ✅ `.deb` | Keep; Flatpak + apt backends |
 | Spike Tools | Install / Rescue / Move My Files | ✅ `.deb` | Keep |
 
-Implementation sketch: add `firefox`, `vlc`, `thunderbird` to `spike-live.list.chroot` (and/or install-time seed); Flatpak runtimes still preseed per variant for third-party apps.
+Implementation: `spike-live.list.chroot` + `config/spike-archives/` (staged by `build-iso.sh`) + `includes.chroot/etc/apt/` for Mozilla sources/pinning.
+
+**Future:** BDFL intends lighter-weight replacements for these defaults later (same roles; not Alpha-blocking). See `DECISIONS.md`.
 
 ## Blocked / Waiting On Decision
 
@@ -65,6 +66,10 @@ Implementation sketch: add `firefox`, `vlc`, `thunderbird` to `spike-live.list.c
 
 | Date | Item |
 | :-: | :-: |
+| 2026-08-10 | shell **0.0.35** + installer **0.0.13**: home seed, Discover/AppStream/Flatpak, LO profile dirs, Spike lockscreen QML |
+| 2026-08-10 | shell **0.0.34**: Mozilla Firefox/Thunderbird AppArmor + profile-home fix |
+| 2026-08-10 | config **0.0.12** + shell **0.0.33** + installer **0.0.12**: power/input live apply; Wi‑Fi NM handoff |
+| 2026-08-09 | Default apps seeded: Mozilla FF/TB `.deb` + VLC + LibreOffice (package list + APT archives) |
 | 2026-08-09 | shell **0.0.32**: Spike lock + block sleep/locking + brightness logind live |
 | 2026-08-09 | Default email: **Thunderbird**; apps policy Flatpak+`.deb`; Alpha opened |
 | 2026-08-09 | shell **0.0.31** + installer **0.0.11**: post-install first-run wizard |
@@ -77,9 +82,9 @@ Implementation sketch: add `firefox`, `vlc`, `thunderbird` to `spike-live.list.c
 
 ## Next Suggested Work
 
-1. **Preinstalled apps:** add Firefox + VLC + **Thunderbird** as **`.deb`** where possible; keep Flatpak runtimes for Discover third-party apps.  
-2. Rebuild ISO with shell **0.0.32** + installer **0.0.11** → smoke lock, brightness, block-sleep, first-run.  
-3. Fill first-run placeholder hooks (tour / Flatpak verify / update check) as apps land.  
+1. Rebuild ISO → smoke: home dirs filled, Discover/AppStream, LibreOffice opens, lock unlocks, power/Wi‑Fi live.  
+2. Confirm first-run wizard + brightness / block-sleep.  
+3. Fill first-run placeholder hooks as apps land.  
 4. spike-migration inventory/conflict UI (not Alpha-blocking).  
 
 ## How To Update This File

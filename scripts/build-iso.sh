@@ -204,6 +204,32 @@ run_config() {
   fi
 }
 
+# Stage Mozilla APT sources into live-build config/archives/ (needed before
+# package-lists install). Tracked copies live in config/spike-archives/.
+stage_mozilla_archives() {
+  local src="${RECIPE}/config/spike-archives"
+  local dest="${RECIPE}/config/archives"
+  if [[ ! -f "${src}/mozilla.list" || ! -f "${src}/mozilla.key" || ! -f "${src}/mozilla.pref" ]]; then
+    echo "error: missing Mozilla archive files under ${src}" >&2
+    exit 4
+  fi
+  mkdir -p "$dest"
+  # Replace lb's empty nobody-owned archives dir when needed.
+  if [[ ! -w "$dest" ]]; then
+    rm -rf "$dest"
+    mkdir -p "$dest"
+  fi
+  cp -f "${src}/mozilla.list" "${dest}/mozilla.list"
+  cp -f "${src}/mozilla.pref" "${dest}/mozilla.pref"
+  # live-build copies *.key into trusted.gpg.d as binary-friendly .gpg
+  if command -v gpg >/dev/null 2>&1; then
+    gpg --batch --yes --dearmor -o "${dest}/mozilla.key" "${src}/mozilla.key"
+  else
+    cp -f "${src}/mozilla.key" "${dest}/mozilla.key"
+  fi
+  echo "Staged Mozilla APT archives → config/archives/"
+}
+
 inject_local_debs() {
   # Build Spike .debs and stage via includes.chroot + hook (dpkg -i).
   # Do NOT use config/packages.chroot/: live-build signs that local repo with
@@ -212,6 +238,8 @@ inject_local_debs() {
   local inc_dir="${RECIPE}/config/includes.chroot/var/cache/spike-local"
   local pkg_chroot="${RECIPE}/config/packages.chroot"
   mkdir -p "$pkg_dir" "$inc_dir"
+
+  stage_mozilla_archives
 
   echo "Packaging spike-config ..."
   "${ROOT}/scripts/package-spike-config.sh" --out "$pkg_dir"

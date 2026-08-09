@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(spike-shell VERSION 0.0.32 LANGUAGES CXX)
+project(spike-shell VERSION 0.0.35 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -167,4 +167,6 @@ endif()
 install(TARGETS spike-shell RUNTIME DESTINATION bin)
 install(FILES session/spike.desktop DESTINATION share/wayland-sessions)
 install(PROGRAMS session/spike-session DESTINATION bin)
+install(PROGRAMS session/spike-seed-home DESTINATION bin)
+install(PROGRAMS session/spike-fix-mozilla-home DESTINATION bin)
 install(FILES pam/spike-lock DESTINATION etc/pam.d)

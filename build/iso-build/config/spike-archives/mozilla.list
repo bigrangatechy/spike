@@ -1,0 +1,5 @@
+# Mozilla official .deb packages (not Ubuntu Snap stubs).
+# Firefox: suite "mozilla"; Thunderbird: suite "thunderbird-deb".
+# Spec: DESIGN-DECISIONS.md — Flatpak + .deb, Snap forbidden.
+deb https://packages.mozilla.org/apt mozilla main
+deb https://packages.mozilla.org/apt thunderbird-deb main

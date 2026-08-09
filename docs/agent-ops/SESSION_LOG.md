@@ -4,6 +4,36 @@ Append-only. Newest sessions at the **top**.
 
 ---
 
+## 2026-08-10 — installed desktop: home seed, Discover, LO, lock
+
+Installed smoke: empty home (no Documents/…), Discover AppStream error, LibreOffice silent fail (“user installation could not be completed”), KWin “screen locker is broken” (missing breeze LNF lockscreen QML). Fixes: shell **0.0.35** `spike-seed-home` + Spike LockScreen.qml; installer **0.0.13** seeds XDG/app dirs at configure; ISO packages Flatpak/AppStream + hook `0740`; hide powerdevil autostart. **On current install:** run `xdg-user-dirs-update`; `mkdir -p ~/.config/libreoffice/4/user`; `sudo apt install flatpak plasma-discover-backend-flatpak appstream && sudo flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo && sudo appstreamcli refresh --force`; copy LockScreen.qml from next package or rebuild ISO.
+
+---
+
+## 2026-08-10 — Firefox/Thunderbird profile cannot be loaded
+
+Mozilla `.deb`s hit Ubuntu AppArmor / broken `profiles.ini`. Fix: unconfined AppArmor stubs in `includes.chroot/etc/apparmor.d/{firefox,thunderbird}`, hook `0730-spike-mozilla-apparmor.chroot` removes confined `usr.bin.*` leftovers, shell **0.0.34** `spike-fix-mozilla-home` resets inaccessible dirs / broken profiles.ini at session start. **Current live workaround:** `rm -rf ~/.mozilla ~/.thunderbird ~/.cache/mozilla` then reopen (or rebuild ISO).
+
+---
+
+## 2026-08-10 — live apply (power/input) + Wi‑Fi handoff
+
+Smoke: brightness OK; apps present; power profiles not live on installed; Wi‑Fi from installer missing after install. Fixes: spike-config **0.0.12** applies CPU governor + Wi‑Fi powersave on Power SetSetting (root DBus); shell **0.0.33** applies mouse/touchpad/keyboard live via KWin `InputDevice` D-Bus and re-applies on session start; installer **0.0.12** copies NetworkManager connections into the installed system (`copy_network_connections`). Rebuild to verify.
+
+---
+
+## 2026-08-09 — Future: lightweight replacements for default apps
+
+BDFL: Alpha ships Firefox / Thunderbird / VLC / LibreOffice; later Spike will aim for lighter replacements that keep the same roles. Logged in DECISIONS + DESIGN-DECISIONS; not an Alpha blocker.
+
+---
+
+## 2026-08-09 — seed default apps (Mozilla .deb + VLC + LibreOffice)
+
+Ubuntu `firefox`/`thunderbird` apt packages are Snap stubs — forbidden. Wired **packages.mozilla.org** (`mozilla` + `thunderbird-deb` suites) via `config/spike-archives/` (staged to live-build `config/archives/` by `build-iso.sh`) and `includes.chroot/etc/apt/` (sources + pin + key). Live list: `firefox`, `thunderbird`, `vlc`, `libreoffice` (+ qt6/kf6/plasma). Strip hook drops Snap stubs if present; verify hook fails build if FF/TB are Snap. Rebuild to confirm launcher entries.
+
+---
+
 ## 2026-08-09 — shell 0.0.32: lock, block sleep/locking, brightness live
 
 SpikeLockScreen (PAM `/etc/pam.d/spike-lock`) from Session menu / PrepareForSleep / session Lock; Super+L best-effort. Plasma-equivalent **Manually block sleep and screen locking** in battery popup + Settings → Power (`SleepInhibit` logind `sleep:idle` block). Manual Suspend confirms when inhibit is on. Brightness applet: sysfs → logind `SetBrightness` → brightnessctl (was silent no-op without write perms). Package `spike-shell_0.0.32-1_amd64.deb`.

@@ -6,6 +6,16 @@ Operational decisions that affect how work proceeds. Product/architecture ration
 
 ---
 
+## 2026-08-09 — Lightweight replacements for preinstalled apps (future)
+
+**Decision (BDFL):** Current defaults (Firefox, Thunderbird, VLC, LibreOffice) are the Alpha shipping set. Spike will **eventually** replace them with lighter-weight Spike-oriented alternatives where that improves Tier‑1 RAM/ISO fit and beginner UX — without dropping the “has a browser / email / media / office” roles.
+
+**Not now:** Do not start replacement projects mid-Alpha smoke; keep Mozilla/Ubuntu `.deb` seeds until a replacement is ready to ship.
+
+**Refs:** `STATE.md` Default apps, `DESIGN-DECISIONS.md` Preinstalled Defaults.
+
+---
+
 ## 2026-08-09 — Default email client: Thunderbird
 
 **Decision (BDFL):** **Thunderbird** is Spike’s preinstalled desktop email client (prefer `.deb` on ISO/Tier‑1). Webmail via Firefox remains fine.

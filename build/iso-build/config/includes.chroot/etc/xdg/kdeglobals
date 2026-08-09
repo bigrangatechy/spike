@@ -7,7 +7,7 @@
 ColorScheme=SpikeDark
 
 [KDE]
-LookAndFeelPackage=
+LookAndFeelPackage=org.kde.breeze.desktop
 widgetStyle=Breeze
 
 [Icons]

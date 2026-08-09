@@ -896,7 +896,10 @@ Microphone and camera access is controlled via Wayland portals:
 
 ### Lock Screen Behavior
 
-Spike Shell provides its own screen locker (not xscreensaver, not KDE's):
+Spike Shell provides its own screen locker (not xscreensaver). KWin still loads
+`libkscreenlocker`; Spike ships a minimal breeze Look-and-Feel `LockScreen.qml`
+so the greeter does not fall into “The screen locker is broken” (full Plasma
+shell QML is not on the ISO). SpikeLockScreen + PAM remain the Session-menu path.
 
 **Lock triggers:**
 

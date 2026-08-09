@@ -256,6 +256,20 @@ QWidget *makePowerPage(QWidget *parent, ConfigClient *config, QLabel *statusBar)
   };
 
   QObject::connect(reload, &QPushButton::clicked, outer, load);
+  // Profile drives live governor / Wi‑Fi powersave defaults (POWER-MANAGEMENT.md).
+  QObject::connect(profile, &QComboBox::currentIndexChanged, outer, [profile, governor, wifiSave]() {
+    const QString p = profile->currentData().toString();
+    if (p == QLatin1String("performance")) {
+      setComboData(governor, QStringLiteral("performance"));
+      setComboData(wifiSave, QStringLiteral("off"));
+    } else if (p == QLatin1String("battery_saver") || p == QLatin1String("critical")) {
+      setComboData(governor, QStringLiteral("powersave"));
+      setComboData(wifiSave, QStringLiteral("on"));
+    } else {
+      setComboData(governor, QStringLiteral("powersave"));
+      setComboData(wifiSave, QStringLiteral("adaptive"));
+    }
+  });
   QObject::connect(
       apply, &QPushButton::clicked, outer,
       [config, profile, blank, dimBefore, allowSuspend, allowHibernate, hybrid, lidBat, lidAc,
@@ -285,20 +299,19 @@ QWidget *makePowerPage(QWidget *parent, ConfigClient *config, QLabel *statusBar)
           return;
         }
 
+        // spike-config-dbus (root) applies governor + Wi‑Fi powersave on SetSetting.
+        // Also try a local best-effort for live sessions where DBus apply is delayed.
         const QString gov = governor->currentData().toString();
         const bool govOk = applyGovernorLive(gov);
-        // Never restart systemd-logind from the desktop — it tears down the
-        // session and floods the journal. Drop-in applies on next boot.
         QString msg = QStringLiteral(
-            "Saved power settings (logind drop-in written; lid/button actions after reboot).");
-        if (govOk) {
-          msg += QStringLiteral(" CPU governor applied.");
-        } else {
-          msg += QStringLiteral(" Could not set CPU governor live (needs cpupower/sudo).");
+            "Saved. Profile/CPU/Wi‑Fi applied live via spike-config. "
+            "Lid/power-button idle actions still need a reboot (logind).");
+        if (!govOk) {
+          msg += QStringLiteral(" (Local cpupower fallback unavailable — DBus apply is enough.)");
         }
         status->setText(msg);
         if (statusBar) {
-          statusBar->setText(QStringLiteral("Power applied"));
+          statusBar->setText(QStringLiteral("Power applied live"));
         }
       });
 

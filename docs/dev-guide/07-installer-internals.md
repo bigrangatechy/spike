@@ -43,14 +43,15 @@ spike-installer/
 └── restore/         → Layer 4 post-reinstall restore into /home/<user>
 ```
 
-**Status (0.0.11):** Qt wizard + privileged `spike-install-helper` can partition,
+**Status (0.0.12):** Qt wizard + privileged `spike-install-helper` can partition,
 unsquashfs, configure account/hostname/variant, set **locale + timezone + keyboard**,
-write **`/var/lib/spike/first-boot`** + `installer-notifications/` for the shell first-run
+**copy NetworkManager Wi‑Fi/Ethernet connections** from the live session into the
+installed system, write **`/var/lib/spike/first-boot`** + `installer-notifications/` for the shell first-run
 wizard, run **spike-config --detect** (KERNEL.md module blacklist), regenerate a **local**
 (non-casper) initramfs, enforce DRM/seat groups + enable `seatd`, Step 7 backup with
 **async** system scan, SKIPPED honesty / `--exclude-disk`, Layer 4 with `RESTORE_STATUS=` on
-Finish. Wi‑Fi step uses nmcli. Storage requires typing **ERASE**. Installer E2E
-gate is **met** (Alpha); remaining work is polish + apps (`STATE.md`).
+Finish. Wi‑Fi step uses nmcli (system-wide permissions preferred for handoff). Storage requires typing **ERASE**. Installer E2E
+gate is **met** (Alpha); remaining work is polish (`STATE.md`).
 
 **Step 7 note:** Entering the backup page used to call `spike-rescue --list-systems` with
 `waitForFinished` on the GUI thread while rescue walked personal-file trees — that hung

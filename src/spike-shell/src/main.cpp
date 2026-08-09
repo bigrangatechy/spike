@@ -3,6 +3,7 @@
 #include "firstrun/FirstRunWizard.hpp"
 #include "lock/LockController.hpp"
 #include "panel/Panel.hpp"
+#include "settings/InputConfig.hpp"
 
 #include <QApplication>
 #include <QFile>
@@ -11,6 +12,7 @@
 #include <QPalette>
 #include <QProcess>
 #include <QScreen>
+#include <QSettings>
 #include <QShortcut>
 #include <QStandardPaths>
 #include <QTimer>
@@ -60,7 +62,7 @@ int main(int argc, char *argv[])
 {
   QApplication app(argc, argv);
   QApplication::setApplicationName(QStringLiteral("spike-shell"));
-  QApplication::setApplicationVersion(QStringLiteral("0.0.32"));
+  QApplication::setApplicationVersion(QStringLiteral("0.0.35"));
   QApplication::setOrganizationName(QStringLiteral("BigRangaTech"));
 
   // Breeze SVG icons need qt6-svg-plugins on the live image.
@@ -98,6 +100,25 @@ int main(int argc, char *argv[])
   auto *lockShortcut = new QShortcut(QKeySequence(QStringLiteral("Meta+L")), &panel);
   QObject::connect(lockShortcut, &QShortcut::activated, []() {
     spike::LockController::instance().lockScreen();
+  });
+
+  // Re-apply saved pointer/keyboard prefs once KWin InputDevice nodes exist.
+  QTimer::singleShot(1500, []() {
+    const QString path = QStandardPaths::writableLocation(QStandardPaths::ConfigLocation) +
+                         QStringLiteral("/kcminputrc");
+    QSettings s(path, QSettings::IniFormat);
+    s.beginGroup(QStringLiteral("Mouse"));
+    const double accel = s.value(QStringLiteral("PointerAcceleration"), 0.0).toDouble();
+    s.endGroup();
+    s.beginGroup(QStringLiteral("Libinput"));
+    const bool tap = s.value(QStringLiteral("TapToClick"), true).toBool();
+    s.endGroup();
+    s.beginGroup(QStringLiteral("Keyboard"));
+    const int delay = s.value(QStringLiteral("RepeatDelay"), 600).toInt();
+    const int rate = s.value(QStringLiteral("RepeatRate"), 25).toInt();
+    s.endGroup();
+    spike::applyPointerSettings(accel, tap, nullptr);
+    spike::applyKeyboardRepeat(delay, rate, nullptr);
   });
 
   // Portals need WAYLAND_DISPLAY (set by KWin for --exit-with-session).

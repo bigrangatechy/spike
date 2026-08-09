@@ -31,6 +31,8 @@ Builds ${DEB_NAME} from src/spike-shell/ (Qt6 Widgets, Architecture: amd64).
 Install paths:
   /usr/bin/spike-shell
   /usr/bin/spike-session
+  /usr/bin/spike-seed-home
+  /usr/bin/spike-fix-mozilla-home
   /usr/share/wayland-sessions/spike.desktop
   /etc/pam.d/spike-lock
 EOF
@@ -104,8 +106,17 @@ mkdir -p \
 
 install -m 755 "${BUILD}/spike-shell" "${DEST}/usr/bin/spike-shell"
 install -m 755 "${SRC}/session/spike-session" "${DEST}/usr/bin/spike-session"
+install -m 755 "${SRC}/session/spike-seed-home" "${DEST}/usr/bin/spike-seed-home"
+install -m 755 "${SRC}/session/spike-fix-mozilla-home" "${DEST}/usr/bin/spike-fix-mozilla-home"
 install -m 644 "${SRC}/session/spike.desktop" "${DEST}/usr/share/wayland-sessions/spike.desktop"
 install -m 644 "${SRC}/pam/spike-lock" "${DEST}/etc/pam.d/spike-lock"
+# Minimal kscreenlocker LNF (also shipped via ISO includes.chroot for live image)
+mkdir -p "${DEST}/usr/share/plasma/look-and-feel/org.kde.breeze.desktop/contents/lockscreen"
+if [[ -f "${ROOT}/build/iso-build/config/includes.chroot/usr/share/plasma/look-and-feel/org.kde.breeze.desktop/contents/lockscreen/LockScreen.qml" ]]; then
+  install -m 644 \
+    "${ROOT}/build/iso-build/config/includes.chroot/usr/share/plasma/look-and-feel/org.kde.breeze.desktop/contents/lockscreen/LockScreen.qml" \
+    "${DEST}/usr/share/plasma/look-and-feel/org.kde.breeze.desktop/contents/lockscreen/LockScreen.qml"
+fi
 cp "${SRC}/README.md" "${DEST}/usr/share/doc/${PKG_NAME}/README"
 
 cat >"${DEST}/usr/share/doc/${PKG_NAME}/copyright" <<'EOF'
@@ -134,7 +145,8 @@ Description: Spike Linux desktop shell (Qt6 Widgets)
 EOF
 
 find "${DEST}" -type d -exec chmod 755 {} +
-chmod 755 "${DEST}/usr/bin/spike-shell" "${DEST}/usr/bin/spike-session"
+chmod 755 "${DEST}/usr/bin/spike-shell" "${DEST}/usr/bin/spike-session" \
+  "${DEST}/usr/bin/spike-seed-home" "${DEST}/usr/bin/spike-fix-mozilla-home"
 
 mkdir -p "$OUT_DIR"
 dpkg-deb --root-owner-group --build "$DEST" "${OUT_DIR}/${DEB_NAME}"
