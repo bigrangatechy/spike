@@ -1,0 +1,38 @@
+#!/bin/bash
+# Install Spike LockScreen.qml where kscreenlocker_greet actually looks first
+# (Plasma shell package), and disable idle autolock that races logind suspend.
+set -euo pipefail
+
+echo "I: Spike kscreenlocker greeter / idle-lock policy"
+
+SPIKE_LOCK_QML="/usr/share/plasma/look-and-feel/org.kde.breeze.desktop/contents/lockscreen/LockScreen.qml"
+SHELL_LOCK_DIR="/usr/share/plasma/shells/org.kde.plasma.desktop/contents/lockscreen"
+
+if [[ -f "$SPIKE_LOCK_QML" ]]; then
+	if [[ -d /usr/share/plasma/shells/org.kde.plasma.desktop ]]; then
+		mkdir -p "$SHELL_LOCK_DIR"
+		# Keep a copy of upstream if present (once).
+		if [[ -f "$SHELL_LOCK_DIR/LockScreen.qml" && ! -f "$SHELL_LOCK_DIR/LockScreen.qml.plasma-orig" ]]; then
+			cp -a "$SHELL_LOCK_DIR/LockScreen.qml" "$SHELL_LOCK_DIR/LockScreen.qml.plasma-orig" || true
+		fi
+		cp -f "$SPIKE_LOCK_QML" "$SHELL_LOCK_DIR/LockScreen.qml"
+		echo "I: installed Spike LockScreen.qml into plasma shell lockscreen path"
+	else
+		echo "W: plasma shell package path missing — LNF lockscreen only"
+	fi
+else
+	echo "W: Spike LockScreen.qml missing at $SPIKE_LOCK_QML"
+fi
+
+# Ensure policy file wins over any package default.
+mkdir -p /etc/xdg
+cat >/etc/xdg/kscreenlockerrc <<'EOF'
+[Daemon]
+Autolock=false
+LockOnResume=false
+Timeout=0
+LockGrace=0
+RequirePassword=true
+EOF
+
+echo "I: Spike kscreenlocker policy finished"

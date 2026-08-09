@@ -1,8 +1,10 @@
-# Spike: KWin integrates libkscreenlocker; idle autolock uses our LNF LockScreen.qml.
-# Keep resume lock on (SECURITY.md); Spike Shell also listens to PrepareForSleep.
+# Spike: do NOT use KWin/kscreenlocker idle autolock.
+# Autolock + logind IdleAction=suspend was locking then sleeping; greeter without
+# full Plasma QML shows “screen locker is broken”. SpikeLockScreen handles
+# Session menu + PrepareForSleep. Suspend-time greeter uses our LockScreen.qml.
 [Daemon]
-Autolock=true
-LockOnResume=true
-Timeout=10
-LockGrace=5
+Autolock=false
+LockOnResume=false
+Timeout=0
+LockGrace=0
 RequirePassword=true

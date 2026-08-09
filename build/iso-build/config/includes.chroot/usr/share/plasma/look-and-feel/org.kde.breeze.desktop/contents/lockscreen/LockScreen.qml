@@ -1,8 +1,8 @@
 /*
  * Spike minimal lockscreen for kscreenlocker_greet.
- * Stock Plasma shell lockscreen needs plasma-workspace QML we do not ship;
- * without this file the greeter falls into “The screen locker is broken”.
- * Spec: docs/SECURITY.md (Spike owns lock UX; greeter must still satisfy KWin).
+ * Installed as breeze LNF + org.kde.plasma.desktop shell lockscreen so the
+ * greeter does not treat Plasma’s outdated shell QML as primary and fall into
+ * “The screen locker is broken”.
  */
 import QtQuick
 import QtQuick.Controls
@@ -11,7 +11,6 @@ import QtQuick.Layouts
 Item {
     id: root
 
-    // Magical properties / signals expected by kscreenlocker_greet
     property bool viewVisible: true
     property bool suspendToRamSupported: false
     property bool suspendToDiskSupported: false
@@ -21,7 +20,8 @@ Item {
     signal suspendToDisk()
     signal suspendToRam()
 
-    anchors.fill: parent
+    width: 800
+    height: 600
 
     Rectangle {
         anchors.fill: parent
@@ -45,6 +45,7 @@ Item {
                 font.pixelSize: 48
                 font.bold: true
                 Layout.alignment: Qt.AlignHCenter
+                text: Qt.formatTime(new Date(), "hh:mm")
             }
 
             Label {
@@ -57,17 +58,17 @@ Item {
             TextField {
                 id: passwordBox
                 echoMode: TextInput.Password
-                placeholderText: qsTr("Password")
+                placeholderText: "Password"
                 Layout.preferredWidth: 280
                 Layout.alignment: Qt.AlignHCenter
                 focus: true
-                onAccepted: tryUnlock()
+                onAccepted: root.tryUnlock()
             }
 
             Button {
-                text: qsTr("Unlock")
+                text: "Unlock"
                 Layout.alignment: Qt.AlignHCenter
-                onClicked: tryUnlock()
+                onClicked: root.tryUnlock()
             }
         }
     }
@@ -77,44 +78,42 @@ Item {
         running: true
         repeat: true
         triggeredOnStart: true
-        onTriggered: {
-            const d = new Date();
-            const hh = d.getHours().toString().padStart(2, "0");
-            const mm = d.getMinutes().toString().padStart(2, "0");
-            clockLabel.text = hh + ":" + mm;
-        }
+        onTriggered: clockLabel.text = Qt.formatTime(new Date(), "hh:mm")
     }
 
     function tryUnlock() {
-        statusLabel.text = "";
-        root.notification = "";
-        authenticator.startAuthenticating();
-        authenticator.respond(passwordBox.text);
+        statusLabel.text = ""
+        root.notification = ""
+        if (typeof authenticator === "undefined" || !authenticator) {
+            statusLabel.text = "Authenticator unavailable"
+            return
+        }
+        authenticator.startAuthenticating()
+        authenticator.respond(passwordBox.text)
     }
 
     Connections {
-        target: authenticator
-        function onSucceeded() {
-            Qt.quit();
-        }
+        target: (typeof authenticator !== "undefined") ? authenticator : null
+        function onSucceeded() { Qt.quit() }
         function onFailed(kind) {
-            statusLabel.text = qsTr("Incorrect password");
-            passwordBox.clear();
-            passwordBox.forceActiveFocus();
+            statusLabel.text = "Incorrect password"
+            passwordBox.clear()
+            passwordBox.forceActiveFocus()
         }
         function onErrorMessageChanged() {
-            if (authenticator.errorMessage)
-                statusLabel.text = authenticator.errorMessage;
+            if (authenticator && authenticator.errorMessage)
+                statusLabel.text = authenticator.errorMessage
         }
         function onInfoMessageChanged() {
-            if (authenticator.infoMessage)
-                statusLabel.text = authenticator.infoMessage;
+            if (authenticator && authenticator.infoMessage)
+                statusLabel.text = authenticator.infoMessage
         }
     }
 
     Component.onCompleted: {
-        authenticator.startAuthenticating();
-        passwordBox.forceActiveFocus();
+        if (typeof authenticator !== "undefined" && authenticator)
+            authenticator.startAuthenticating()
+        passwordBox.forceActiveFocus()
     }
 
     onClearPassword: passwordBox.clear()

@@ -110,13 +110,24 @@ install -m 755 "${SRC}/session/spike-seed-home" "${DEST}/usr/bin/spike-seed-home
 install -m 755 "${SRC}/session/spike-fix-mozilla-home" "${DEST}/usr/bin/spike-fix-mozilla-home"
 install -m 644 "${SRC}/session/spike.desktop" "${DEST}/usr/share/wayland-sessions/spike.desktop"
 install -m 644 "${SRC}/pam/spike-lock" "${DEST}/etc/pam.d/spike-lock"
-# Minimal kscreenlocker LNF (also shipped via ISO includes.chroot for live image)
+# Minimal kscreenlocker LNF + plasma shell lockscreen (greeter looks at shell first)
 mkdir -p "${DEST}/usr/share/plasma/look-and-feel/org.kde.breeze.desktop/contents/lockscreen"
-if [[ -f "${ROOT}/build/iso-build/config/includes.chroot/usr/share/plasma/look-and-feel/org.kde.breeze.desktop/contents/lockscreen/LockScreen.qml" ]]; then
-  install -m 644 \
-    "${ROOT}/build/iso-build/config/includes.chroot/usr/share/plasma/look-and-feel/org.kde.breeze.desktop/contents/lockscreen/LockScreen.qml" \
+mkdir -p "${DEST}/usr/share/plasma/shells/org.kde.plasma.desktop/contents/lockscreen"
+LOCK_QML="${ROOT}/build/iso-build/config/includes.chroot/usr/share/plasma/look-and-feel/org.kde.breeze.desktop/contents/lockscreen/LockScreen.qml"
+if [[ -f "$LOCK_QML" ]]; then
+  install -m 644 "$LOCK_QML" \
     "${DEST}/usr/share/plasma/look-and-feel/org.kde.breeze.desktop/contents/lockscreen/LockScreen.qml"
+  install -m 644 "$LOCK_QML" \
+    "${DEST}/usr/share/plasma/shells/org.kde.plasma.desktop/contents/lockscreen/LockScreen.qml"
 fi
+mkdir -p "${DEST}/etc/xdg"
+if [[ -f "${ROOT}/build/iso-build/config/includes.chroot/etc/xdg/kscreenlockerrc" ]]; then
+  install -m 644 "${ROOT}/build/iso-build/config/includes.chroot/etc/xdg/kscreenlockerrc" \
+    "${DEST}/etc/xdg/kscreenlockerrc"
+fi
+# KWin script → panel task list (Wayland window icons)
+mkdir -p "${DEST}/usr/share/kwin/scripts"
+cp -a "${SRC}/kwin-scripts/spike-tasklist" "${DEST}/usr/share/kwin/scripts/"
 cp "${SRC}/README.md" "${DEST}/usr/share/doc/${PKG_NAME}/README"
 
 cat >"${DEST}/usr/share/doc/${PKG_NAME}/copyright" <<'EOF'

@@ -7,5 +7,7 @@ theme=Breeze
 BorderlessMaximizedWindows=false
 
 # Overview effect needs milou / kwin private QML we do not ship — disable noise.
+# Night Light plugin must stay on for tray/Settings color temperature.
 [Plugins]
 overviewEnabled=false
+nightlightEnabled=true

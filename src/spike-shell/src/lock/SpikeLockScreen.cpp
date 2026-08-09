@@ -217,6 +217,9 @@ void SpikeLockScreen::tryUnlock()
     m_status->clear();
   }
   hide();
+  // Clear KWin/kscreenlocker session lock if it raced us (avoids stuck “broken” greeter).
+  QProcess::startDetached(QStringLiteral("loginctl"),
+                          {QStringLiteral("unlock-session")});
   emit unlocked();
 }
 

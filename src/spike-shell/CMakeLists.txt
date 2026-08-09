@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(spike-shell VERSION 0.0.35 LANGUAGES CXX)
+project(spike-shell VERSION 0.0.37 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -67,6 +67,8 @@ add_executable(spike-shell
   src/panel/applets/KeyboardLayoutApplet.hpp
   src/panel/applets/WindowListApplet.cpp
   src/panel/applets/WindowListApplet.hpp
+  src/panel/applets/TaskListAdaptor.cpp
+  src/panel/applets/TaskListAdaptor.hpp
   src/notify/NotificationDaemon.cpp
   src/notify/NotificationDaemon.hpp
   src/notify/NotificationAdaptor.cpp
@@ -170,3 +172,5 @@ install(PROGRAMS session/spike-session DESTINATION bin)
 install(PROGRAMS session/spike-seed-home DESTINATION bin)
 install(PROGRAMS session/spike-fix-mozilla-home DESTINATION bin)
 install(FILES pam/spike-lock DESTINATION etc/pam.d)
+install(DIRECTORY kwin-scripts/spike-tasklist
+        DESTINATION share/kwin/scripts)

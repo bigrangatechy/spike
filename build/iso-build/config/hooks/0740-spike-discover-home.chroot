@@ -44,6 +44,11 @@ if command -v appstreamcli >/dev/null 2>&1; then
 		|| echo "W: appstreamcli refresh soft-failed"
 fi
 
+# PackageKit must be enabled so Discover can talk to apt online.
+if command -v systemctl >/dev/null 2>&1; then
+	systemctl enable packagekit.service 2>/dev/null || true
+fi
+
 # Powerdevil autostart fights Spike Power + can race the locker; KCMs stay installable.
 mkdir -p /etc/xdg/autostart
 if [[ -f /etc/xdg/autostart/powerdevil.desktop ]]; then

@@ -178,6 +178,31 @@ start_audio() {
 start_audio
 sync || true
 
+# Discover / Flatpak / PackageKit indexes (browsers can work while Discover looks "offline").
+refresh_software_indexes() {
+  if ! ip -4 route show default 2>/dev/null | grep -q . \
+     && ! ip -6 route show default 2>/dev/null | grep -q .; then
+    echo "spike-session: no default route yet — skip software index refresh"
+    return 0
+  fi
+  echo "spike-session: refreshing Flatpak/PackageKit indexes in background"
+  (
+    if command -v flatpak >/dev/null 2>&1; then
+      flatpak remote-add --user --if-not-exists flathub \
+        https://dl.flathub.org/repo/flathub.flatpakrepo 2>/dev/null || true
+      if [[ -f /etc/flatpak/remotes.d/flathub.flatpakrepo ]]; then
+        flatpak remote-add --system --if-not-exists flathub \
+          /etc/flatpak/remotes.d/flathub.flatpakrepo 2>/dev/null || true
+      fi
+      flatpak update --appstream -y 2>&1 | tail -n 20 || true
+    fi
+    if command -v pkcon >/dev/null 2>&1; then
+      pkcon refresh 2>&1 | tail -n 20 || true
+    fi
+  ) &
+}
+refresh_software_indexes
+
 # Portals need WAYLAND_DISPLAY — do NOT start them here (blocks ~90s then ABRTs).
 # spike-shell starts them after KWin is up. Log desktop id only.
 ensure_session_bus() {

@@ -5,14 +5,62 @@
 #include <QDBusConnection>
 #include <QDBusInterface>
 #include <QDBusMessage>
+#include <QDBusReply>
 #include <QCheckBox>
 #include <QLabel>
 #include <QPushButton>
+#include <QSettings>
 #include <QSlider>
+#include <QStandardPaths>
 #include <QVBoxLayout>
 #include <QWidget>
 
 namespace spike {
+
+namespace {
+
+QString kwinrcPath()
+{
+  return QStandardPaths::writableLocation(QStandardPaths::ConfigLocation) +
+         QStringLiteral("/kwinrc");
+}
+
+void writeNightColorConfig(bool enabled, int temperature)
+{
+  QSettings s(kwinrcPath(), QSettings::IniFormat);
+  s.beginGroup(QStringLiteral("NightColor"));
+  s.setValue(QStringLiteral("Active"), enabled);
+  // Constant = always use NightTemperature while Active (not schedule).
+  s.setValue(QStringLiteral("Mode"), QStringLiteral("Constant"));
+  s.setValue(QStringLiteral("NightTemperature"), temperature);
+  s.setValue(QStringLiteral("DayTemperature"), 6500);
+  s.endGroup();
+  s.beginGroup(QStringLiteral("Plugins"));
+  s.setValue(QStringLiteral("nightlightEnabled"), true);
+  s.endGroup();
+  s.sync();
+}
+
+bool reconfigureKwin()
+{
+  QDBusInterface kwin(QStringLiteral("org.kde.KWin"), QStringLiteral("/KWin"),
+                      QStringLiteral("org.kde.KWin"), QDBusConnection::sessionBus());
+  if (!kwin.isValid()) {
+    return false;
+  }
+  kwin.call(QStringLiteral("reconfigure"));
+  return true;
+}
+
+QDBusInterface nightLightIface()
+{
+  return QDBusInterface(QStringLiteral("org.kde.KWin"),
+                        QStringLiteral("/org/kde/KWin/NightLight"),
+                        QStringLiteral("org.kde.KWin.NightLight"),
+                        QDBusConnection::sessionBus());
+}
+
+} // namespace
 
 NightLightApplet::NightLightApplet(QWidget *parent)
   : QPushButton(parent)
@@ -65,22 +113,30 @@ void NightLightApplet::applyFromConfig(bool enabled, int temperature)
 
 bool NightLightApplet::tryKwinSet(bool enabled, int temperature)
 {
-  // KWin Night Color manager (best-effort; may no-op on older builds).
-  QDBusInterface night(QStringLiteral("org.kde.KWin"), QStringLiteral("/ColorCorrect"),
-                       QStringLiteral("org.kde.kwin.ColorCorrect"),
-                       QDBusConnection::sessionBus());
-  if (night.isValid()) {
-    night.setProperty("enabled", enabled);
-    night.setProperty("nightTemperature", temperature);
-    return true;
+  // KWin 6 NightLight D-Bus is mostly read-only; enablement lives in kwinrc
+  // [NightColor]. preview() applies temperature immediately while Active.
+  writeNightColorConfig(enabled, temperature);
+  reconfigureKwin();
+
+  QDBusInterface night = nightLightIface();
+  if (!night.isValid()) {
+    // Plugin may need a moment after reconfigure; still wrote config.
+    return false;
   }
-  QDBusMessage msg = QDBusMessage::createMethodCall(
-      QStringLiteral("org.kde.KWin.NightLight"), QStringLiteral("/org/kde/KWin/NightLight"),
-      QStringLiteral("org.kde.KWin.NightLight"), QStringLiteral("setEnabled"));
-  msg << enabled;
-  QDBusConnection::sessionBus().call(msg);
-  Q_UNUSED(temperature);
-  return false;
+
+  if (enabled) {
+    QDBusMessage preview = QDBusMessage::createMethodCall(
+        QStringLiteral("org.kde.KWin"), QStringLiteral("/org/kde/KWin/NightLight"),
+        QStringLiteral("org.kde.KWin.NightLight"), QStringLiteral("preview"));
+    preview << static_cast<uint>(temperature);
+    QDBusConnection::sessionBus().call(preview);
+  } else {
+    QDBusMessage stop = QDBusMessage::createMethodCall(
+        QStringLiteral("org.kde.KWin"), QStringLiteral("/org/kde/KWin/NightLight"),
+        QStringLiteral("org.kde.KWin.NightLight"), QStringLiteral("stopPreview"));
+    QDBusConnection::sessionBus().call(stop);
+  }
+  return true;
 }
 
 void NightLightApplet::refresh()

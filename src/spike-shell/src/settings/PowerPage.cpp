@@ -300,16 +300,11 @@ QWidget *makePowerPage(QWidget *parent, ConfigClient *config, QLabel *statusBar)
         }
 
         // spike-config-dbus (root) applies governor + Wi‑Fi powersave on SetSetting.
-        // Also try a local best-effort for live sessions where DBus apply is delayed.
         const QString gov = governor->currentData().toString();
-        const bool govOk = applyGovernorLive(gov);
-        QString msg = QStringLiteral(
+        (void)applyGovernorLive(gov); // optional; root DBus path is authoritative
+        status->setText(QStringLiteral(
             "Saved. Profile/CPU/Wi‑Fi applied live via spike-config. "
-            "Lid/power-button idle actions still need a reboot (logind).");
-        if (!govOk) {
-          msg += QStringLiteral(" (Local cpupower fallback unavailable — DBus apply is enough.)");
-        }
-        status->setText(msg);
+            "Lid/power-button/idle suspend still need a reboot if those changed (logind)."));
         if (statusBar) {
           statusBar->setText(QStringLiteral("Power applied live"));
         }

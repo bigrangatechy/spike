@@ -4,6 +4,18 @@ Append-only. Newest sessions at the **top**.
 
 ---
 
+## 2026-08-10 — lock→sleep→broken greeter + night light
+
+Smoke: mouse/power live OK (cpupower message noisy); night light silent fail; idle lock then immediate sleep → “screen locker is broken” on wake. Fixes in shell **0.0.37**: disable kscreenlocker Autolock/LockOnResume; Spike LockScreen.qml into plasma *shell* path (greeter was hitting outdated Plasma QML); Night Light via kwinrc `[NightColor]` + `preview()`; quieter Power Apply text; unlock-session on Spike unlock.
+
+---
+
+## 2026-08-10 — Discover offline + task icons + System Monitor
+
+Installed smoke (after home/LO/lock fixes): FF/TB/LO OK; Discover opens but “can’t connect” despite Wi‑Fi (browsers work). Panel lacked open-app icons; need System Monitor. Fixes: shell **0.0.36** KWin `spike-tasklist` → panel task icons; session refreshes Flatpak appstream + `pkcon`; NM connectivity check; ISO adds `plasma-systemmonitor` + `packagekit-tools`. Rebuild to verify.
+
+---
+
 ## 2026-08-10 — installed desktop: home seed, Discover, LO, lock
 
 Installed smoke: empty home (no Documents/…), Discover AppStream error, LibreOffice silent fail (“user installation could not be completed”), KWin “screen locker is broken” (missing breeze LNF lockscreen QML). Fixes: shell **0.0.35** `spike-seed-home` + Spike LockScreen.qml; installer **0.0.13** seeds XDG/app dirs at configure; ISO packages Flatpak/AppStream + hook `0740`; hide powerdevil autostart. **On current install:** run `xdg-user-dirs-update`; `mkdir -p ~/.config/libreoffice/4/user`; `sudo apt install flatpak plasma-discover-backend-flatpak appstream && sudo flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo && sudo appstreamcli refresh --force`; copy LockScreen.qml from next package or rebuild ISO.

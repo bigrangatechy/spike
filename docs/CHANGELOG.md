@@ -138,6 +138,8 @@ Security fixes follow responsible disclosure. If a vulnerability is fixed before
 ├── spike-config **0.0.12** + shell **0.0.33** + installer **0.0.12**: power/input live apply; Wi‑Fi NM handoff
 ├── shell **0.0.34** + ISO AppArmor stubs: Firefox/Thunderbird profile-load fix (Mozilla `.deb` vs Ubuntu confinement)
 ├── shell **0.0.35** + installer **0.0.13**: XDG home seed, Discover Flatpak/AppStream, LibreOffice profile dirs, Spike kscreenlocker QML
+├── shell **0.0.36**: panel open-app icons (KWin task list), Discover index refresh, plasma-systemmonitor
+├── shell **0.0.37**: idle lock disabled; Spike LockScreen for greeter; Night Light via NightColor+preview
 ├── **Alpha opened** (2026-08-09): installer E2E + blacklist smoke confirmed
 
 ├── spike-migration **0.0.1** + live Desktop: Install Spike / Rescue My Files / Move My Files

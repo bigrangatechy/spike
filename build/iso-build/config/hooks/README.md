@@ -6,6 +6,7 @@
 - `0720-spike-verify-includes.chroot` — fail build if critical includes missing or default apps are Snap stubs.
 - `0730-spike-mozilla-apparmor.chroot` — unconfined AppArmor stubs for Mozilla Firefox/Thunderbird `.deb`s.
 - `0740-spike-discover-home.chroot` — Flatpak/Flathub + AppStream refresh, skel XDG dirs, hide powerdevil autostart, breeze LNF for lockscreen.
+- `0750-spike-kscreenlocker.chroot` — Spike LockScreen.qml into plasma shell path; disable idle autolock (suspend race).
 
 Soft-fail on missing packages where noted in each hook.
 
