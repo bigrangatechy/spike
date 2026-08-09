@@ -1,10 +1,13 @@
 #include "panel/applets/BatteryApplet.hpp"
 
 #include "power/BatteryClient.hpp"
+#include "power/SleepInhibit.hpp"
 
 #include <QApplication>
+#include <QCheckBox>
 #include <QIcon>
 #include <QLabel>
+#include <QMessageBox>
 #include <QPushButton>
 #include <QScreen>
 #include <QTimer>
@@ -29,7 +32,7 @@ BatteryApplet::BatteryApplet(QWidget *parent)
 
   m_popup = new QWidget(nullptr, Qt::Popup | Qt::FramelessWindowHint);
   m_popup->setObjectName(QStringLiteral("BatteryPopup"));
-  m_popup->setMinimumWidth(220);
+  m_popup->setMinimumWidth(260);
   auto *lay = new QVBoxLayout(m_popup);
   lay->setContentsMargins(12, 10, 12, 10);
   auto *title = new QLabel(QStringLiteral("Battery"), m_popup);
@@ -39,6 +42,32 @@ BatteryApplet::BatteryApplet(QWidget *parent)
   detail->setObjectName(QStringLiteral("BatteryDetail"));
   detail->setWordWrap(true);
   lay->addWidget(detail);
+
+  m_blockSleep = new QCheckBox(QStringLiteral("Manually block sleep and screen locking"), m_popup);
+  m_blockSleep->setToolTip(
+      QStringLiteral("Like Plasma’s power widget: prevents idle sleep and idle screen lock "
+                     "for this session (logind inhibit). Manual Lock still works."));
+  m_blockSleep->setChecked(SleepInhibit::instance().isActive());
+  lay->addWidget(m_blockSleep);
+  connect(m_blockSleep, &QCheckBox::toggled, this, [this](bool on) {
+    QString err;
+    if (!SleepInhibit::instance().setActive(on, &err)) {
+      m_blockSleep->blockSignals(true);
+      m_blockSleep->setChecked(false);
+      m_blockSleep->blockSignals(false);
+      QMessageBox::warning(m_popup, QStringLiteral("Power"),
+                           QStringLiteral("Could not block sleep/locking:\n%1").arg(err));
+    }
+  });
+  connect(&SleepInhibit::instance(), &SleepInhibit::changed, this, [this](bool active) {
+    if (!m_blockSleep) {
+      return;
+    }
+    m_blockSleep->blockSignals(true);
+    m_blockSleep->setChecked(active);
+    m_blockSleep->blockSignals(false);
+  });
+
   auto *powerSettings = new QPushButton(QStringLiteral("Power Settings"), m_popup);
   lay->addWidget(powerSettings);
   connect(powerSettings, &QPushButton::clicked, this, &BatteryApplet::openPowerSettings);
@@ -80,6 +109,9 @@ void BatteryApplet::refresh()
   QString tip = QStringLiteral("%1 — %2%").arg(m_client->stateText()).arg(m_client->percentage());
   if (!m_client->timeRemainingText().isEmpty()) {
     tip += QStringLiteral("\n%1").arg(m_client->timeRemainingText());
+  }
+  if (SleepInhibit::instance().isActive()) {
+    tip += QStringLiteral("\nBlocking sleep and screen locking");
   }
   setToolTip(tip);
   updateIcon();
@@ -124,6 +156,11 @@ void BatteryApplet::togglePopup()
   }
   if (m_client) {
     m_client->refresh();
+  }
+  if (m_blockSleep) {
+    m_blockSleep->blockSignals(true);
+    m_blockSleep->setChecked(SleepInhibit::instance().isActive());
+    m_blockSleep->blockSignals(false);
   }
   placePopup();
   m_popup->show();

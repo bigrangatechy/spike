@@ -208,6 +208,8 @@ Standard freedesktop.org categories:
 ```
 ├── Pre-populated with common apps at install:
 │   ├── Firefox (web browser)
+│   ├── Thunderbird (email)
+│   ├── VLC (media)
 │   ├── Dolphin (file manager)
 │   ├── Kate (text editor)
 │   └── Discover (software center)

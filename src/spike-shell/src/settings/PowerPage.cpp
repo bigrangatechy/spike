@@ -1,6 +1,7 @@
 #include "settings/PowerPage.hpp"
 
 #include "power/BatteryClient.hpp"
+#include "power/SleepInhibit.hpp"
 #include "settings/ConfigClient.hpp"
 
 #include <QCheckBox>
@@ -11,6 +12,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QLabel>
+#include <QMessageBox>
 #include <QProcess>
 #include <QPushButton>
 #include <QScrollArea>
@@ -88,6 +90,35 @@ QWidget *makePowerPage(QWidget *parent, ConfigClient *config, QLabel *statusBar)
       w);
   hint->setWordWrap(true);
   lay->addWidget(hint);
+
+  auto *blockSleep = new QCheckBox(
+      QStringLiteral("Manually block sleep and screen locking (this session)"), w);
+  blockSleep->setToolTip(
+      QStringLiteral("Plasma-equivalent: logind inhibit for idle sleep and idle lock. "
+                     "Also available in the battery tray popup."));
+  blockSleep->setChecked(SleepInhibit::instance().isActive());
+  lay->addWidget(blockSleep);
+  QObject::connect(blockSleep, &QCheckBox::toggled, outer, [blockSleep, statusBar](bool on) {
+    QString err;
+    if (!SleepInhibit::instance().setActive(on, &err)) {
+      blockSleep->blockSignals(true);
+      blockSleep->setChecked(false);
+      blockSleep->blockSignals(false);
+      QMessageBox::warning(blockSleep, QStringLiteral("Power"),
+                           QStringLiteral("Could not block sleep/locking:\n%1").arg(err));
+      return;
+    }
+    if (statusBar) {
+      statusBar->setText(on ? QStringLiteral("Blocking sleep and screen locking")
+                            : QStringLiteral("Idle sleep/lock allowed"));
+    }
+  });
+  QObject::connect(&SleepInhibit::instance(), &SleepInhibit::changed, outer,
+                   [blockSleep](bool active) {
+                     blockSleep->blockSignals(true);
+                     blockSleep->setChecked(active);
+                     blockSleep->blockSignals(false);
+                   });
 
   auto *statusHead = new QLabel(QStringLiteral("<b>Current status</b>"), w);
   lay->addWidget(statusHead);

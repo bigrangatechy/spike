@@ -1,14 +1,17 @@
 #include "desktop/DesktopBackground.hpp"
 #include "firstrun/FirstRunHooks.hpp"
 #include "firstrun/FirstRunWizard.hpp"
+#include "lock/LockController.hpp"
 #include "panel/Panel.hpp"
 
 #include <QApplication>
 #include <QFile>
 #include <QIcon>
+#include <QKeySequence>
 #include <QPalette>
 #include <QProcess>
 #include <QScreen>
+#include <QShortcut>
 #include <QStandardPaths>
 #include <QTimer>
 
@@ -57,7 +60,7 @@ int main(int argc, char *argv[])
 {
   QApplication app(argc, argv);
   QApplication::setApplicationName(QStringLiteral("spike-shell"));
-  QApplication::setApplicationVersion(QStringLiteral("0.0.31"));
+  QApplication::setApplicationVersion(QStringLiteral("0.0.32"));
   QApplication::setOrganizationName(QStringLiteral("BigRangaTech"));
 
   // Breeze SVG icons need qt6-svg-plugins on the live image.
@@ -87,6 +90,15 @@ int main(int argc, char *argv[])
   spike::Panel panel;
   panel.applyLayerShell();
   panel.show();
+
+  // Restore sleep/lock inhibit + watch PrepareForSleep / Session.Lock.
+  (void)spike::LockController::instance();
+
+  // Optional Super+L (works when shell windows have focus; KWin global shortcut later).
+  auto *lockShortcut = new QShortcut(QKeySequence(QStringLiteral("Meta+L")), &panel);
+  QObject::connect(lockShortcut, &QShortcut::activated, []() {
+    spike::LockController::instance().lockScreen();
+  });
 
   // Portals need WAYLAND_DISPLAY (set by KWin for --exit-with-session).
   // Never start these from spike-session before KWin — that blocks ~90s then ABRTs.

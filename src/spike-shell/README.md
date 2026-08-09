@@ -1,12 +1,12 @@
 # Spike Shell
 
-Stage 3 skeleton — **pre-alpha**. Spec: `docs/DESKTOP.md`.
+Stage 3 skeleton — **Alpha**. Spec: `docs/DESKTOP.md`.
 
 ## What this is
 
 Spike Shell is the custom desktop shell (Qt6 **Widgets**, not QML) that runs as a Wayland client under **standalone KWin**. It does **not** use Plasma (`plasma-workspace`, Akonadi, Baloo, etc.).
 
-MVP for this skeleton (**0.0.31**):
+MVP for this skeleton (**0.0.32**):
 
 | Piece | Status |
 |-------|--------|
@@ -17,14 +17,16 @@ MVP for this skeleton (**0.0.31**):
 | Clock / calendar popup | ✅ |
 | Network tray | ✅ + active VPN row |
 | Volume tray | ✅ 0–150%, middle-click mute |
-| Battery tray | ✅ UPower + ETA (hidden if none) |
+| Battery tray | ✅ UPower + ETA; **block sleep/locking** switch (logind inhibit) |
 | Notifications tray | ✅ in-process `org.freedesktop.Notifications` |
-| Brightness / Removable / Updates / Night Light | ✅ conditional / optional |
+| Brightness | ✅ sysfs + logind `SetBrightness` (+ brightnessctl fallback) |
+| Removable / Updates / Night Light | ✅ conditional / optional |
 | Bluetooth / Airplane / Keyboard Layout | ✅ conditional |
-| Session menu | ✅ Lock + confirm logout/reboot/shutdown |
+| Session menu | ✅ Spike lock screen + suspend confirm if inhibit on |
+| Lock screen | ✅ `SpikeLockScreen` + PAM (`/etc/pam.d/spike-lock`) |
 | Settings → PANEL | ✅ Panel / Tray Applets / Night Light (live Apply) |
 | Settings window | ✅ custom pages + KCM hosts |
-| Power (Settings) | ✅ spike-config + logind (no mid-session restart) |
+| Power (Settings) | ✅ spike-config + logind + same block-sleep switch |
 | Appearance | ✅ accent/font/wallpaper live |
 | Date & Time / Keyboard / Mouse / Layout | ✅ Spike-native |
 | Language / Users / VPN | ✅ |
@@ -40,7 +42,7 @@ cd src/spike-shell
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
 cmake --build build -j"$(nproc)"
 ./scripts/package-spike-shell.sh
-# → build/packages/spike-shell_0.0.31-1_amd64.deb
+# → build/packages/spike-shell_0.0.32-1_amd64.deb
 ```
 
 ## First-run

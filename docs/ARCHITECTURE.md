@@ -214,7 +214,7 @@ Spike uses KDE applications that run independently of the Plasma desktop shell. 
 
 | **Application** | **Purpose** | **Why This One** |
 | :-: | :-: | :-: |
-| Discover | Software center | Handles both apt and Flatpak, beginner-friendly |
+| Discover | Software center | apt (`.deb`) and Flatpak; beginner-friendly |
 | Dolphin | File manager | Most polished Qt file manager, themable |
 | Konsole | Terminal | For power users who want it, never required |
 | Kate | Text editor | Lightweight, capable, KDE-integrated |
@@ -235,19 +235,19 @@ Spike uses KDE applications that run independently of the Plasma desktop shell. 
 
 ## Software Management
 
-### Flatpak via Discover
+### Flatpak And .deb via Discover
 
-User-installed applications come through Flatpak, managed by Discover.
+Applications install as **Flatpak** or **`.deb` (apt)**, managed by Discover. Snap is not available.
 
-- Discover handles both system packages (apt) and user applications (Flatpak) 
-
-- Users search, click install, and apps appear in the launcher 
-
-- No terminal needed, no repository jargon 
+- Discover handles system packages (apt/`.deb`) and Flatpak apps in one UI  
+- Spike-maintained / system software is always `.deb`  
+- Users search, click install, and apps appear in the launcher  
+- No terminal needed, no repository jargon  
+- AppImage: not first-class (steer away). Official support only if install is GUI-equal to `.deb`/Flatpak (`DESIGN-DECISIONS.md`)  
 
 ### Pre-Seeded Runtimes
 
-Common Flatpak runtimes are pre-installed on the ISO to avoid large downloads on first app install:
+Common Flatpak runtimes are pre-installed on the ISO to avoid large downloads on first Flatpak app install:
 
 **Spike Standard (selective):**
 
@@ -267,15 +267,15 @@ Common Flatpak runtimes are pre-installed on the ISO to avoid large downloads on
 
 ### System Packages
 
-Core system packages come from Ubuntu LTS repositories:
+Core system and Spike packages come from Ubuntu LTS repositories (and Spike `.deb`s):
 
 - Security patches via `unattended-upgrades` (automatic) 
 
 - Non-security updates via Discover notification 
 
-- KDE standalone apps maintained by Ubuntu/Debian packagers 
+- KDE standalone apps and Spike Tools maintained as `.deb`s 
 
-- No custom package repository required 
+- No Snap; no custom package repository required for Alpha 
 
 ## Filesystem
 

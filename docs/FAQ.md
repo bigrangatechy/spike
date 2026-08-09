@@ -370,7 +370,7 @@ Flatpak sandboxing isolates Firefox from the rest of the system. This improves s
 
 ### Does Spike Come With An Email Client?
 
-Not pre-installed. Thunderbird is available from Discover (Flathub) if you need a desktop email client. Firefox can also handle webmail (Gmail, Outlook, etc.).
+Yes — **Thunderbird** is the default desktop email client (preinstalled; prefer `.deb` on the ISO). Webmail in Firefox still works for Gmail, Outlook, etc. See `DESIGN-DECISIONS.md` / `agent-ops/STATE.md`.
 
 ### Can I Use Microsoft Office?
 
@@ -447,7 +447,7 @@ See `SECURITY.md` for the full update model.
 | Terminal skills expected | Often expected | Terminal never needed |
 | Config file editing | Common | Config files managed by spike-config |
 | Telemetry | Some (Ubuntu) | Zero telemetry |
-| Package format | Snap (Ubuntu) or Flatpak | Flatpak only |
+| Package format | Snap (Ubuntu) or Flatpak | Flatpak **and** `.deb` (no Snap) |
 | Memory tuning | Manual | Automatic memory management at install |
 
 ### How Is Spike Different From Raspberry Pi OS?

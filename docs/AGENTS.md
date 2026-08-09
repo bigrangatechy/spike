@@ -114,7 +114,7 @@ CPU classification thresholds:
 | **Display** | Wayland (KWin) + XWayland fallback |
 | **Desktop** | Custom lightweight KDE-feel shell (panel, launcher, session) — NOT full KDE Plasma — standalone KWin + custom shell |
 | **Init system** | systemd |
-| **Package mgr** | apt (system) + Flatpak (user applications via Discover) |
+| **Package mgr** | apt (`.deb`, system + apps) + Flatpak (via Discover); Snap removed |
 | **Snap** | REMOVED entirely (snapd not installed) |
 
 ### Variant System
@@ -461,7 +461,7 @@ Spike Shell components:
 KDE standalone apps included (NOT full Plasma):
 
 ```
-├── Discover (software manager — Flatpak frontend)
+├── Discover (software manager — Flatpak + apt/`.deb`)
 ├── Dolphin (file manager)
 ├── Konsole (terminal emulator)
 ├── Kate (text editor)
@@ -472,14 +472,18 @@ KDE standalone apps included (NOT full Plasma):
     └── Not full System Settings; not plasma-nm; never plasma-desktop/workspace
 ```
 
-Flatpak via Discover for user applications:
+Applications via Discover (Flatpak and/or `.deb`):
 
 ```
 ├── Pre-seeded KDE + GNOME Flatpak runtimes on ISO (Standard)
 ├── Pre-seeded all common runtimes (Plus)
-├── Firefox (Flatpak, Spike-tuned prefs)
-├── LibreOffice (Flatpak)
-└── User installs any additional apps via Discover
+├── System / Spike stack always `.deb` (shell, KWin, Dolphin, …)
+├── Default apps may be `.deb` or Flatpak (Alpha: prefer `.deb` where Ubuntu packages fit Tier‑1)
+├── Firefox (Spike-tuned prefs)
+├── Thunderbird (default email client)
+├── VLC (media)
+├── LibreOffice (typically Flatpak; `.deb` acceptable)
+└── User installs additional apps via Discover (Flatpak or `.deb`)
 ```
 
 ### Bootloader
@@ -1586,7 +1590,7 @@ Theme engine:
 | Architecture | x86_64 only | 32-bit requires library forking |
 | Display server | Wayland (KWin) | Modern, XWayland fallback validated |
 | Desktop shell | Custom (not Plasma) | Lightweight, cohesive UX |
-| Package manager (user apps) | Flatpak | Sandboxed, easy updates via Discover |
+| Package manager (apps) | Flatpak **and** `.deb` via Discover | System stack stays `.deb`; Snap forbidden |
 | Filesystem | ext4 everywhere | Simplicity, consistency, reliability |
 | Encryption | None (deliberate) | Beginner recovery simplicity |
 | Bootloader | GRUB2 | Reliable, well-understood, Limine later |
@@ -1643,7 +1647,7 @@ Theme engine:
 └── 📝 Hardware smoke: Celeron N4020, AMD A4 (ongoing)
 ```
 
-> **Note:** Project release label remains **pre-alpha** until the **installer works end-to-end** (then **Alpha**). Prototyping (ISO, shell, spike-config, installer) continues under pre-alpha until that gate. See `docs/agent-ops/DECISIONS.md`.
+> **Note:** Project release label is **Alpha** (installer E2E met 2026-08-09). See `docs/agent-ops/DECISIONS.md` / `STATE.md`.
 
 **Phase 4 — Alpha Release (8 months from start)** 🔲 NOT STARTED
 

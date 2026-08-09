@@ -33,7 +33,7 @@ What Spike is NOT:
 
 - **Custom Qt6/Wayland desktop** (Spike Shell) 
 
-- **Flatpak-only application model** (one app store, one source) 
+- **Flatpak + `.deb` application model** (Discover; system stack is always `.deb`; no Snap)
 
 - **ZRAM memory management** (effective RAM exceeds physical RAM) 
 
@@ -67,17 +67,14 @@ See [HARDWARE.md](HARDWARE.md) for the complete hardware specification, detectio
 ## Project Status
 
 ```
-CURRENT PHASE: Pre-alpha (documentation)
-Spike follows a "docs-first" methodology. The entire system is
-specified in documentation before any code is written.
-- You cannot download or install Spike yet
-- There is no ISO image yet
-- There is no working desktop yet
-- What exists: a complete specification of what Spike will be
-- When code begins, it will follow these specifications
+CURRENT PHASE: Alpha (installer E2E met 2026-08-09)
+Spike remains docs-first: product specs in this tree guide the build.
+- Live ISO + installer + Spike Shell ship for Alpha testing
+- Not a public marketing “download Spike Alpha” yet — see agent-ops/STATE.md
+- Next: preinstalled apps (Firefox, media, email), first-run polish
 Timeline:
-- Pre-alpha (current): documentation, architecture, design
-- Alpha: first bootable ISO, basic desktop, installer
+- Pre-alpha: complete (docs + early ISO/shell; ended at installer E2E)
+- Alpha (current): desktop apps, hardware testing, polish
 - Beta: feature-complete, hardware testing, bug fixing
 - Release Candidate: final testing, polish, documentation review
 - 1.0: first stable release (~18 months from alpha start)

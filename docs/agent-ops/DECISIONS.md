@@ -2,13 +2,55 @@
 
 Operational decisions that affect how work proceeds. Product/architecture rationale remains in `docs/DESIGN-DECISIONS.md`. Log new entries at the **top** (newest first).
 
-**Last updated:** 2026-08-06
+**Last updated:** 2026-08-09
+
+---
+
+## 2026-08-09 — Default email client: Thunderbird
+
+**Decision (BDFL):** **Thunderbird** is Spike’s preinstalled desktop email client (prefer `.deb` on ISO/Tier‑1). Webmail via Firefox remains fine.
+
+**Refs:** `STATE.md` Default apps, `FAQ.md`, `AGENTS.md`, `MIGRATION-GUIDE.md`.
+
+---
+
+## 2026-08-09 — AppImage: steer away unless GUI-equal to .deb/Flatpak
+
+**Decision (BDFL):** Do **not** treat AppImage as a first-class Spike install format. Prefer Flatpak and `.deb`. AppImages aren’t inherently rejected forever, but Spike does not fully trust the usual sideload model.
+
+**Gate to ever support AppImage officially:** install/remove/update must be **as easy as `.deb` or Flatpak** through a GUI (Discover and/or Spike user-facing tools). No terminal, no manual `chmod +x` as the documented path — same Golden Rule as other user-facing surfaces.
+
+**Refs:** `DESIGN-DECISIONS.md` Software Management, `PHILOSOPHY.md` / GUI rules, Flatpak+`.deb` decision above.
+
+---
+
+## 2026-08-09 — Apps: Flatpak and .deb (no Snap)
+
+**Decision (BDFL):** Supported application formats are **Flatpak** and **`.deb` (apt)** via Discover. **Snap remains forbidden.** Spike system/desktop software stays **`.deb`**. AppImage: see following entry (steer away; GUI-equal gate).
+
+**Supersedes:** Product wording that user apps were Flatpak-only (`DESIGN-DECISIONS.md` Flatpak Over Snap, `CONSTRAINTS.md`, `CONTRIBUTING.md` structural constraint #6, FAQ/AGENTS summaries).
+
+**Why:** The ISO already ships the shell and Tier‑1 tools as debs; Flatpak-only forced a false split. Debs for system stack + optional Flatpak for sandboxed third-party apps matches how Spike is built.
+
+**Refs:** `DESIGN-DECISIONS.md`, `ARCHITECTURE.md`, `AGENTS.md`, `STATE.md` Default apps.
+
+---
+
+## 2026-08-09 — Alpha opened (installer E2E met)
+
+**Decision (BDFL):** Open **Alpha**. The custom installer works end-to-end: live → install → reboot to installed Spike Shell desktop; KERNEL.md module blacklist applied at install. Gate from `2026-08-06 — Pre-alpha ends when the installer works` is **met**.
+
+**Still Alpha work (not Beta):** first-run wizard polish, Flatpak/preseeded apps (Firefox, media, email, …), hardware matrix, Secure Boot hardening, migration inventory UI, etc.
+
+**Refs:** `STATE.md`, `ROADMAP.md` Phase 2, smoke 2026-08-09.
 
 ---
 
 ## 2026-08-06 — Pre-alpha ends when the installer works (enter Alpha)
 
 **Decision (BDFL):** Leave **pre-alpha** and open **Alpha** only when the **custom Spike installer works end-to-end** (live USB → install to disk → reboot into an installed Spike desktop). Until that gate is met, keep the **pre-alpha** label even while shell, ISO, and other stack work continues.
+
+**Status:** **Met 2026-08-09** — see “Alpha opened” entry above.
 
 **What “installer works” means (minimum):**
 - Installer runs from the live session
@@ -165,7 +207,7 @@ Operational decisions that affect how work proceeds. Product/architecture ration
 
 ## Founding product decisions (pointer)
 
-Major product/architecture choices (Ubuntu Server LTS base, Wayland/KWin shell, Flatpak-only apps, ZRAM, one ISO / two variants, no telemetry, etc.) are recorded in:
+Major product/architecture choices (Ubuntu Server LTS base, Wayland/KWin shell, Flatpak + `.deb` apps / no Snap, ZRAM, one ISO / two variants, no telemetry, etc.) are recorded in:
 
 → **`docs/DESIGN-DECISIONS.md`** (authoritative “why”)
 

@@ -402,7 +402,7 @@ AppArmor is enabled with Ubuntu defaults. No custom profiles.
 
 ## Flatpak Sandboxing
 
-Flatpak provides its own application sandboxing, separate from AppArmor. This is the primary isolation mechanism for user-installed applications.
+Flatpak provides its own application sandboxing, separate from AppArmor. Flatpak is the preferred isolation path for third-party apps; `.deb` apps rely on normal Unix permissions / AppArmor where packaged. Snap is not used.
 
 **Flatpak sandbox layers:**
 
@@ -1099,7 +1099,7 @@ Spike does NOT include antivirus software.
 ├── The primary malware vector is the browser (handled by sandboxing)
 ├── Flatpak sandboxing limits application damage
 ├── AppArmor confines system services
-└── No executable email attachments (no email client installed by default)
+└── Thunderbird is the default email client (preinstalled; warn on risky attachments)
 ```
 
 **Defense in depth:**

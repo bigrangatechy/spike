@@ -76,7 +76,10 @@ rtkit
 
 # Stage-3 live apps — KDE standalone set from CONSTRAINTS.md / DESIGN-DECISIONS.md.
 # Spike Shell owns the shell; these are the application layer (not full Plasma).
-# No full browser yet — QtWebEngine is too heavy for 4GB Tier-1 targets (Firefox via Flatpak later).
+# Alpha (2026-08): seed default apps as .deb where possible
+# (firefox, vlc, thunderbird); Flatpak also via Discover. No Snap.
+# See docs/agent-ops/STATE.md “Default apps” and DESIGN-DECISIONS.md.
+# Do not pull QtWebEngine browsers for Tier-1 RAM.
 dolphin
 konsole
 kate

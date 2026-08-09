@@ -1,0 +1,5 @@
+# Spike Lock Screen PAM service (SECURITY.md MVP).
+# Falls back to @include common-auth if unix modules differ by distro.
+#%PAM-1.0
+@include common-auth
+@include common-account

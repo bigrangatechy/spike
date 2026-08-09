@@ -1,6 +1,8 @@
 #include "panel/applets/SessionMenuApplet.hpp"
 
+#include "lock/LockController.hpp"
 #include "panel/applets/TrayHelpers.hpp"
+#include "power/SleepInhibit.hpp"
 
 #include <QIcon>
 #include <QMenu>
@@ -92,15 +94,7 @@ void SessionMenuApplet::showMenu()
   if (chosen == settings) {
     tray::openPanelSettings(this);
   } else if (chosen == lock) {
-    const QString sessionId = qEnvironmentVariable("XDG_SESSION_ID");
-    if (!sessionId.isEmpty() &&
-        runDetached(QStringLiteral("loginctl"), {QStringLiteral("lock-session"), sessionId})) {
-      return;
-    }
-    runWait(QStringLiteral("busctl"),
-            {QStringLiteral("call"), QStringLiteral("org.freedesktop.login1"),
-             QStringLiteral("/org/freedesktop/login1"),
-             QStringLiteral("org.freedesktop.login1.Manager"), QStringLiteral("LockSessions")});
+    LockController::instance().lockScreen();
   } else if (chosen == logout) {
     if (!confirm(this, QStringLiteral("Log out"), QStringLiteral("Log out of this session?"))) {
       return;
@@ -114,6 +108,12 @@ void SessionMenuApplet::showMenu()
                   {QStringLiteral("terminate-user"), qEnvironmentVariable("USER")});
     }
   } else if (chosen == suspend) {
+    if (SleepInhibit::instance().isActive()) {
+      if (!confirm(this, QStringLiteral("Suspend"),
+                   QStringLiteral("Sleep/locking block is on — suspend anyway?"))) {
+        return;
+      }
+    }
     runPowerAction(QStringLiteral("Suspend"), QStringLiteral("suspend"));
   } else if (chosen == reboot) {
     if (!confirm(this, QStringLiteral("Restart"), QStringLiteral("Restart the computer now?"))) {

@@ -6,7 +6,7 @@ Implementation sketch of **spike-shell** — the live/installed desktop shell (n
 
 ## Status
 
-Shipping on the live ISO (version in `src/spike-shell/CMakeLists.txt` / `STATE.md`). Pre-alpha: expect polish gaps vs Plasma branding docs.
+Shipping on the live ISO (version in `src/spike-shell/CMakeLists.txt` / `STATE.md`). Alpha: expect polish gaps vs full SECURITY.md lock chrome.
 
 ## High-level processes
 
@@ -22,7 +22,8 @@ spike-session (wayland session entry)
                   ├── Launcher (Kickoff-style; scans *.desktop)
                   ├── Settings host (KCMs + custom pages via org.spike.Config)
                   ├── FirstRunWizard (installed only; see firstrun/)
-                  └── Power / audio / network helpers
+                  ├── LockController + SpikeLockScreen (PAM)
+                  └── Power / audio / network helpers (SleepInhibit, BrightnessClient)
 ```
 
 ## Source layout
@@ -31,12 +32,13 @@ spike-session (wayland session entry)
 src/spike-shell/src/
 ├── main.cpp
 ├── firstrun/          → FirstRunWizard + FirstRunHooks (placeholders)
+├── lock/              → SpikeLockScreen, PamAuth, LockController
 ├── panel/
 ├── launcher/          → Launcher.cpp (categoryFor, desktop scan)
 ├── settings/
 ├── network/
 ├── audio/
-└── power/
+└── power/             → BatteryClient, BrightnessClient, SleepInhibit
 ```
 
 ### First-run wizard (0.0.31+)
@@ -50,6 +52,14 @@ notices → Get started.
 Drop-in hooks: `firstrun::runDesktopTour`, `verifyFlatpakRuntimes`, `checkSecurityUpdates`,
 `offerAccessibilityWizard`, `collectPostInstallNotices` (reads
 `/var/lib/spike/installer-notifications/*.txt`).
+
+### Lock / sleep inhibit (0.0.32+)
+
+- **Manually block sleep and screen locking** — battery popup + Settings → Power; holds
+  logind `Inhibit("sleep:idle", …, "block")` (`SleepInhibit`).
+- **Lock Screen** — Session menu / Super+L / `PrepareForSleep` / session `Lock` →
+  `SpikeLockScreen` (PAM service `spike-lock`, packaged under `/etc/pam.d/`).
+- Manual Suspend asks for confirmation when the inhibit switch is on.
 
 Session / desktop entry bits also under `src/spike-shell/session/` (packaged into the `.deb`).
 

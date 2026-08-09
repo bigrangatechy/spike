@@ -261,18 +261,49 @@ Each decision includes the context that led to it, the alternatives considered, 
 
 ## Software Management
 
-### Flatpak Over Snap
+### Flatpak And .deb (Not Snap)
 
-**Decision:** Use Flatpak for user-installed applications. Snap is stripped entirely.
+**Decision:** User-facing applications may be installed as **Flatpak** or **`.deb` (apt)**. Both are first-class in Discover. **Snap is stripped entirely.**
 
-**Context:** Snap is Canonical's container format, tightly coupled to Ubuntu's infrastructure and the Snap Store (proprietary backend). Flatpak is community-governed, supports multiple repositories (Flathub is the de facto standard), and integrates cleanly with Discover.
+**AppImage stance:** Spike **steers away** from AppImage as a supported channel. AppImages are not inherently bad, but Spike does not fully trust the typical download-and-chmod workflow (unsigned binaries, no store review, weak integration). Spike does **not** ship or promote AppImages in Alpha.
+
+**If AppImage is ever first-class later**, it must meet the same bar as `.deb` / Flatpak for beginners:
+
+```
+├── Installable from a GUI (Discover and/or a Spike Settings/tools page)
+├── As easy as clicking Install for a .deb or Flatpak (no terminal, no chmod +x ritual)
+├── Appears in the Spike launcher after install
+└── Removable/updatable from the same GUI surface
+```
+
+That matches Spike’s rule: anything user-facing gets a GUI. A half-supported “save the file and make it executable” path is rejected.
+
+**Supersedes (2026-08-09):** Earlier “Flatpak-only for user applications” wording. Rationale for the change: Spike’s own system and desktop stack (shell, KWin, Dolphin, Konsole, Discover, spike-config, …) is packaged as **`.deb`s**; forbidding apt apps forced an awkward split. Allowing both formats keeps system software honest as debs while Flatpak remains the preferred path for sandboxed third-party apps from Flathub.
+
+**Context:** Snap is Canonical's container format, tightly coupled to Ubuntu's infrastructure and the Snap Store (proprietary backend). Flatpak is community-governed and integrates cleanly with Discover. Debian/Ubuntu `.deb` packages remain the native format for the base OS and Spike-maintained components.
+
+**Guidance:**
+
+```
+├── System / Spike-maintained software → .deb (apt)
+├── Third-party / sandboxed apps → Flatpak preferred when available
+├── Either format OK in Discover when both exist (user choice)
+├── Snap → never (snapd not installed)
+└── AppImage → not first-class (steer away); only if GUI install = .deb/Flatpak ease
+```
 
 **Trade-offs accepted:**
 
 ```
+├── Two formats in Discover (slightly more complex than Flatpak-only)
 ├── Some Ubuntu-specific applications are only available as Snaps (not relevant to target users)
-└── Flatpak runtime sizes are significant (mitigated by pre-seeding on ISO)
+├── Flatpak runtime sizes are significant (mitigated by pre-seeding on ISO)
+└── Some niche apps ship only as AppImage — users may run them manually; Spike won't document that as the normal path
 ```
+
+### Default Desktop Apps (Alpha)
+
+**Decision:** Preinstalled defaults (prefer `.deb` on Tier‑1): **Firefox** (browser), **Thunderbird** (email), **VLC** (media). LibreOffice follows after RAM/ISO budget allows. System tools (Dolphin, Kate, Konsole, Discover) remain `.deb` as today.
 
 ### Pre-Seeded Flatpak Runtimes
 
@@ -286,7 +317,7 @@ Each decision includes the context that led to it, the alternatives considered, 
 
 **Decision:** Use KDE Discover as the software center.
 
-**Context:** Discover handles both apt (system packages) and Flatpak (user applications) in a single, beginner-friendly interface. It supports ratings, screenshots, and search. Building a custom software center would be a massive undertaking with no clear benefit.
+**Context:** Discover handles **apt (`.deb`)** and **Flatpak** in a single, beginner-friendly interface. It supports ratings, screenshots, and search. Building a custom software center would be a massive undertaking with no clear benefit. System updates and user apps both surface here.
 
 **Trade-offs accepted:**
 

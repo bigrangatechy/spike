@@ -4,6 +4,36 @@ Append-only. Newest sessions at the **top**.
 
 ---
 
+## 2026-08-09 — shell 0.0.32: lock, block sleep/locking, brightness live
+
+SpikeLockScreen (PAM `/etc/pam.d/spike-lock`) from Session menu / PrepareForSleep / session Lock; Super+L best-effort. Plasma-equivalent **Manually block sleep and screen locking** in battery popup + Settings → Power (`SleepInhibit` logind `sleep:idle` block). Manual Suspend confirms when inhibit is on. Brightness applet: sysfs → logind `SetBrightness` → brightnessctl (was silent no-op without write perms). Package `spike-shell_0.0.32-1_amd64.deb`.
+
+---
+
+## 2026-08-09 — Thunderbird locked as default email
+
+BDFL: preinstalled email client is **Thunderbird** (prefer `.deb`). FAQ/STATE/AGENTS/SECURITY/DECISIONS updated; ready to seed with Firefox + VLC.
+
+---
+
+## 2026-08-09 — AppImage stance clarified
+
+Steer away from AppImage (trust / sideload model). Not a moral ban — if ever first-class, must install/remove via GUI as easily as `.deb` or Flatpak (Discover or Spike tools). Logged in DECISIONS + DESIGN-DECISIONS.
+
+---
+
+## 2026-08-09 — Apps policy: Flatpak + .deb (no Snap)
+
+BDFL: drop Flatpak-only. Discover supports **Flatpak and `.deb`**; Spike system stack stays `.deb`; Snap still forbidden; AppImage not a Spike install path. Specs updated: DESIGN-DECISIONS, ARCHITECTURE, AGENTS, CONTRIBUTING, FAQ, CONSTRAINTS, STATE default-apps (prefer deb Firefox/VLC/email on Tier‑1).
+
+---
+
+## 2026-08-09 — Alpha opened; docs + default-apps track
+
+BDFL: installer E2E met (installed desktop + module blacklist OK) → **Alpha** (`DECISIONS.md`). Docs: STATE/ROADMAP/README/CHANGELOG/INDEX flipped off pre-alpha gate. Next Alpha focus documented in STATE: preinstalled software (Firefox Flatpak, media/VLC, email candidate Thunderbird, LibreOffice later). First-run wizard already in shell **0.0.31**; rebuild still needed to smoke it on a fresh install.
+
+---
+
 ## 2026-08-09 — post-install first-run wizard (shell 0.0.31 / installer 0.0.11)
 
 Smoke before this change: erase install reached installed desktop; KERNEL.md module blacklist looked correct. Gap: no first-boot UX. Shell **0.0.31**: FirstRunWizard (Welcome → TZ → Wi‑Fi → Tour placeholder → Accessibility offer → Import → Notices → Done); hooks in `firstrun/FirstRunHooks` for Flatpak/updates/tour drop-ins; gate on `/etc/spike/installed` + `~/.config/spike/first_run_completed`. Installer **0.0.11**: writes `/var/lib/spike/first-boot` + `installer-notifications/`. Packages ready; rebuild to verify wizard on next install.

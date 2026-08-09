@@ -32,6 +32,7 @@ Install paths:
   /usr/bin/spike-shell
   /usr/bin/spike-session
   /usr/share/wayland-sessions/spike.desktop
+  /etc/pam.d/spike-lock
 EOF
 }
 
@@ -98,11 +99,13 @@ mkdir -p \
   "${DEST}/DEBIAN" \
   "${DEST}/usr/bin" \
   "${DEST}/usr/share/wayland-sessions" \
-  "${DEST}/usr/share/doc/${PKG_NAME}"
+  "${DEST}/usr/share/doc/${PKG_NAME}" \
+  "${DEST}/etc/pam.d"
 
 install -m 755 "${BUILD}/spike-shell" "${DEST}/usr/bin/spike-shell"
 install -m 755 "${SRC}/session/spike-session" "${DEST}/usr/bin/spike-session"
 install -m 644 "${SRC}/session/spike.desktop" "${DEST}/usr/share/wayland-sessions/spike.desktop"
+install -m 644 "${SRC}/pam/spike-lock" "${DEST}/etc/pam.d/spike-lock"
 cp "${SRC}/README.md" "${DEST}/usr/share/doc/${PKG_NAME}/README"
 
 cat >"${DEST}/usr/share/doc/${PKG_NAME}/copyright" <<'EOF'
@@ -122,12 +125,12 @@ Section: x11
 Priority: optional
 Architecture: ${ARCH}
 Maintainer: BigRangaTech <spike@bigrangatech.com>
-Depends: libqt6widgets6 | libqt6widgets6t64, libqt6gui6 | libqt6gui6t64, libqt6core6t64 | libqt6core6, libqt6dbus6 | libqt6dbus6t64, qt6-wayland, liblayershellqtinterface6, layer-shell-qt, libkf6kcmutils6, libkf6kcmutilscore6, libkf6coreaddons6
-Recommends: kwin-wayland, xwayland, dbus-user-session, seatd, libseat1, breeze-cursor-theme, breeze-icon-theme, qt6-svg-plugins, spike-config, libkf6kcmutils-bin, pulseaudio-utils, upower, bluez, udisks2, rfkill, wmctrl
+Depends: libqt6widgets6 | libqt6widgets6t64, libqt6gui6 | libqt6gui6t64, libqt6core6t64 | libqt6core6, libqt6dbus6 | libqt6dbus6t64, qt6-wayland, liblayershellqtinterface6, layer-shell-qt, libkf6kcmutils6, libkf6kcmutilscore6, libkf6coreaddons6, libpam0g
+Recommends: kwin-wayland, xwayland, dbus-user-session, seatd, libseat1, breeze-cursor-theme, breeze-icon-theme, qt6-svg-plugins, spike-config, libkf6kcmutils-bin, pulseaudio-utils, upower, bluez, udisks2, rfkill, wmctrl, brightnessctl
 Description: Spike Linux desktop shell (Qt6 Widgets)
  Bottom panel, Kickoff launcher, Network/Volume/Battery tray applets, Settings
- (custom pages + in-window KCMs), session menu under standalone KWin.
- Stage 3 pre-alpha — see docs/DESKTOP.md.
+ (custom pages + in-window KCMs), Spike lock screen, session menu under standalone KWin.
+ Stage 3 Alpha — see docs/DESKTOP.md.
 EOF
 
 find "${DEST}" -type d -exec chmod 755 {} +

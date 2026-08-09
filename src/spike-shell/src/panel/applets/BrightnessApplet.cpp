@@ -1,9 +1,8 @@
 #include "panel/applets/BrightnessApplet.hpp"
 
 #include "panel/applets/TrayHelpers.hpp"
+#include "power/BrightnessClient.hpp"
 
-#include <QDir>
-#include <QFile>
 #include <QLabel>
 #include <QSlider>
 #include <QVBoxLayout>
@@ -22,6 +21,8 @@ BrightnessApplet::BrightnessApplet(QWidget *parent)
   setIconSize(QSize(20, 20));
   connect(this, &QPushButton::clicked, this, &BrightnessApplet::togglePopup);
 
+  m_client = new BrightnessClient(this);
+
   m_popup = new QWidget(nullptr, Qt::Popup | Qt::FramelessWindowHint);
   m_popup->setMinimumWidth(240);
   auto *lay = new QVBoxLayout(m_popup);
@@ -34,72 +35,26 @@ BrightnessApplet::BrightnessApplet(QWidget *parent)
   lay->addWidget(m_pct);
   connect(m_slider, &QSlider::valueChanged, this, &BrightnessApplet::onSlider);
 
-  if (!discover()) {
+  if (!m_client->hasBacklight()) {
     hide();
     return;
   }
   refresh();
 }
 
-bool BrightnessApplet::discover()
+bool BrightnessApplet::hasBacklight() const
 {
-  const QDir dir(QStringLiteral("/sys/class/backlight"));
-  if (!dir.exists()) {
-    return false;
-  }
-  const QStringList entries = dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
-  for (const QString &e : entries) {
-    const QString base = dir.absoluteFilePath(e);
-    const QString bright = base + QStringLiteral("/brightness");
-    const QString maxb = base + QStringLiteral("/max_brightness");
-    if (QFile::exists(bright) && QFile::exists(maxb)) {
-      m_brightnessPath = bright;
-      m_maxPath = maxb;
-      m_hasBacklight = true;
-      return true;
-    }
-  }
-  return false;
-}
-
-int BrightnessApplet::readMax() const
-{
-  QFile f(m_maxPath);
-  if (!f.open(QIODevice::ReadOnly)) {
-    return 100;
-  }
-  return QString::fromUtf8(f.readAll()).trimmed().toInt();
-}
-
-int BrightnessApplet::readBrightness() const
-{
-  QFile f(m_brightnessPath);
-  if (!f.open(QIODevice::ReadOnly)) {
-    return 0;
-  }
-  return QString::fromUtf8(f.readAll()).trimmed().toInt();
-}
-
-bool BrightnessApplet::writeBrightness(int value)
-{
-  QFile f(m_brightnessPath);
-  if (!f.open(QIODevice::WriteOnly)) {
-    return false;
-  }
-  f.write(QByteArray::number(value));
-  return true;
+  return m_client && m_client->hasBacklight();
 }
 
 void BrightnessApplet::refresh()
 {
-  if (!m_hasBacklight) {
+  if (!m_client || !m_client->hasBacklight()) {
     hide();
     return;
   }
   show();
-  const int maxv = qMax(1, readMax());
-  const int cur = readBrightness();
-  const int pct = qBound(1, qRound(100.0 * cur / maxv), 100);
+  const int pct = m_client->percentage();
   if (m_slider && !m_slider->isSliderDown()) {
     m_slider->blockSignals(true);
     m_slider->setValue(pct);
@@ -114,9 +69,13 @@ void BrightnessApplet::refresh()
 
 void BrightnessApplet::onSlider(int value)
 {
-  const int maxv = qMax(1, readMax());
-  const int raw = qBound(1, qRound(maxv * (value / 100.0)), maxv);
-  writeBrightness(raw);
+  if (!m_client) {
+    return;
+  }
+  if (!m_client->setPercentage(value) && m_pct) {
+    m_pct->setText(QStringLiteral("%1% (could not apply)").arg(value));
+    return;
+  }
   if (m_pct) {
     m_pct->setText(QStringLiteral("%1%").arg(value));
   }
@@ -125,7 +84,7 @@ void BrightnessApplet::onSlider(int value)
 
 void BrightnessApplet::togglePopup()
 {
-  if (!m_hasBacklight || !m_popup) {
+  if (!m_client || !m_client->hasBacklight() || !m_popup) {
     return;
   }
   if (m_popup->isVisible()) {

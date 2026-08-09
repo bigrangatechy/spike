@@ -286,21 +286,34 @@ All changes take effect immediately (no reboot required).
 Hardware interface:
 
 ```
-├── Primary: /sys/class/backlight/intel_backlight/brightness
-├── Fallback: /sys/class/backlight/acpi_video0/brightness
-└── Software adjustment: /sys/class/drm/card0/device/panel_self_refresh
+├── Primary: /sys/class/backlight/*/brightness (read; write when permitted)
+├── Preferred write path: logind Session.SetBrightness (unprivileged seat)
+└── Fallback: brightnessctl -d <device> set <value>
 ```
 
 Controls:
 
 ```
 ├── Physical function keys (Fn + brightness up/down)
-├── Brightness applet in tray (slide control)
-├── Settings → Display → Brightness slider
-└── Auto-adjust (if ambient light sensor present)
+├── Brightness applet in tray (slide control — live via BrightnessClient)
+├── Settings → Display → Brightness slider (when KCM exposes it)
+└── Auto-adjust (if ambient light sensor present) — later
 ```
 
 Range: 0–100% (hardware-dependent minimum) Minimum safe: 10% (below this, LCD may not turn on)
+
+### Block sleep and screen locking (Plasma-equivalent)
+
+Session-scoped switch (not an always-visible Power tray):
+
+```
+├── Battery tray popup → “Manually block sleep and screen locking”
+├── Settings → Power → same checkbox (for AC-only machines without battery applet)
+├── Implementation: logind Inhibit("sleep:idle", …, "block") via SleepInhibit
+├── Persists in QSettings power/blockSleepAndLocking; restored on shell start
+├── Blocks idle sleep and idle lock; manual Lock Screen still works
+└── Manual Suspend: confirm “Sleep/locking block is on — suspend anyway?”
+```
 
 Auto-dim settings:
 

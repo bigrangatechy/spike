@@ -43,7 +43,7 @@ Spike gives these machines a second life.
 ├── No config file editing for any user setting (Golden Rule)
 ├── Zero telemetry — nothing is collected, ever
 ├── Custom Qt6/Wayland desktop (Spike Shell)
-├── Flatpak-only application model (one app store, one source)
+├── Flatpak + `.deb` apps via Discover (system stack is `.deb`; no Snap)
 ├── ZRAM memory management (effective RAM exceeds physical RAM)
 ├── Two variants: Standard (minimal effects) and Plus (full effects)
 ├── Automatic hardware detection and configuration at install time
@@ -83,22 +83,22 @@ detection logic, and tier classification.
 
 ## Project Status
 
-**CURRENT PHASE: Pre-alpha** (implementation underway)
+**CURRENT PHASE: Alpha** (installer E2E met 2026-08-09)
 
-Spike remains **pre-alpha** until the **installer works end-to-end**. Live ISO / shell work continues under that label. Opening **Alpha** is a BDFL gate when install → reboot to installed desktop succeeds.
+Spike is in **Alpha**: live → install → reboot to installed desktop works. Focus now is Tier‑1 desktop completeness (preinstalled apps, first-run polish, hardware testing). Not a public “download Spike Alpha” marketing release yet — see `docs/agent-ops/STATE.md`.
 
 ```
-├── Live ISO and Spike Shell are in active pre-alpha development
-├── No public “download Spike Alpha” yet
-├── Specs in docs/ guide the build
-└── Phase flip: pre-alpha → Alpha when installer E2E works (DECISIONS.md)
+├── Installer E2E gate closed (DECISIONS.md)
+├── Shell / Rescue / Migration / config shipping on ISO
+├── Next: preinstalled apps (Firefox, media, email, …)
+└── Specs in docs/ still guide the build
 ```
 
 Timeline:
 
 ```
-├── Pre-alpha (current): docs + early ISO/shell; ends at installer E2E
-├── Alpha: installer works; expand desktop, hardware testing
+├── Pre-alpha: complete (docs + ISO/shell; ended at installer E2E)
+├── Alpha (current): expand desktop apps, hardware testing, polish
 ├── Beta: feature-complete, hardware testing, bug fixing
 ├── Release Candidate: final testing, polish, documentation review
 └── 1.0: first stable release (~18 months from alpha start)

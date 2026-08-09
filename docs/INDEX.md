@@ -32,7 +32,7 @@ Status legend:
 └── ⛔ Deprecated — document exists but is superseded (none currently)
 ```
 
-> **NOTE:** Spec status (“complete”) means the document is written. **Implementation** is underway in pre-alpha (ISO, shell, config, Rescue MVP); **Alpha** still opens only when the installer works end-to-end (`DECISIONS.md`).
+> **NOTE:** Spec status (“complete”) means the document is written. **Implementation** is in **Alpha** (installer E2E met 2026-08-09). See `agent-ops/DECISIONS.md` / `STATE.md`.
 
 ## Document Counts
 

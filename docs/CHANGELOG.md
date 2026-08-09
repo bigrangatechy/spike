@@ -110,7 +110,7 @@ Security fixes follow responsible disclosure. If a vulnerability is fixed before
 
 ### Unreleased
 
-Pre-alpha implementation is underway (ISO, shell, spike-config, Rescue). Alpha still gated on installer E2E — see `agent-ops/STATE.md` / `DECISIONS.md`.
+**Alpha** (opened 2026-08-09): installer E2E met. See `agent-ops/STATE.md` / `DECISIONS.md`. Next: preinstalled apps (Firefox / media / email).
 
 **Added:**
 
@@ -133,6 +133,8 @@ Pre-alpha implementation is underway (ISO, shell, spike-config, Rescue). Alpha s
 ├── spike-installer **0.0.9**: full timezone (`zone.tab`) + 11 languages + XKB keyboard → `/etc/default/keyboard`
 ├── spike-installer **0.0.10** + rescue **0.0.12**: async Step 7 system scan; `--list-systems` skips find-files inventory
 ├── spike-shell **0.0.31** + installer **0.0.11**: post-install first-run wizard + `/var/lib/spike/first-boot`
+├── spike-shell **0.0.32**: SpikeLockScreen (PAM), block sleep/locking inhibit, brightness via logind
+├── **Alpha opened** (2026-08-09): installer E2E + blacklist smoke confirmed
 
 ├── spike-migration **0.0.1** + live Desktop: Install Spike / Rescue My Files / Move My Files
 ├── Full tray + Settings → PANEL (shell **0.0.27** + config **0.0.7**)
@@ -205,7 +207,7 @@ These are target milestones, not released versions. Actual content will be deter
 └── Polish, animations, theme completeness
 ```
 
-Note: Spike Rescue recover+restore MVP ships on the live ISO during pre-alpha; installer-integrated restore remains alpha-gated with the installer.
+Note: Spike Rescue recover+restore and installer Layer 4 restore ship on the live ISO in Alpha; polish and migration inventory UI continue.
 
 **Hardware validation:**
 

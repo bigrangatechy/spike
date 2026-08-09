@@ -919,7 +919,7 @@ Appeal timeline:
 
 ### Technical Disagreements
 
-Disagreement about technical decisions is healthy and expected. Spike makes many debatable choices (Ubuntu base, Flatpak-only, Qt6, BDFL governance). Reasonable people can disagree.
+Disagreement about technical decisions is healthy and expected. Spike makes many debatable choices (Ubuntu base, Flatpak + `.deb` apps, Qt6, BDFL governance). Reasonable people can disagree.
 
 Rules for technical disagreement:
 

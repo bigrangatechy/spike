@@ -1,8 +1,8 @@
 # Spike Agent Ops — Current State
 
 **Last updated:** 2026-08-09  
-**Phase label:** Pre-alpha (implementation underway; Alpha gate not met yet)  
-**Note:** Stay in **pre-alpha** until the **installer works end-to-end** (live → install → reboot to installed desktop). That is the BDFL gate to open **Alpha** — not a calendar date, not “shell boots,” not Stage counter. See `DECISIONS.md`.
+**Phase label:** **Alpha** (installer E2E met — live → install → reboot to installed desktop)  
+**Note:** Pre-alpha gate from `DECISIONS.md` is closed. Alpha focus: Tier‑1 desktop completeness (preinstalled apps, first-run polish, hardware matrix). Beta is still later. See `ROADMAP.md` Phase 2.
 
 ## Summary
 
@@ -15,93 +15,72 @@
 | `dev-guide/` | 📝 Core filled (01–09, 12, 19); remaining stubs point at product docs |
 | agent-ops core | ✅ Written |
 | ISO / build tooling | ✅ live-build; hybrid remaster + debug capture |
-| Installer stack | 📝 **0.0.11** first-boot markers; shell **0.0.31** first-run wizard; E2E smoke green (desktop + blacklist) |
+| Installer stack | ✅ **0.0.11** E2E smoke green; first-boot markers; shell **0.0.32** lock/inhibit |
 | `scripts/build-iso.sh` | ✅ Packages config + shell + rescue + installer + **migration** + lb build |
 | Stage 1 live ISO | ✅ Hardware boot + login |
-| Stage 2 (`spike-config`) | 📝 **0.0.11** (KERNEL.md module blacklist from detect) |
-| Stage 3 (Spike Shell) | 📝 **0.0.31** first-run wizard + Rescue **0.0.12** + installer **0.0.11** + migration **0.0.3** |
-| Stage 4 (installer) | 📝 **0.0.11** — first-boot marker; locale; blacklist; Step 7 honesty |
+| Stage 2 (`spike-config`) | ✅ **0.0.11** (KERNEL.md module blacklist from detect) |
+| Stage 3 (Spike Shell) | 📝 **0.0.32** lock + sleep inhibit + brightness live + Rescue **0.0.12** + migration **0.0.3** |
+| Stage 4 (installer) | ✅ **0.0.11** — E2E install + blacklist + locale; first-run on next ISO |
+| Preinstalled apps | 🔲 Alpha next — Firefox / media / email (see below) |
 
 ## In Progress
 
 | Item | Notes |
 | :-: | :-: |
-| Stage 3 — desktop smoke | shell **0.0.31** first-run wizard (placeholders for tour/a11y/Flatpak/updates) |
-| Stage 4 — installer E2E | Smoke OK (desktop + blacklist); rebuild with **0.0.11**/**0.0.31** to verify wizard |
+| Alpha — preinstalled software | Seed browser, media player, email (Flatpak per AGENTS.md); see Default apps |
+| Stage 3 — first-run polish | Wizard shipped **0.0.31**; tour/a11y/Flatpak/update hooks still placeholders |
+| Rebuild smoke | Shell **0.0.32**: lock, block-sleep switch, brightness via logind; first-run still needs ISO smoke |
+
+## Default apps (Alpha — planned)
+
+**Package policy (2026-08-09):** Discover supports **Flatpak and `.deb`**. Spike system software is always `.deb`. Snap forbidden. See `DESIGN-DECISIONS.md`.
+
+Spec sources: `AGENTS.md`, `DESKTOP.md` (VLC, Discover, Internet/Media categories).
+
+| Role | Spec intent | On ISO today | Alpha plan |
+| :-: | :-: | :-: | :-: |
+| Browser | Firefox + Spike prefs | ❌ | Prefer **`.deb`** `firefox` on Tier‑1; Flatpak still available in Discover |
+| Media player | VLC in Media category | ❌ | Prefer **`.deb`** `vlc` (or Flatpak if deb too heavy) |
+| Email | **Thunderbird** (locked) | ❌ | Prefer **`.deb`** `thunderbird` |
+| Office | LibreOffice | ❌ | Flatpak or `.deb`; seed after browser works on 4GB |
+| Files / editor / terminal | Dolphin, Kate, Konsole | ✅ `.deb` | Keep |
+| Software center | Discover | ✅ `.deb` | Keep; Flatpak + apt backends |
+| Spike Tools | Install / Rescue / Move My Files | ✅ `.deb` | Keep |
+
+Implementation sketch: add `firefox`, `vlc`, `thunderbird` to `spike-live.list.chroot` (and/or install-time seed); Flatpak runtimes still preseed per variant for third-party apps.
 
 ## Blocked / Waiting On Decision
 
 | Item | Notes |
 | :-: | :-: |
 | Layer 2 GRUB recovery screen | Still deferred |
-| spike-migration full wizard | Wizard shell **0.0.3** shipped; inventory/conflict/old-disk Mode B later (SPIKE-MIGRATION.md) |
-| Notification daemon / history tray | Prefs + in-process fdo Notifications + tray history (**0.0.27**); retention polish later |
-| Magnifier / high-contrast theme apply | Magnifier launcher + Spike Shell HC chrome live; full app themes later |
+| spike-migration full wizard | Wizard shell **0.0.3**; inventory/conflict/old-disk Mode B later |
+| Notification daemon / history tray | Prefs + fdo Notifications + tray (**0.0.27**); retention polish later |
+| Magnifier / high-contrast theme apply | Magnifier + HC chrome live; full app themes later |
 | APT edit / PPA / NVIDIA driver UX | Sources page lists + launches tools; in-page edit later |
-| Custom Spike SVG icons | Inherit-only `spike-icons` for now (BRANDING overrides later) |
-| Custom Spike Aurorae decorations | After Breeze works; BRANDING.md pixel match is follow-up |
-| Plasma-ish / BRANDING desktop polish | Expected gap: custom QSS shell ≠ Plasma recolour; wallpaper, fonts, Aurorae, icons after smoke |
-| Printer KCM QML / Sound Kirigami spam | Upstream noise; note only unless one-line fix |
-| N4020 sof-essx8336 silence | Sink present; speakers still dead — separate from canberra |
+| Custom Spike SVG icons / Aurorae | Follow-up branding polish |
+| N4020 sof-essx8336 silence | Sink present; speakers still dead — separate track |
 
 ## Recently Completed
 
 | Date | Item |
 | :-: | :-: |
-| 2026-08-09 | shell **0.0.31** + installer **0.0.11**: post-install first-run wizard; smoke: desktop + blacklist OK |
-| 2026-08-09 | installer **0.0.10** + rescue **0.0.12**: fix variant→backup freeze (async scan; quick --list-systems) |
-| 2026-08-09 | installer **0.0.9**: full timezone/language/keyboard lists + `/etc/default/keyboard` |
-| 2026-08-09 | installer **0.0.8** + config **0.0.11** + migration **0.0.3**: install-time blacklist; Step 7 honesty; Move My Files wizard shell |
-| 2026-08-09 | installer **0.0.7** + shell **0.0.30** + config **0.0.10**: installed DRM groups/seatd; Panel/tray live Apply |
-| 2026-08-09 | installer **0.0.6** + rescue **0.0.11** + config **0.0.9**: non-casper installed boot; Step 7 exclude wipe disk |
-| 2026-08-09 | installer **0.0.2** + migration **0.0.1**: real install-helper; Desktop Install/Rescue/Move My Files |
-| 2026-08-08 | shell **0.0.25**: Settings finish — Advanced forms, About, live accent/font/wallpaper, Diagnostics/VPN/Sources polish |
-| 2026-08-08 | shell **0.0.24** + config **0.0.5**: Settings → Power (custom); logind drop-in; session Suspend |
-| 2026-08-08 | installer **0.0.1**: 10-step Qt wizard + spike-common session scan; ISO/desktop wired; no disk wipe |
-| 2026-08-08 | Docs catch-up: ROADMAP/AGENTS/CHANGELOG/GLOSSARY/INDEX aligned to Rescue 0.0.9 + shell 0.0.23 + spike-common |
-| 2026-08-08 | rescue **0.0.9** + shell **0.0.23**: Restore mode; SpikeBackup at writable root; Spike Tools; spike-common |
-| 2026-08-08 | rescue **0.0.8**: mkdir-dest findmnt walk-up for non-existent /var/log paths |
-| 2026-08-08 | rescue **0.0.4** + shell **0.0.22**: 700/600 file reads; Dolphin dark kdeglobals |
-| 2026-08-08 | spike-rescue **0.0.3**: dest = Spike USB `writable` partition |
-| 2026-08-08 | Docs: SPIKE-MIGRATION.md + SPIKE-RECOVERY-TOOL-GENERAL.md (spec only) |
-| 2026-08-08 | spike-rescue **0.0.2**: passwordless RO helper + Fedora btrfs home subvols |
-| 2026-08-08 | spike-rescue 0.0.1: Layer 3 Rescue My Files (RO copy + SHA256) |
-| 2026-08-08 | spike-shell 0.0.20 + config 0.0.4: Notifications / Accessibility / Software Sources started |
-| 2026-08-08 | spike-shell 0.0.19: Appearance live panel; Memory/Boot forms; Language/Users/VPN pages |
-| 2026-08-08 | A4 audio OK (`libcanberra-pulse`); detect 0.0.3 HW fill; version single-source |
-| 2026-08-07 | spike-shell 0.0.18: live user spike + tty1 autologin → spike-session; drop sof HDMI UCM; non-blocking portals |
-| 2026-08-06 | spike-shell 0.0.17: portals Spike:KDE, audio/pipewire groups, BT SPA, PW 44100 live drop-in, SOF scoped, volume/wpctl, launcher icons, verify-includes hook |
-| 2026-08-06 | spike-shell 0.0.16: Libinput kcminputrc + honest Mouse/Keyboard Apply |
-| 2026-08-06 | spike-shell 0.0.15: non-empty WP/SpikeDark, qt6-svg-plugins, pulse wait |
-| 2026-08-06 | spike-shell 0.0.14: Date/Time, Keyboard, Mouse, Layout pages; Volume + Battery applets; spike-icons |
-| 2026-08-06 | Pre-rebuild polish: breeze + plasma-integration + portal-kde + applications.menu + SpikeDark + SOF HDMI WP rule |
-| 2026-08-06 | Smoke: session + Network/Settings + **graceful shutdown** (capture 20260806T115605Z) |
-| 2026-08-06 | BDFL: pre-alpha → Alpha only when installer works E2E |
-| 2026-08-06 | Full debug capture follow + defer PipeWire until spike-session (SOF spam) |
-| 2026-08-06 | Docs updated for Network custom UI + Settings KCM allowlist |
-| 2026-08-06 | NetworkManager tray applet + Settings Network page (D-Bus + nmcli, no plasma-nm) |
-| 2026-08-06 | Settings category audit: every DESKTOP.md page present; Appearance wired to Config |
-| 2026-08-06 | Live packages: kscreen, plasma-pa, powerdevil, bluedevil, print-manager, PipeWire |
-| 2026-08-06 | In-window KCM host (`KCModuleLoader`) with Apply/Reset/Defaults |
-| 2026-08-06 | `org.spike.Config` D-Bus service + Settings skeleton + Kickoff-style launcher |
-| 2026-08-06 | Live smoke: shutdown OK; apps OK; htop needed Terminal=true wrap |
-| 2026-08-06 | Align live package list with KDE standalone apps (CONSTRAINTS.md) |
-| 2026-08-06 | Session input fixed (seatd/groups/cursors); launcher `.desktop` scan; power via sudo/polkit |
-| 2026-08-06 | spike-shell white-on-dark QSS + `.deb` wired into live ISO |
-| 2026-08-06 | Stage 3 Spike Shell skeleton (`src/spike-shell/`, builds) |
-| 2026-08-06 | Pre-alpha kept through shell/installer; Alpha by feel (installer cue) |
-| 2026-08-06 | Target detect confirmed: Celeron N4020 / ~4GB |
-| 2026-08-06 | Detect no longer baked from build host; capture + debug GRUB |
-| 2026-08-06 | spike-config packaged into live ISO |
-| 2026-08-05 | Stage 1 live ISO path (firmware, UEFI hybrid) |
+| 2026-08-09 | shell **0.0.32**: Spike lock + block sleep/locking + brightness logind live |
+| 2026-08-09 | Default email: **Thunderbird**; apps policy Flatpak+`.deb`; Alpha opened |
+| 2026-08-09 | shell **0.0.31** + installer **0.0.11**: post-install first-run wizard |
+| 2026-08-09 | installer **0.0.10** + rescue **0.0.12**: fix variant→backup freeze |
+| 2026-08-09 | installer **0.0.9**: full timezone/language/keyboard lists |
+| 2026-08-09 | installer **0.0.8** + config **0.0.11** + migration **0.0.3**: blacklist; Step 7; Move wizard |
+| 2026-08-09 | installer **0.0.7** + shell **0.0.30** + config **0.0.10**: DRM groups/seatd; live Apply |
+| 2026-08-09 | installer **0.0.6** + rescue **0.0.11** + config **0.0.9**: non-casper boot; exclude wipe disk |
+| 2026-08-06 | BDFL: pre-alpha → Alpha only when installer works E2E (**met**) |
 
 ## Next Suggested Work
 
-1. Rebuild ISO + smoke: Rescue recover (SpikeBackup at stick root) + Restore into `/home/spike`.  
-2. Confirm launcher **Spike Tools** category.  
-3. Stage 4: custom installer Step 7 + Layer 4 using `spike-common`.  
-4. spike-migration detailed wizard on the same engine.  
-5. Open **Alpha** when installer E2E is confirmed (BDFL gate).
+1. **Preinstalled apps:** add Firefox + VLC + **Thunderbird** as **`.deb`** where possible; keep Flatpak runtimes for Discover third-party apps.  
+2. Rebuild ISO with shell **0.0.32** + installer **0.0.11** → smoke lock, brightness, block-sleep, first-run.  
+3. Fill first-run placeholder hooks (tour / Flatpak verify / update check) as apps land.  
+4. spike-migration inventory/conflict UI (not Alpha-blocking).  
 
 ## How To Update This File
 

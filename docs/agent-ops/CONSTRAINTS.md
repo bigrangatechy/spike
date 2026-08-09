@@ -247,7 +247,7 @@ Do **not** list full Plasma System Settings / `plasma-nm` as shipped apps — Sp
 | **Constraint** | **Value** | **Source** |
 | :-: | :-: | :-: |
 | System packages | apt | `ARCHITECTURE.md` |
-| User applications | Flatpak only (via Discover) | `ARCHITECTURE.md` |
+| User applications | Flatpak **and** `.deb` via Discover (no Snap; AppImage not first-class) | `ARCHITECTURE.md`, `DESIGN-DECISIONS.md` |
 | Snap | **REMOVED entirely** (snapd not installed) | `ARCHITECTURE.md` |
 | Flatpak runtimes (Standard) | KDE + GNOME pre-seeded on ISO | `VARIANT-DIFFERENCES.md` |
 | Flatpak runtimes (Plus) | All common runtimes pre-seeded on ISO | `VARIANT-DIFFERENCES.md` |

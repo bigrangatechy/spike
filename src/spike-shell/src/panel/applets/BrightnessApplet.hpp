@@ -8,13 +8,15 @@ class QWidget;
 
 namespace spike {
 
+class BrightnessClient;
+
 class BrightnessApplet : public QPushButton
 {
   Q_OBJECT
 
 public:
   explicit BrightnessApplet(QWidget *parent = nullptr);
-  bool hasBacklight() const { return m_hasBacklight; }
+  bool hasBacklight() const;
 
 private slots:
   void refresh();
@@ -22,14 +24,7 @@ private slots:
   void onSlider(int value);
 
 private:
-  bool discover();
-  int readBrightness() const;
-  int readMax() const;
-  bool writeBrightness(int value);
-
-  QString m_brightnessPath;
-  QString m_maxPath;
-  bool m_hasBacklight = false;
+  BrightnessClient *m_client = nullptr;
   QWidget *m_popup = nullptr;
   QSlider *m_slider = nullptr;
   QLabel *m_pct = nullptr;

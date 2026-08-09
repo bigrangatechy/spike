@@ -513,7 +513,7 @@ If you're coming from Ubuntu, Fedora, Debian, or another Linux distro:
 **Package differences:**
 
 ```
-├── Spike uses Flatpak for user applications (not AUR, RPM Fusion, etc.)
+├── Spike uses Flatpak and `.deb` for applications (not Snap, AUR, RPM Fusion, etc.)
 ├── System packages: standard Ubuntu LTS apt repository (base only)
 ├── You will NOT find: AUR, Snap (only Flatpak), RPM packages
 ├── If you relied on specific packages from another distro's repos:
@@ -630,8 +630,7 @@ Firefox is Spike's default and only pre-installed browser.
 ```
 ├── Nothing to do — your email lives on the server
 ├── On Spike: open Firefox → go to your webmail site → log in
-├── Alternatively: install a desktop email client (Thunderbird)
-│   ├── Thunderbird available via Discover (Flatpak)
+├── Alternatively: use Thunderbird (preinstalled on Spike)
 │   ├── Add your account (Gmail, Outlook, etc.) — auto-configures
 │   └── Mail, contacts, and calendar sync from server
 └── No migration needed — email is cloud-based

@@ -69,13 +69,15 @@ Total to production: ~18 months from start of alpha (target)
 End of life: Minimum 5 years per release (see END-OF-LIFE-POLICY.md)
 ```
 
-## Phase 1: Pre-Alpha (Current)
+## Phase 1: Pre-Alpha (Complete)
 
 ### Objective
 
 Docs-first: record architectural decisions, specify components, and document constraints so the system can be built without tribal knowledge. **Pre-alpha allows implementation** once specs are sufficient. User-guide and most dev-guide pages are filled as the desktop and build pipeline ship.
 
 **Exit (enter Alpha):** The custom **installer works end-to-end** (live USB → install to disk → reboot into installed Spike). Confirmed by BDFL. Shell/ISO progress alone does not flip the phase label. See `docs/agent-ops/DECISIONS.md`.
+
+**Status:** **Complete 2026-08-09** — installer E2E met; phase label is now **Alpha**.
 
 ### Duration
 
@@ -125,6 +127,8 @@ Unknown — determined by documentation and implementation velocity. The docs-fi
 ### Exit Criteria
 
 **Pre-alpha ends → Alpha begins** when the **custom installer works end-to-end** (live → install → reboot to installed desktop), confirmed by BDFL. See `docs/agent-ops/DECISIONS.md`.
+
+**Status:** Gate **met 2026-08-09**. Spike is in **Alpha**.
 
 That is separate from “may we write code?” (yes, already) and from later **Alpha → Beta** exit criteria in Phase 3.
 
@@ -176,15 +180,17 @@ That is separate from “may we write code?” (yes, already) and from later **A
 | Fork the repository | ✓ (but no merges accepted) |
 
 
-## Phase 2: Alpha
+## Phase 2: Alpha (Current)
 
 ### Objective
 
 Build and harden the core system under the **Alpha** label. Spike Shell is usable; the **installer already works E2E** (that was the gate out of pre-alpha). Expand Tier 1 coverage, finish core shell features, and broaden testing.
 
+**Near-term Alpha focus (2026-08):** preinstalled apps (Firefox, media player, email), first-run placeholder fill-in, hardware matrix.
+
 ### Entry criteria
 
-Custom installer works end-to-end (see Phase 1 exit / `DECISIONS.md`). Until then, work continues under **pre-alpha**.
+Custom installer works end-to-end (see Phase 1 exit / `DECISIONS.md`). **Met 2026-08-09.**
 
 ### Duration
 
@@ -744,8 +750,8 @@ None of these are promised. They are possibilities. The post-1.0 roadmap will be
 
 | **Phase** | **Duration** | **Version** | **Status** |
 | :-: | :-: | :-: | :-: |
-| Pre-alpha | ? | — | In progress |
-| Alpha | 8 months | 0.1–0.2-alpha | Future |
+| Pre-alpha | — | — | **Complete** (2026-08-09) |
+| Alpha | 8 months | 0.1–0.2-alpha | **Current** |
 | Beta | 10 months | 0.3–0.5-beta | Future |
 | Production | Ongoing | 1.0+ | Future |
 
@@ -818,14 +824,15 @@ Scope creep is the biggest risk to Spike. The BDFL is responsible for guarding a
 
 | **Component** | **Depends on** | **Status** |
 | :-: | :-: | :-: |
-| Spike Shell | KWin, Qt6, systemd | Shipping live ISO (`src/spike-shell/` — see STATE.md) |
-| Spike Installer | spike-config, hardware detect | Wizard **0.0.1** on ISO (`src/spike-installer/` — wipe/copy TBD) |
-| Spike Rescue | Live ISO, Qt6 | Shipping MVP recover+restore (`src/spike-rescue/` + `spike-common/`) |
-| spike-migration | spike-common, Qt6 | Scaffold + spec (`src/spike-migration/`, `SPIKE-MIGRATION.md`) |
-| spike-config | Templates, sysctl, modprobe | Packaged (`src/spike-config/` + `.deb` ISO inject) |
+| Spike Shell | KWin, Qt6, systemd | **0.0.31** first-run wizard (`STATE.md`) |
+| Spike Installer | spike-config, hardware detect | **0.0.11** E2E (`src/spike-installer/`) |
+| Spike Rescue | Live ISO, Qt6 | **0.0.12** batch CLI + recover/restore |
+| spike-migration | spike-common, Qt6 | Wizard shell **0.0.3** (`SPIKE-MIGRATION.md`) |
+| spike-config | Templates, sysctl, modprobe | **0.0.11** + install-time blacklist |
 | spike-branding | Artist assets, GRUB, Plymouth | Partial (`src/spike-branding/` + includes.chroot) |
 | ISO build system | All above | live-build working (`build/iso-build/`, `scripts/build-iso.sh`) |
 | CI/CD | GitLab CE, Docker | Scaffolded |
+| Preinstalled apps | Flatpak **and** `.deb` / Discover | **Alpha next** — Firefox, VLC, Thunderbird (`STATE.md`) |
 
 ## Community Milestones
 

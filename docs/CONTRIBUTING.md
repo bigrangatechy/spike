@@ -240,9 +240,9 @@ The structural constraints are:
 
 - All code must be GPLv2+ compatible. No proprietary dependencies. No GPL-incompatible licenses in the codebase. 
 
-**6. Flatpak-only application model**
+**6. Flatpak and `.deb` application model (no Snap)**
 
-- User applications are delivered via Flatpak. No Snap, no apt-installed user applications (system packages only for the base system and core components). 
+- Applications are delivered via **Flatpak** and/or **`.deb` (apt)** through Discover. No Snap. System and Spike-maintained software is always `.deb`. AppImage is not first-class (steer away); if ever supported, GUI install must be as easy as `.deb`/Flatpak.
 
 If your contribution violates any of these, it will be rejected. Not because it's bad, but because it contradicts what Spike is. If you believe a structural constraint should change, see GOVERNANCE.md for the override process (requires 5+ contributors).
 
@@ -548,7 +548,7 @@ Signed-off-by: Jane Smith <jane@example.com>
 ├── [ ] Commit messages follow the convention (see above)
 ├── [ ] One logical change per commit (squash if needed)
 ├── [ ] Your change doesn't violate structural constraints
-│       (zero telemetry, Golden Rules, old-hardware focus, GPLv2+, Flatpak-only)
+│       (zero telemetry, Golden Rules, old-hardware focus, GPLv2+, Flatpak+.deb)
 ├── [ ] You've tested your change:
 │       ├── Documentation: proofread, verified cross-references, checked formatting
 │       ├── Code: compiles, passes tests, meets performance targets
@@ -1137,7 +1137,7 @@ Maintainers are appointed by the BDFL. Criteria:
 
 ## When You Disagree With The Project Direction
 
-You will disagree with some of Spike's decisions. Everyone does. Spike makes unusual choices: Flatpak-only, no terminal for user tasks, no config file editing, BDFL governance, strict enforcement.
+You will disagree with some of Spike's decisions. Everyone does. Spike makes unusual choices: Flatpak + `.deb` (no Snap), no terminal for user tasks, no config file editing, BDFL governance, strict enforcement.
 
 **Healthy disagreement:**
 

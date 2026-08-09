@@ -3,6 +3,7 @@
 #include <QPushButton>
 
 class QWidget;
+class QCheckBox;
 
 namespace spike {
 
@@ -29,6 +30,7 @@ private:
 
   BatteryClient *m_client = nullptr;
   QWidget *m_popup = nullptr;
+  QCheckBox *m_blockSleep = nullptr;
 };
 
 } // namespace spike

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(spike-shell VERSION 0.0.31 LANGUAGES CXX)
+project(spike-shell VERSION 0.0.32 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -75,6 +75,16 @@ add_executable(spike-shell
   src/audio/VolumeClient.hpp
   src/power/BatteryClient.cpp
   src/power/BatteryClient.hpp
+  src/power/BrightnessClient.cpp
+  src/power/BrightnessClient.hpp
+  src/power/SleepInhibit.cpp
+  src/power/SleepInhibit.hpp
+  src/lock/PamAuth.cpp
+  src/lock/PamAuth.hpp
+  src/lock/SpikeLockScreen.cpp
+  src/lock/SpikeLockScreen.hpp
+  src/lock/LockController.cpp
+  src/lock/LockController.hpp
   src/network/NmClient.cpp
   src/network/NmClient.hpp
   src/network/NetworkPanelWidget.cpp
@@ -137,7 +147,7 @@ add_executable(spike-shell
 )
 
 target_include_directories(spike-shell PRIVATE src)
-target_link_libraries(spike-shell PRIVATE Qt6::Widgets Qt6::DBus LayerShellQt::Interface)
+target_link_libraries(spike-shell PRIVATE Qt6::Widgets Qt6::DBus LayerShellQt::Interface ${CMAKE_DL_LIBS})
 
 if(KF6KCMUtils_FOUND)
   target_link_libraries(spike-shell PRIVATE KF6::KCMUtils)
@@ -157,3 +167,4 @@ endif()
 install(TARGETS spike-shell RUNTIME DESTINATION bin)
 install(FILES session/spike.desktop DESTINATION share/wayland-sessions)
 install(PROGRAMS session/spike-session DESTINATION bin)
+install(FILES pam/spike-lock DESTINATION etc/pam.d)
