@@ -9,6 +9,7 @@ namespace spike {
 struct InstallState {
   QString language = QStringLiteral("en_US");
   QString timezone = QStringLiteral("UTC");
+  QString keyboard = QStringLiteral("us"); // XKBLAYOUT
   QString wifiSsid;
   QString wifiConnected; // display only for now
   QString username = QStringLiteral("spike");
@@ -17,8 +18,11 @@ struct InstallState {
   QString variant = QStringLiteral("standard"); // standard | plus
   bool doBackup = false;
   QString backupDestMount; // USB mount for Step 7
+  QString backupSystemPartition; // e.g. /dev/sda2 from --list-systems
+  QString backupStatus;          // ok | skipped | failed | ""
   bool restoreAfterInstall = false;
   QString restoreSessionPath; // SpikeBackup/<stamp>/<label>
+  QString restoreStatus;      // ok | skipped | failed | ""
   QString targetDisk;         // e.g. /dev/sda — confirmed on storage step
   QString detectSummary;
   QStringList backupSessionsFound;

@@ -9,7 +9,7 @@ class QProcess;
 
 namespace spike {
 
-/** Runs privileged spike-install-helper and streams log lines. */
+/** Runs Step 7 batch-recover (optional) then privileged install-all; streams logs. */
 class InstallEngine : public QObject
 {
   Q_OBJECT
@@ -20,6 +20,7 @@ public:
   bool isRunning() const;
   void start(const InstallState &state);
   void cancel();
+  InstallState lastState() const { return m_state; }
 
 signals:
   void logLine(const QString &line);
@@ -30,8 +31,18 @@ private slots:
   void onProcessFinished(int exitCode, int status);
 
 private:
+  void startInstallAll();
+  void startBackupThenInstall();
+  void emitFinished(bool ok, const QString &message);
+  void cleanupPasswordFile();
+
+  enum class Phase { Idle, Backup, Install };
+
   QProcess *m_proc = nullptr;
   QString m_passwordFile;
+  InstallState m_state;
+  Phase m_phase = Phase::Idle;
+  bool m_backupSkipped = false;
 };
 
 } // namespace spike

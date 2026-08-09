@@ -120,9 +120,9 @@ QWidget *makePanelGeometryPage(QWidget *parent, ConfigClient *config, QLabel *st
                          !set(QStringLiteral("animations_enabled"), anim->isChecked())) {
                        return;
                      }
-                     status->setText(QStringLiteral("Panel settings saved (live via Config)."));
+                     status->setText(QStringLiteral("Panel settings saved + applied live."));
                      if (statusBar) {
-                       statusBar->setText(QStringLiteral("Panel applied"));
+                       statusBar->setText(QStringLiteral("Panel applied live"));
                      }
                    });
   load();
@@ -209,9 +209,9 @@ QWidget *makeTrayAppletsPage(QWidget *parent, ConfigClient *config, QLabel *stat
           status->setText(QStringLiteral("Save failed: %1").arg(err));
           return;
         }
-        status->setText(QStringLiteral("Tray applet visibility saved."));
+        status->setText(QStringLiteral("Tray applet visibility saved + applied live."));
         if (statusBar) {
-          statusBar->setText(QStringLiteral("Tray Applets applied"));
+          statusBar->setText(QStringLiteral("Tray Applets applied live"));
         }
       });
   load();

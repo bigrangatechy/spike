@@ -8,6 +8,7 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
+from spike_config import blacklist as blacklist_mod
 from spike_config import state as state_mod
 
 PCI_CLASS_VGA = "0x030000"
@@ -355,6 +356,7 @@ def detect(state: dict[str, Any]) -> dict[str, Any]:
     _detect_storage(hw.setdefault("storage", {}))
     _detect_network(hw.setdefault("network", {}))
     _apply_memory_defaults(state, hw)
+    blacklist_mod.apply_blacklist_to_state(state)
 
     state_mod.save(state)
     return state

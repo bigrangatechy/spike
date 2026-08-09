@@ -27,6 +27,7 @@ src/spike-config/
 │   ├── changelog.py
 │   ├── paths.py                → path roots (overridable for tests)
 │   ├── detect.py               → /proc+/sys hardware detect (cpu/ram/gpu/storage/net)
+│   ├── blacklist.py            → KERNEL.md module blacklist from PCI presence
 │   └── modules/                → memory, boot, network, multimedia, security
 └── tests/
 ```
@@ -35,7 +36,7 @@ src/spike-config/
 
 ```bash
 ./scripts/package-spike-config.sh
-# → build/packages/spike-config_0.0.1-1_all.deb
+# → build/packages/spike-config_0.0.11-1_all.deb
 
 sudo ./scripts/build-iso.sh
 # rebuilds the .deb, stages under includes.chroot/var/cache/spike-local/,

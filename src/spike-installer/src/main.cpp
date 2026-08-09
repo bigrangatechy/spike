@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
 {
   QApplication app(argc, argv);
   QApplication::setApplicationName(QStringLiteral("spike-installer"));
-  QApplication::setApplicationVersion(QStringLiteral("0.0.4"));
+  QApplication::setApplicationVersion(QStringLiteral("0.0.5"));
   QApplication::setOrganizationName(QStringLiteral("BigRangaTech"));
   darkPalette(app);
 

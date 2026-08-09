@@ -3,6 +3,7 @@
 #include "InstallState.hpp"
 
 #include <QMainWindow>
+#include <QProcess>
 
 class QComboBox;
 class QLabel;
@@ -12,6 +13,7 @@ class QCheckBox;
 class QStackedWidget;
 class QTextEdit;
 class QPushButton;
+class QProcess;
 
 namespace spike {
 
@@ -28,12 +30,14 @@ private slots:
   void goNext();
   void goBack();
   void refreshBackupUi();
+  void onListSystemsFinished(int exitCode, QProcess::ExitStatus status);
   void refreshWifiUi();
   void connectWifi();
   void onFinishClose();
   void startInstall();
   void onInstallLog(const QString &line);
   void onInstallFinished(bool ok, const QString &message);
+  void fillBackupDestAndSessions();
 
 private:
   void buildUi();
@@ -41,6 +45,10 @@ private:
   void applyPageToUi(int index);
   bool validateCurrent();
   QString stateDump() const;
+  void selectKeyboard(const QString &layoutId);
+  void selectTimezone(const QString &tz);
+  void onLanguageChanged();
+  void onTimezoneChanged(const QString &tz);
   static QString runNmcli(const QStringList &args, int timeoutMs = 20000);
 
   InstallState m_state;
@@ -57,6 +65,9 @@ private:
 
   QComboBox *m_language = nullptr;
   QComboBox *m_timezone = nullptr;
+  QComboBox *m_keyboard = nullptr;
+  QLineEdit *m_keyboardTest = nullptr;
+  bool m_keyboardTouched = false;
   QLabel *m_wifiStatus = nullptr;
   QListWidget *m_wifiList = nullptr;
   QLineEdit *m_wifiPassword = nullptr;
@@ -71,6 +82,9 @@ private:
   QLabel *m_variantHint = nullptr;
   QCheckBox *m_doBackup = nullptr;
   QListWidget *m_backupDestList = nullptr;
+  QListWidget *m_backupSystemList = nullptr;
+  QProcess *m_listSystemsProc = nullptr;
+  bool m_listSystemsBusy = false;
   QCheckBox *m_restoreCheck = nullptr;
   QListWidget *m_restoreList = nullptr;
   QListWidget *m_diskList = nullptr;

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(spike-installer VERSION 0.0.4 LANGUAGES CXX)
+project(spike-installer VERSION 0.0.11 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -16,6 +16,8 @@ add_executable(spike-installer
   src/InstallEngine.cpp
   src/InstallEngine.hpp
   src/InstallState.hpp
+  src/InstallLocale.cpp
+  src/InstallLocale.hpp
   src/detect/Detect.cpp
   src/detect/Detect.hpp
   "${SPIKE_COMMON_DIR}/SpikeBackupLayout.cpp"

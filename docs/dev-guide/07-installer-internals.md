@@ -43,18 +43,33 @@ spike-installer/
 └── restore/         → Layer 4 post-reinstall restore into /home/<user>
 ```
 
-**Status (0.0.4):** Qt wizard + privileged `spike-install-helper` can partition,
-unsquashfs, configure account/hostname/variant, install GRUB (with `grub.cfg`
-guaranteed — `update-grub` or minimal fallback), optional Layer 4 restore.
-Wi‑Fi step uses nmcli (scan/connect/skip). Storage step requires typing **ERASE**.
-Step 7 backup copy still stubbed. Alpha gate remains installer E2E smoke (`STATE.md`).
+**Status (0.0.11):** Qt wizard + privileged `spike-install-helper` can partition,
+unsquashfs, configure account/hostname/variant, set **locale + timezone + keyboard**,
+write **`/var/lib/spike/first-boot`** + `installer-notifications/` for the shell first-run
+wizard, run **spike-config --detect** (KERNEL.md module blacklist), regenerate a **local**
+(non-casper) initramfs, enforce DRM/seat groups + enable `seatd`, Step 7 backup with
+**async** system scan, SKIPPED honesty / `--exclude-disk`, Layer 4 with `RESTORE_STATUS=` on
+Finish. Wi‑Fi step uses nmcli. Storage requires typing **ERASE**. Alpha gate remains
+installer E2E smoke (`STATE.md`).
 
-**GRUB note:** Live squashfs ships `grub-*-bin` without metapackages, so
-`/etc/default/grub` and `/boot/grub` are often missing. Helper creates them,
-runs `update-grub` (logged), and writes a minimal `grub.cfg` if that fails.
-UEFI also installs the removable `EFI/BOOT` path.
-Package: `./scripts/package-spike-installer.sh` → Desktop **Install Spike**.
-Live Desktop also gets **Rescue My Files** and **Move My Files** (migration launcher).
+**Step 7 note:** Entering the backup page used to call `spike-rescue --list-systems` with
+`waitForFinished` on the GUI thread while rescue walked personal-file trees — that hung
+the Variant→Backup transition. Installer now scans asynchronously; rescue **0.0.12**
+`--list-systems` skips the inventory `find-files` walk (OS/users only).
+
+**GRUB / boot note:** Live squashfs ships `grub-*-bin` without metapackages and a
+casper-oriented initrd (`BOOT=casper` baked into conf.d). Helper sanitizes
+`/etc/default/grub` (strip missing theme font paths), runs `update-initramfs` with
+`BOOT=local`, passes `boot=local` on the kernel cmdline, and refuses a `grub.cfg`
+that still contains `boot=casper`. UEFI also installs the removable `EFI/BOOT` path.
+
+**Installed session note:** Live `spike-live-groups` is removed from the target (correct),
+so the helper must `usermod -aG video,input,render,…` and `systemctl enable seatd` —
+otherwise kwin DRM fails and the installed boot looks like a hung black screen.
+
+**Module blacklist note:** `cmd_configure` runs `spike-config --detect` (fills
+`security.module_blacklist`) then `--generate-all` before `prepare_local_initramfs`,
+so the blacklist is present when initrd is rebuilt.
 
 ### SpikeBackup (shared with Rescue / Migration)
 

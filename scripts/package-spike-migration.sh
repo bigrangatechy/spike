@@ -76,9 +76,8 @@ Architecture: ${ARCH}
 Maintainer: BigRangaTech <spike@bigrangatech.com>
 Depends: libqt6widgets6 | libqt6widgets6t64, libqt6gui6 | libqt6gui6t64, libqt6core6t64 | libqt6core6
 Recommends: spike-rescue, spike-installer
-Description: Spike Migration — Move My Files (pre-alpha launcher)
- Desktop entry point for migration; full wizard comes later. Opens Rescue /
- Installer for SpikeBackup-based moves today.
+Description: Spike Migration — Move My Files
+ Wizard shell (Mode A/B) over spike-rescue batch backup/restore (SPIKE-MIGRATION.md).
 EOF
 
 cat >"${DEST}/DEBIAN/postinst" <<'EOF'

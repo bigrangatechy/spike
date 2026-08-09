@@ -108,7 +108,7 @@ Priority: optional
 Architecture: ${ARCH}
 Maintainer: BigRangaTech <spike@bigrangatech.com>
 Depends: libqt6widgets6 | libqt6widgets6t64, libqt6gui6 | libqt6gui6t64, libqt6core6t64 | libqt6core6, util-linux, parted, e2fsprogs, dosfstools, rsync, squashfs-tools, grub-common, sudo
-Recommends: spike-config, grub-efi-amd64-bin, grub-pc-bin, grub2-common, efibootmgr
+Recommends: spike-config, spike-rescue, grub-efi-amd64-bin, grub-pc-bin, grub2-common, efibootmgr
 Description: Spike Installer — install Spike Linux from the live USB
  Qt wizard (INSTALLER.md): partition, squashfs copy, account, bootloader via
  privileged spike-install-helper (CLI args; type ERASE to confirm wipe).

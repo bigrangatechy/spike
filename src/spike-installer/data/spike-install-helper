@@ -190,6 +190,7 @@ cmd_configure() {
   host="${SPIKE_INSTALL_HOSTNAME:?}"
   lang="${SPIKE_INSTALL_LANG:-en_US.UTF-8}"
   tz="${SPIKE_INSTALL_TIMEZONE:-UTC}"
+  keyboard="${SPIKE_INSTALL_KEYBOARD:-us}"
   variant="${SPIKE_INSTALL_VARIANT:-standard}"
   pwfile="${SPIKE_INSTALL_PASSWORD_FILE:-}"
 
@@ -208,24 +209,59 @@ cmd_configure() {
     fi
   fi
 
-  # Locale / timezone best-effort
+  # Locale / timezone / keyboard
   if [ -f "$MNT/etc/locale.gen" ]; then
     sed -i "s/^# *${lang}/${lang}/" "$MNT/etc/locale.gen" 2>/dev/null || true
+    # Also uncomment bare lang without .UTF-8 if present
+    lang_base="${lang%%.*}"
+    sed -i "s/^# *${lang_base}\\.UTF-8/${lang_base}.UTF-8/" "$MNT/etc/locale.gen" 2>/dev/null || true
   fi
   echo "LANG=$lang" >"$MNT/etc/default/locale"
   if [ -e "/usr/share/zoneinfo/$tz" ]; then
     ln -sf "/usr/share/zoneinfo/$tz" "$MNT/etc/localtime"
     echo "$tz" >"$MNT/etc/timezone"
+  else
+    log "WARN: timezone $tz not found under /usr/share/zoneinfo — leaving default"
   fi
+
+  # Debian/Ubuntu console + XKB keyboard (console-setup / keyboard-configuration)
+  cat >"$MNT/etc/default/keyboard" <<EOF
+XKBMODEL="pc105"
+XKBLAYOUT="$keyboard"
+XKBVARIANT=""
+XKBOPTIONS=""
+BACKSPACE="guess"
+EOF
+  log "Wrote /etc/default/keyboard XKBLAYOUT=$keyboard"
 
   mount --bind /dev "$MNT/dev" 2>/dev/null || true
   mount --bind /proc "$MNT/proc" 2>/dev/null || true
   mount --bind /sys "$MNT/sys" 2>/dev/null || true
   mount --bind /run "$MNT/run" 2>/dev/null || true
 
-  chroot "$MNT" useradd -m -s /bin/bash -G sudo,audio,video,plugdev,netdev "$user" 2>/dev/null \
+  if chroot "$MNT" sh -c 'command -v locale-gen >/dev/null'; then
+    chroot "$MNT" locale-gen "$lang" >>"$LOG" 2>&1 \
+      || chroot "$MNT" locale-gen >>"$LOG" 2>&1 \
+      || log "WARN: locale-gen failed for $lang"
+  fi
+  if chroot "$MNT" sh -c 'command -v update-locale >/dev/null'; then
+    chroot "$MNT" update-locale "LANG=$lang" >>"$LOG" 2>&1 || true
+  fi
+  if chroot "$MNT" sh -c 'command -v setupcon >/dev/null'; then
+    chroot "$MNT" setupcon --force >>"$LOG" 2>&1 \
+      || log "WARN: setupcon failed (console keymap may need reboot)"
+  fi
+
+  chroot "$MNT" useradd -m -s /bin/bash \
+    -G sudo,audio,video,input,render,plugdev,netdev,pipewire "$user" 2>/dev/null \
     || chroot "$MNT" useradd -m -s /bin/bash "$user" 2>/dev/null \
     || log "WARN: useradd may have failed (user might exist)"
+
+  # Squashfs live user may already exist without DRM/seat groups — live overlay
+  # groups from spike-live-groups do NOT persist into the image. Always enforce.
+  chroot "$MNT" usermod -aG \
+    sudo,audio,video,input,render,plugdev,netdev,pipewire "$user" 2>/dev/null \
+    || log "WARN: usermod groups failed for $user"
 
   if [ -n "$pwfile" ] && [ -f "$pwfile" ]; then
     pw="$(cat "$pwfile")"
@@ -234,14 +270,32 @@ cmd_configure() {
   fi
 
   # Mark installed system + tty1 autologin as the new user (Alpha desktop path).
-  mkdir -p "$MNT/etc/spike" "$MNT/etc/systemd/system/getty@tty1.service.d"
+  mkdir -p "$MNT/etc/spike" "$MNT/etc/systemd/system/getty@tty1.service.d" \
+    "$MNT/var/log/spike" "$MNT/var/lib/spike/installer-notifications"
   touch "$MNT/etc/spike/installed"
+  # First-boot wizard gate (BOOT-PROCESS.md); shell also uses ~/.config/spike/first_run_completed.
+  touch "$MNT/var/lib/spike/first-boot"
+  chmod 666 "$MNT/var/lib/spike/first-boot" 2>/dev/null || true
+  log "Wrote /var/lib/spike/first-boot + installer-notifications/"
+  chown root:adm "$MNT/var/log/spike" 2>/dev/null || true
+  chmod 775 "$MNT/var/log/spike" 2>/dev/null || true
+  # Allow the desktop user to write session logs (same path live capture reads).
+  chroot "$MNT" usermod -aG adm "$user" 2>/dev/null || true
+
   cat >"$MNT/etc/systemd/system/getty@tty1.service.d/autologin.conf" <<EOF
 [Service]
 ExecStart=
 ExecStart=-/sbin/agetty --autologin $user --noclear %I \$TERM
 Type=idle
 EOF
+
+  # seatd is required for kwin --drm (live uses system seatd). Enable on install.
+  if chroot "$MNT" sh -c 'command -v seatd >/dev/null && [ -f /lib/systemd/system/seatd.service -o -f /usr/lib/systemd/system/seatd.service ]'; then
+    chroot "$MNT" systemctl enable seatd.service >>"$LOG" 2>&1 \
+      || log "WARN: could not enable seatd.service"
+  else
+    log "WARN: seatd not present in target — session may fall back to logind"
+  fi
 
   # Autostart Spike Shell on installed boots (live still uses boot=casper).
   cat >"$MNT/etc/profile.d/99-spike-autostart-session.sh" <<'EOF'
@@ -270,6 +324,13 @@ case "$_tty" in
 esac
 
 command -v spike-session >/dev/null 2>&1 || return 0
+
+# Hard requirement for DRM/seatd — warn loudly if groups missing.
+for _g in video input render; do
+  if ! id -nG 2>/dev/null | tr ' ' '\n' | grep -qx "$_g"; then
+    echo "spike: WARNING: not in group '$_g' — desktop may be a black screen. Fix: sudo usermod -aG video,input,render \$USER && reboot" >&2
+  fi
+done
 
 export SPIKE_SESSION_STARTED=1
 echo "spike: starting desktop session (Ctrl+Alt+F2 for a text console)…"
@@ -303,7 +364,22 @@ EOF
     chroot "$MNT" spike-config --init-state 2>/dev/null || true
     chroot "$MNT" spike-config --state-set desktop variant "$variant" 2>/dev/null || true
     chroot "$MNT" spike-config --state-set installer auto_login true 2>/dev/null || true
+    # Hardware detect on the *target machine* (sysfs already bind-mounted) fills
+    # security.module_blacklist (KERNEL.md) before generate-all writes modprobe.d.
+    log "Running spike-config --detect (hardware + module blacklist)"
+    if chroot "$MNT" spike-config --detect >>"$LOG" 2>&1; then
+      log "Hardware detect OK"
+    else
+      log "WARN: spike-config --detect failed — blacklist may be empty"
+    fi
     chroot "$MNT" spike-config --generate-all 2>/dev/null || true
+    if [ -f "$MNT/etc/modprobe.d/spike-blacklist.conf" ]; then
+      bl_count="$(grep -cE '^blacklist ' "$MNT/etc/modprobe.d/spike-blacklist.conf" 2>/dev/null || true)"
+      bl_count="${bl_count:-0}"
+      log "Wrote module blacklist ($bl_count entries) → /etc/modprobe.d/spike-blacklist.conf"
+    else
+      log "WARN: spike-blacklist.conf missing after generate-all"
+    fi
   else
     printf '{"variant":"%s"}\n' "$variant" >"$MNT/var/lib/spike/config/install-variant.json" || true
   fi
@@ -313,6 +389,7 @@ EOF
 
 # Live squashfs ships grub-*-bin without metapackages → no /etc/default/grub and
 # often no /boot/grub. Without those, update-grub fails and firmware lands in grub>.
+# spike-config --generate-all may also write GRUB_THEME/FONT to missing theme assets.
 ensure_grub_defaults() {
   mkdir -p "$MNT/boot/grub" "$MNT/etc/default/grub.d"
   if [ ! -f "$MNT/etc/default/grub" ]; then
@@ -344,6 +421,58 @@ EOF
   else
     echo 'GRUB_TIMEOUT=5' >>"$MNT/etc/default/grub"
   fi
+  # spike-config ships theme paths that are not on the live squashfs → grub-probe
+  # fails ("failed to get canonical path of …/font.pf2") and update-grub aborts.
+  if [ ! -f "$MNT/boot/grub/themes/spike/theme.txt" ]; then
+    sed -i -E 's/^(GRUB_THEME=)/#\1/; s/^(GRUB_BACKGROUND=)/#\1/; s/^(GRUB_FONT=)/#\1/' \
+      "$MNT/etc/default/grub" 2>/dev/null || true
+    sed -i 's/^GRUB_TERMINAL_OUTPUT=gfxterm/#GRUB_TERMINAL_OUTPUT=gfxterm/' \
+      "$MNT/etc/default/grub" 2>/dev/null || true
+  fi
+  # Never leave casper live args in installed GRUB cmdline.
+  if grep -Eq 'boot=casper|casper' "$MNT/etc/default/grub" 2>/dev/null; then
+    sed -i -E 's/\s*boot=casper\b//g; s/\s*casper\b//g' "$MNT/etc/default/grub" || true
+  fi
+  # Override live initrd default-boot-to-casper even if update-initramfs is skipped.
+  if grep -q '^GRUB_CMDLINE_LINUX=' "$MNT/etc/default/grub"; then
+    if ! grep -Eq '^GRUB_CMDLINE_LINUX=.*boot=local' "$MNT/etc/default/grub"; then
+      sed -i -E 's/^GRUB_CMDLINE_LINUX="([^"]*)"/GRUB_CMDLINE_LINUX="\1 boot=local"/' \
+        "$MNT/etc/default/grub"
+      sed -i -E 's/^GRUB_CMDLINE_LINUX=" boot=local"/GRUB_CMDLINE_LINUX="boot=local"/' \
+        "$MNT/etc/default/grub"
+    fi
+  else
+    echo 'GRUB_CMDLINE_LINUX="boot=local"' >>"$MNT/etc/default/grub"
+  fi
+}
+
+# Live initrd has conf.d/default-boot-to-casper.conf → BOOT=casper unless overridden.
+# Without regenerating initramfs (or boot=local on cmdline), installed boots drop into
+# "(initramfs) unable to find a medium containing a live file system".
+prepare_local_initramfs() {
+  mkdir -p "$MNT/etc/initramfs-tools/conf.d"
+  cat >"$MNT/etc/initramfs-tools/conf.d/spike-installed.conf" <<'EOF'
+# Installed Spike — do not default to casper live boot.
+BOOT=local
+EOF
+  # Stop the casper hook from re-injecting default-boot-to-casper on rebuild.
+  if [ -f "$MNT/usr/share/initramfs-tools/hooks/casper" ]; then
+    chmod a-x "$MNT/usr/share/initramfs-tools/hooks/casper" 2>/dev/null || true
+  fi
+  # Drop live-only wants again (generate-all / dpkg may have recreated nothing here).
+  rm -f "$MNT/etc/systemd/system/"*.wants/casper.service \
+    "$MNT/etc/systemd/system/"*.wants/casper-md5check.service 2>/dev/null || true
+
+  if ! chroot "$MNT" sh -c 'command -v update-initramfs >/dev/null'; then
+    log "WARN: update-initramfs missing — GRUB will pass boot=local as fallback"
+    return 0
+  fi
+  log "Regenerating initramfs for local (non-casper) boot"
+  if chroot "$MNT" update-initramfs -u -k all >>"$LOG" 2>&1; then
+    log "update-initramfs OK"
+  else
+    log "WARN: update-initramfs failed — see $LOG (boot=local on GRUB cmdline still set)"
+  fi
 }
 
 # Emergency menu if update-grub cannot run (still better than bare grub>).
@@ -370,7 +499,7 @@ insmod ext2
 insmod gzio
 menuentry "Spike Linux" {
   search --no-floppy --fs-uuid --set=root $uuid_root
-  linux /boot/vmlinuz-$kver root=UUID=$uuid_root ro quiet splash
+  linux /boot/vmlinuz-$kver root=UUID=$uuid_root ro quiet splash boot=local
   initrd /boot/initrd.img-$kver
 }
 EOF
@@ -387,7 +516,7 @@ insmod ext2
 insmod gzio
 menuentry "Spike Linux" {
   search --no-floppy --fs-uuid --set=root $uuid_boot
-  linux /vmlinuz-$kver root=UUID=$uuid_root ro quiet splash
+  linux /vmlinuz-$kver root=UUID=$uuid_root ro quiet splash boot=local
   initrd /initrd.img-$kver
 }
 EOF
@@ -406,6 +535,7 @@ cmd_bootloader() {
   mount --bind /run "$MNT/run" 2>/dev/null || true
 
   ensure_grub_defaults
+  prepare_local_initramfs
 
   if ! chroot "$MNT" sh -c 'command -v grub-install >/dev/null'; then
     die "grub-install missing in target (need grub2-common + grub-*-bin in squashfs)"
@@ -432,13 +562,58 @@ cmd_bootloader() {
   log "Running update-grub"
   if chroot "$MNT" update-grub >>"$LOG" 2>&1; then
     log "update-grub OK"
+    # Belt-and-suspenders: if leftover live initrd still has casper default, force local.
+    if ! grep -Eqw 'boot=local' "$MNT/boot/grub/grub.cfg" 2>/dev/null; then
+      sed -i -E 's|(linux[^\n]*root=UUID=[^ ]+)|\1 boot=local|g' "$MNT/boot/grub/grub.cfg" 2>/dev/null \
+        || true
+    fi
   else
     log "WARN: update-grub failed — installing minimal grub.cfg fallback"
     write_minimal_grub_cfg "$disk"
   fi
 
   [ -s "$MNT/boot/grub/grub.cfg" ] || die "grub.cfg missing after bootloader step"
+  if grep -Eqw 'boot=casper' "$MNT/boot/grub/grub.cfg" 2>/dev/null; then
+    die "grub.cfg still contains boot=casper — refusing to leave live boot on installed disk"
+  fi
   log "Bootloader installed on $disk (grub.cfg $(wc -c <"$MNT/boot/grub/grub.cfg") bytes)"
+}
+
+# Flatten SpikeBackup session into new home (home/<old>/Documents/… → Documents/…).
+# Mirrors spike-common stripHomePrefix / buildRestoreMappings.
+cmd_restore_shell_flatten() {
+  session="$1"
+  dest="$2"
+  copied=0
+  # Portable find|while (no mapfile).
+  find "$session" -type f ! -name 'REPORT.txt' -print 2>/dev/null | while IFS= read -r src; do
+    rel="${src#"$session"/}"
+    case "$rel" in
+      home/*|Users/*|Home/*)
+        # Drop home|Users and the username segment.
+        rest="${rel#*/}"   # after home/
+        rest="${rest#*/}"  # after username/
+        mapped="$rest"
+        ;;
+      Documents/*|Pictures/*|Videos/*|Movies/*|Music/*|Downloads/*|Desktop/*)
+        mapped="$rel"
+        ;;
+      *)
+        # Skip OS noise / unknown trees
+        continue
+        ;;
+    esac
+    [ -n "$mapped" ] || continue
+    out="$dest/$mapped"
+    mkdir -p "$(dirname "$out")" || continue
+    cp -a "$src" "$out" || continue
+    copied=$((copied + 1))
+  done
+  # Note: copied count in subshell — verify at least one mapped file or empty session.
+  find "$dest" -type f ! -name 'SpikeRestore-REPORT.txt' 2>/dev/null | head -n1 | grep -q . \
+    || [ "$(find "$session" -type f ! -name 'REPORT.txt' 2>/dev/null | wc -l | tr -d ' ')" = "0" ] \
+    || return 1
+  return 0
 }
 
 cmd_restore() {
@@ -449,14 +624,26 @@ cmd_restore() {
   dest="$MNT/home/$user"
   [ -d "$dest" ] || die "target home missing: $dest"
   log "Layer 4 restore: $session → $dest"
-  # Prefer home tree inside session
-  src="$session"
-  if [ -d "$session/home" ]; then
-    src="$session/home"
+
+  if command -v spike-rescue >/dev/null 2>&1; then
+    log "Trying spike-rescue --batch-restore"
+    if spike-rescue --batch-restore --session "$session" --home "$dest" >>"$LOG" 2>&1; then
+      chroot "$MNT" chown -R "$user:$user" "/home/$user" 2>/dev/null || true
+      log "Layer 4 restore via spike-rescue OK"
+      return 0
+    fi
+    log "WARN: spike-rescue --batch-restore failed — falling back to shell flatten"
+  else
+    log "spike-rescue not on PATH — using shell flatten"
   fi
-  rsync -aHAX --info=stats2 "$src"/ "$dest"/ || die "restore rsync failed"
+
+  cmd_restore_shell_flatten "$session" "$dest" || {
+    log "WARN: Layer 4 restore flatten failed"
+    return 1
+  }
   chroot "$MNT" chown -R "$user:$user" "/home/$user" 2>/dev/null || true
-  log "Restore complete"
+  log "Layer 4 restore complete (shell flatten)"
+  return 0
 }
 
 cmd_umount() {
@@ -474,6 +661,7 @@ parse_install_args() {
       --hostname) SPIKE_INSTALL_HOSTNAME="${2:?}"; shift 2 ;;
       --lang) SPIKE_INSTALL_LANG="${2:?}"; shift 2 ;;
       --timezone) SPIKE_INSTALL_TIMEZONE="${2:?}"; shift 2 ;;
+      --keyboard) SPIKE_INSTALL_KEYBOARD="${2:?}"; shift 2 ;;
       --variant) SPIKE_INSTALL_VARIANT="${2:?}"; shift 2 ;;
       --password-file) SPIKE_INSTALL_PASSWORD_FILE="${2:?}"; shift 2 ;;
       --confirm) SPIKE_INSTALL_CONFIRM="${2:?}"; shift 2 ;;
@@ -484,7 +672,7 @@ parse_install_args() {
     esac
   done
   export SPIKE_INSTALL_DISK SPIKE_INSTALL_USER SPIKE_INSTALL_HOSTNAME
-  export SPIKE_INSTALL_LANG SPIKE_INSTALL_TIMEZONE SPIKE_INSTALL_VARIANT
+  export SPIKE_INSTALL_LANG SPIKE_INSTALL_TIMEZONE SPIKE_INSTALL_KEYBOARD SPIKE_INSTALL_VARIANT
   export SPIKE_INSTALL_PASSWORD_FILE SPIKE_INSTALL_CONFIRM SPIKE_INSTALL_RESTORE_SESSION
 }
 
@@ -501,7 +689,14 @@ cmd_install_all() {
   cmd_configure
   cmd_bootloader "$disk"
   if [ -n "${SPIKE_INSTALL_RESTORE_SESSION:-}" ]; then
-    cmd_restore "$SPIKE_INSTALL_RESTORE_SESSION" || log "WARN: restore failed (install otherwise OK)"
+    if cmd_restore "$SPIKE_INSTALL_RESTORE_SESSION"; then
+      log "RESTORE_STATUS=ok"
+    else
+      log "RESTORE_STATUS=failed"
+      log "WARN: restore failed (install otherwise OK)"
+    fi
+  else
+    log "RESTORE_STATUS=skipped"
   fi
   cmd_umount
   log "=== Spike install finished OK ==="
@@ -521,11 +716,11 @@ Usage: spike-install-helper <command> [args]
   restore <session>
   umount
   install-all --disk DEV --user NAME --hostname HOST --confirm ERASE
-              [--lang L] [--timezone TZ] [--variant standard|plus]
+              [--lang L] [--timezone TZ] [--keyboard LAYOUT] [--variant standard|plus]
               [--password-file PATH] [--restore-session DIR]
 
 Env (optional fallback): SPIKE_INSTALL_DISK, USER, HOSTNAME, LANG, TIMEZONE,
-  VARIANT, PASSWORD_FILE, RESTORE_SESSION, CONFIRM, MNT, LOG
+  KEYBOARD, VARIANT, PASSWORD_FILE, RESTORE_SESSION, CONFIRM, MNT, LOG
 EOF
 }
 

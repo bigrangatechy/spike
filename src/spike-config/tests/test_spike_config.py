@@ -51,7 +51,10 @@ class SpikeConfigTests(unittest.TestCase):
         self.assertNotIn("{{", text)
         grub = self.root / "etc/default/grub"
         self.assertTrue(grub.is_file())
-        self.assertIn("zswap.enabled=0", grub.read_text(encoding="utf-8"))
+        grub_text = grub.read_text(encoding="utf-8")
+        self.assertIn("zswap.enabled=0", grub_text)
+        self.assertNotIn("GRUB_FONT=", grub_text)
+        self.assertNotIn("GRUB_THEME=", grub_text)
         self.assertEqual(self.main(["--validate"]), 0)
 
     def test_state_set_and_regenerate(self) -> None:
@@ -140,6 +143,35 @@ class SpikeConfigTests(unittest.TestCase):
         self.assertTrue(network["has_wifi"])
         self.assertEqual(network["wifi_driver"], "iwlwifi")
         self.assertTrue(network["has_ethernet"])
+
+    def test_module_blacklist_policy(self) -> None:
+        from spike_config import blacklist as bl
+
+        empty = self.root / "empty-pci"
+        empty.mkdir(parents=True)
+        mods = bl.compute_module_blacklist(sys_pci=empty)
+        self.assertIn("megaraid_sas", mods)
+        self.assertIn("ib_core", mods)
+        self.assertIn("parport", mods)
+        for forbidden in ("nouveau", "iwlwifi", "usbcore", "i915", "amdgpu"):
+            self.assertNotIn(forbidden, mods)
+
+        # LSI MegaRAID vendor present → megaraid_sas / mptsas exempt
+        pci = self.root / "raid-pci"
+        dev = pci / "0000:01:00.0"
+        dev.mkdir(parents=True)
+        (dev / "vendor").write_text("0x1000\n", encoding="utf-8")
+        (dev / "device").write_text("0x005b\n", encoding="utf-8")
+        mods2 = bl.compute_module_blacklist(sys_pci=pci)
+        self.assertNotIn("megaraid_sas", mods2)
+        self.assertNotIn("mptsas", mods2)
+        self.assertIn("ib_core", mods2)  # still no Mellanox
+
+        # apply_blacklist_to_state writes security.module_blacklist
+        st: dict = {"security": {"module_blacklist": []}}
+        applied = bl.apply_blacklist_to_state(st, sys_pci=empty)
+        self.assertEqual(st["security"]["module_blacklist"], applied)
+        self.assertIn("hpsa", applied)
 
     def test_version_single_source(self) -> None:
         """CLI, pyproject, and packaging must share spike_config.__version__."""

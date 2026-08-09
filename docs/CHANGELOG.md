@@ -126,6 +126,14 @@ Pre-alpha implementation is underway (ISO, shell, spike-config, Rescue). Alpha s
 ├── spike-installer **0.0.2**: privileged install-helper (partition/squashfs/grub) + ERASE confirm
 ├── spike-installer **0.0.3**: CLI args + UEFI grub pkgs + installed session autostart
 ├── spike-installer **0.0.4**: grub.cfg guarantee + Wi‑Fi nmcli page
+├── spike-installer **0.0.5** + rescue **0.0.10** + migration **0.0.2**: Step 7 + Layer 4 + Move My Files Mode A/B
+├── spike-installer **0.0.6** + rescue **0.0.11** + config **0.0.9**: local (non-casper) installed boot; Step 7 `--exclude-disk`
+├── spike-installer **0.0.7** + shell **0.0.30** + config **0.0.10**: installed DRM groups/seatd; Panel/tray live Apply echo
+├── spike-installer **0.0.8** + config **0.0.11** + migration **0.0.3**: install-time blacklist; Step 7 honesty; Move My Files wizard shell
+├── spike-installer **0.0.9**: full timezone (`zone.tab`) + 11 languages + XKB keyboard → `/etc/default/keyboard`
+├── spike-installer **0.0.10** + rescue **0.0.12**: async Step 7 system scan; `--list-systems` skips find-files inventory
+├── spike-shell **0.0.31** + installer **0.0.11**: post-install first-run wizard + `/var/lib/spike/first-boot`
+
 ├── spike-migration **0.0.1** + live Desktop: Install Spike / Rescue My Files / Move My Files
 ├── Full tray + Settings → PANEL (shell **0.0.27** + config **0.0.7**)
 ├── Desktop icons layer (shell **0.0.28**)
@@ -141,7 +149,7 @@ Pre-alpha implementation is underway (ISO, shell, spike-config, Rescue). Alpha s
 └── Appearance panel geometry moved to Settings → Panel (**0.0.27**)
 ```
 
-**Fixed / Known:** post-install **grub>** from failed `update-grub` (installer **0.0.4**); Coastal-Run wallpaper; otherwise SESSION_LOG/STATE (Step 7 backup stub, hardware audio).
+**Fixed / Known:** installed black screen (missing DRM groups) fixed in **0.0.7**; post-install live initramfs in **0.0.6**; Panel/tray live Apply in shell **0.0.30**; otherwise SESSION_LOG/STATE.
 
 #### Unreleased (structured)
 

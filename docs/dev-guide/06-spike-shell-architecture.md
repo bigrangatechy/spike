@@ -21,6 +21,7 @@ spike-session (wayland session entry)
                   ├── Panel (applets: network, volume, battery, …)
                   ├── Launcher (Kickoff-style; scans *.desktop)
                   ├── Settings host (KCMs + custom pages via org.spike.Config)
+                  ├── FirstRunWizard (installed only; see firstrun/)
                   └── Power / audio / network helpers
 ```
 
@@ -29,6 +30,7 @@ spike-session (wayland session entry)
 ```
 src/spike-shell/src/
 ├── main.cpp
+├── firstrun/          → FirstRunWizard + FirstRunHooks (placeholders)
 ├── panel/
 ├── launcher/          → Launcher.cpp (categoryFor, desktop scan)
 ├── settings/
@@ -36,6 +38,18 @@ src/spike-shell/src/
 ├── audio/
 └── power/
 ```
+
+### First-run wizard (0.0.31+)
+
+On installed systems (`/etc/spike/installed`) without `~/.config/spike/first_run_completed`,
+`main.cpp` shows `FirstRunWizard` after the panel is up:
+
+Welcome → timezone → Wi‑Fi → tour placeholder → accessibility offer → import files →
+notices → Get started.
+
+Drop-in hooks: `firstrun::runDesktopTour`, `verifyFlatpakRuntimes`, `checkSecurityUpdates`,
+`offerAccessibilityWizard`, `collectPostInstallNotices` (reads
+`/var/lib/spike/installer-notifications/*.txt`).
 
 Session / desktop entry bits also under `src/spike-shell/session/` (packaged into the `.deb`).
 

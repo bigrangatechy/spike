@@ -1,9 +1,13 @@
 # Installer Layer 4 — restore after fresh install
 
-Placeholder for post-install restore from `SpikeBackup/` into `/home/<newuser>/`.
+After wipe+copy, restores a chosen `SpikeBackup/<stamp>/<os>/` session into
+`/home/<newuser>/` using the same flatten rules as Spike Rescue
+(`spike::buildRestoreMappings` / `home/<olduser>/Documents/…` → `Documents/…`).
 
-Use `spike::buildRestoreMappings(sessionPath, targetHome)` then SHA256-verified
-copy (same semantics as Spike Rescue restore mode).
+Implementation (`spike-install-helper` `cmd_restore`):
 
-Detection: scan connected USB / writable for `SpikeBackup/` (and legacy
-`install-logs-*/log/SpikeBackup/`). Prefer newest stamp; let the user confirm.
+1. Prefer `spike-rescue --batch-restore --session … --home /mnt/spike/home/<user>`
+2. Fallback: shell flatten of category paths
+3. `chown -R` the new user
+
+Detection: wizard scans USB / `LABEL=writable` via `BackupScanner` + spike-common.

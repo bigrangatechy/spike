@@ -1,4 +1,6 @@
 #include "desktop/DesktopBackground.hpp"
+#include "firstrun/FirstRunHooks.hpp"
+#include "firstrun/FirstRunWizard.hpp"
 #include "panel/Panel.hpp"
 
 #include <QApplication>
@@ -55,7 +57,7 @@ int main(int argc, char *argv[])
 {
   QApplication app(argc, argv);
   QApplication::setApplicationName(QStringLiteral("spike-shell"));
-  QApplication::setApplicationVersion(QStringLiteral("0.0.29"));
+  QApplication::setApplicationVersion(QStringLiteral("0.0.31"));
   QApplication::setOrganizationName(QStringLiteral("BigRangaTech"));
 
   // Breeze SVG icons need qt6-svg-plugins on the live image.
@@ -94,6 +96,18 @@ int main(int argc, char *argv[])
         {QStringLiteral("--user"), QStringLiteral("start"), QStringLiteral("--no-block"),
          QStringLiteral("xdg-desktop-portal.service"),
          QStringLiteral("plasma-xdg-desktop-portal-kde.service")});
+  });
+
+  // Post-install first-run wizard (INSTALLER.md / AGENTS.md) — installed only.
+  QTimer::singleShot(800, []() {
+    if (!spike::firstrun::shouldShowFirstRunWizard()) {
+      return;
+    }
+    auto *wiz = new spike::FirstRunWizard(nullptr);
+    wiz->setAttribute(Qt::WA_DeleteOnClose);
+    wiz->show();
+    wiz->raise();
+    wiz->activateWindow();
   });
 
   return app.exec();

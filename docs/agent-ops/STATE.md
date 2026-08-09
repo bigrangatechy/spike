@@ -15,27 +15,26 @@
 | `dev-guide/` | 📝 Core filled (01–09, 12, 19); remaining stubs point at product docs |
 | agent-ops core | ✅ Written |
 | ISO / build tooling | ✅ live-build; hybrid remaster + debug capture |
-| Installer stack | 📝 **0.0.4** GRUB cfg fix + Wi‑Fi page; Step 7 backup still stub; needs E2E retest |
+| Installer stack | 📝 **0.0.11** first-boot markers; shell **0.0.31** first-run wizard; E2E smoke green (desktop + blacklist) |
 | `scripts/build-iso.sh` | ✅ Packages config + shell + rescue + installer + **migration** + lb build |
 | Stage 1 live ISO | ✅ Hardware boot + login |
-| Stage 2 (`spike-config`) | 📝 **0.0.8** (Coastal-Run default wallpaper; desktop tray/night-light defaults; dbus Variant fix) |
-| Stage 3 (Spike Shell) | 📝 **0.0.29** (stretch wallpaper + desktop icons) + Rescue **0.0.9** + installer **0.0.3** |
-| Stage 4 (installer) | 📝 **0.0.4** — GRUB cfg + Wi‑Fi; retest spare-disk after rebuild (Step 7 stub) |
+| Stage 2 (`spike-config`) | 📝 **0.0.11** (KERNEL.md module blacklist from detect) |
+| Stage 3 (Spike Shell) | 📝 **0.0.31** first-run wizard + Rescue **0.0.12** + installer **0.0.11** + migration **0.0.3** |
+| Stage 4 (installer) | 📝 **0.0.11** — first-boot marker; locale; blacklist; Step 7 honesty |
 
 ## In Progress
 
 | Item | Notes |
 | :-: | :-: |
-| Stage 3 — desktop smoke | shell **0.0.29** Coastal-Run stretch wallpaper + desktop icons; Install / Rescue / Move |
-| Stage 4 — installer E2E | **0.0.4** fixes grub> (missing grub.cfg); rebuild + reinstall; Step 7 still stub |
+| Stage 3 — desktop smoke | shell **0.0.31** first-run wizard (placeholders for tour/a11y/Flatpak/updates) |
+| Stage 4 — installer E2E | Smoke OK (desktop + blacklist); rebuild with **0.0.11**/**0.0.31** to verify wizard |
 
 ## Blocked / Waiting On Decision
 
 | Item | Notes |
 | :-: | :-: |
 | Layer 2 GRUB recovery screen | Still deferred |
-| Layer 4 installer restore | Wizard can pick SpikeBackup session; copy-into-home engine not wired |
-| spike-migration (Move My Files) | Scaffold + spec; implement on shared `spike-common` |
+| spike-migration full wizard | Wizard shell **0.0.3** shipped; inventory/conflict/old-disk Mode B later (SPIKE-MIGRATION.md) |
 | Notification daemon / history tray | Prefs + in-process fdo Notifications + tray history (**0.0.27**); retention polish later |
 | Magnifier / high-contrast theme apply | Magnifier launcher + Spike Shell HC chrome live; full app themes later |
 | APT edit / PPA / NVIDIA driver UX | Sources page lists + launches tools; in-page edit later |
@@ -49,6 +48,12 @@
 
 | Date | Item |
 | :-: | :-: |
+| 2026-08-09 | shell **0.0.31** + installer **0.0.11**: post-install first-run wizard; smoke: desktop + blacklist OK |
+| 2026-08-09 | installer **0.0.10** + rescue **0.0.12**: fix variant→backup freeze (async scan; quick --list-systems) |
+| 2026-08-09 | installer **0.0.9**: full timezone/language/keyboard lists + `/etc/default/keyboard` |
+| 2026-08-09 | installer **0.0.8** + config **0.0.11** + migration **0.0.3**: install-time blacklist; Step 7 honesty; Move My Files wizard shell |
+| 2026-08-09 | installer **0.0.7** + shell **0.0.30** + config **0.0.10**: installed DRM groups/seatd; Panel/tray live Apply |
+| 2026-08-09 | installer **0.0.6** + rescue **0.0.11** + config **0.0.9**: non-casper installed boot; Step 7 exclude wipe disk |
 | 2026-08-09 | installer **0.0.2** + migration **0.0.1**: real install-helper; Desktop Install/Rescue/Move My Files |
 | 2026-08-08 | shell **0.0.25**: Settings finish — Advanced forms, About, live accent/font/wallpaper, Diagnostics/VPN/Sources polish |
 | 2026-08-08 | shell **0.0.24** + config **0.0.5**: Settings → Power (custom); logind drop-in; session Suspend |

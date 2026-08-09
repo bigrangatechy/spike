@@ -831,13 +831,18 @@ void RescueEngine::scanSystems()
 
     enrichBtrfsHome(&sys);
     // Keep systems even with zero users (still recoverable after manual browse later).
-    Inventory inv;
-    if (!sys.users.isEmpty() || !sys.homeMountPoint.isEmpty() ||
-        QDir(sys.mountPoint + QStringLiteral("/home")).exists()) {
-      inv = buildInventory(sys);
+    if (m_includeInventoryOnScan) {
+      Inventory inv;
+      if (!sys.users.isEmpty() || !sys.homeMountPoint.isEmpty() ||
+          QDir(sys.mountPoint + QStringLiteral("/home")).exists()) {
+        inv = buildInventory(sys);
+      }
+      sys.fileCount = inv.fileCount;
+      sys.byteTotal = inv.byteTotal;
+    } else {
+      sys.fileCount = 0;
+      sys.byteTotal = 0;
     }
-    sys.fileCount = inv.fileCount;
-    sys.byteTotal = inv.byteTotal;
 
     if (weMounted) {
       // Drop temporary mounts; remount on inventory/copy.
@@ -1591,6 +1596,59 @@ void RescueEngine::startRestore(int sessionIndex, const QString &targetHome)
   }
 
   const BackupSession session = m_backupSessions.at(sessionIndex);
+  runRestoreMappings(session, targetHome);
+}
+
+void RescueEngine::startRestoreFromPath(const QString &sessionPath, const QString &targetHome)
+{
+  m_cancel = false;
+  m_lastError.clear();
+  m_lastCopy = CopyResult{};
+  m_debugLog.clear();
+  appendDebug(QStringLiteral("startRestoreFromPath: session=%1 target=%2")
+                  .arg(sessionPath, targetHome));
+  if (sessionPath.isEmpty() || !QDir(sessionPath).exists()) {
+    m_lastError = QStringLiteral("invalid backup session path");
+    appendDebug(QStringLiteral("startRestoreFromPath: FAIL %1").arg(m_lastError));
+    m_lastCopy.debugLog = m_debugLog;
+    emit copyFinished(false);
+    return;
+  }
+  if (targetHome.isEmpty() || !QDir(targetHome).exists()) {
+    m_lastError = QStringLiteral("invalid restore target home");
+    appendDebug(QStringLiteral("startRestoreFromPath: FAIL %1").arg(m_lastError));
+    m_lastCopy.debugLog = m_debugLog;
+    emit copyFinished(false);
+    return;
+  }
+  QStorageInfo info(targetHome);
+  if (!info.isValid() || info.isReadOnly()) {
+    m_lastError = QStringLiteral("restore target is not writable");
+    appendDebug(QStringLiteral("startRestoreFromPath: FAIL %1").arg(m_lastError));
+    m_lastCopy.debugLog = m_debugLog;
+    emit copyFinished(false);
+    return;
+  }
+
+  BackupSession session;
+  session.sessionPath = sessionPath;
+  const QFileInfo fi(sessionPath);
+  session.osLabel = fi.fileName();
+  session.stamp = fi.dir().dirName();
+  session.spikeBackupRoot = fi.dir().absolutePath();
+  if (QFileInfo(session.spikeBackupRoot).fileName() != QLatin1String("SpikeBackup")) {
+    // …/SpikeBackup/<stamp>/<osLabel>
+    QDir stampDir(session.spikeBackupRoot);
+    if (stampDir.cdUp()) {
+      session.spikeBackupRoot = stampDir.absolutePath();
+    }
+  }
+  summarizeSession(&session);
+  runRestoreMappings(session, targetHome);
+}
+
+void RescueEngine::runRestoreMappings(const BackupSession &session, const QString &targetHome)
+{
   m_lastCopy.destRoot = targetHome;
   const QVector<RestoreMapping> maps =
       buildRestoreMappings(session.sessionPath, targetHome);
@@ -1700,7 +1758,13 @@ void RescueEngine::startRestore(int sessionIndex, const QString &targetHome)
   }
 
   m_lastCopy.debugLog = m_debugLog;
-  emit copyFinished(true);
+  const bool ok = !m_lastCopy.cancelled && m_lastCopy.failedRead == 0 &&
+                  m_lastCopy.failedWrite == 0 && m_lastCopy.failedVerify == 0 &&
+                  (m_lastCopy.copied > 0 || maps.isEmpty());
+  if (!ok && m_lastError.isEmpty() && !m_lastCopy.cancelled) {
+    m_lastError = QStringLiteral("restore completed with failures");
+  }
+  emit copyFinished(ok || (m_lastCopy.copied > 0 && !m_lastCopy.cancelled));
 }
 
 void RescueEngine::requestCancel()

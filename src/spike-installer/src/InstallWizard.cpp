@@ -1,10 +1,12 @@
 #include "InstallWizard.hpp"
 
 #include "InstallEngine.hpp"
+#include "InstallLocale.hpp"
 #include "detect/Detect.hpp"
 
 #include <QCheckBox>
 #include <QComboBox>
+#include <QCompleter>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QLineEdit>
@@ -22,7 +24,7 @@ namespace {
 
 const char *const kStepTitles[] = {
     "Welcome + language",
-    "Timezone",
+    "Timezone + keyboard",
     "Wi-Fi",
     "Username + password",
     "Computer name",
@@ -70,29 +72,64 @@ void InstallWizard::buildUi()
     lay->addWidget(new QLabel(QStringLiteral("Let's Make Tech Repairable Again"), page));
     lay->addWidget(new QLabel(QStringLiteral("Choose your language:"), page));
     m_language = new QComboBox(page);
-    m_language->addItem(QStringLiteral("English (United States)"), QStringLiteral("en_US"));
-    m_language->addItem(QStringLiteral("English (United Kingdom)"), QStringLiteral("en_GB"));
-    m_language->addItem(QStringLiteral("Français"), QStringLiteral("fr_FR"));
-    m_language->addItem(QStringLiteral("Deutsch"), QStringLiteral("de_DE"));
-    m_language->addItem(QStringLiteral("Español"), QStringLiteral("es_ES"));
+    for (const auto &lang : supportedLanguages()) {
+      m_language->addItem(lang.first, lang.second);
+    }
+    connect(m_language, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
+            &InstallWizard::onLanguageChanged);
     lay->addWidget(m_language);
     lay->addStretch(1);
     m_stack->addWidget(page);
   }
 
-  // 1 Timezone
+  // 1 Timezone + keyboard
   {
     auto *page = new QWidget;
     auto *lay = new QVBoxLayout(page);
     lay->addWidget(new QLabel(QStringLiteral("<h2>Timezone</h2>"), page));
+    lay->addWidget(new QLabel(
+        QStringLiteral("Select your timezone (type to filter). Region/city from system zone database."),
+        page));
     m_timezone = new QComboBox(page);
-    m_timezone->addItems({QStringLiteral("UTC"), QStringLiteral("Australia/Sydney"),
-                          QStringLiteral("America/New_York"), QStringLiteral("Europe/London"),
-                          QStringLiteral("Europe/Berlin"), QStringLiteral("Asia/Tokyo")});
+    m_timezone->setEditable(true);
+    m_timezone->setInsertPolicy(QComboBox::NoInsert);
+    m_timezone->addItems(availableTimeZones());
+    if (auto *c = m_timezone->completer()) {
+      c->setFilterMode(Qt::MatchContains);
+      c->setCaseSensitivity(Qt::CaseInsensitive);
+      c->setCompletionMode(QCompleter::PopupCompletion);
+    }
+    connect(m_timezone, &QComboBox::currentTextChanged, this, &InstallWizard::onTimezoneChanged);
     lay->addWidget(m_timezone);
+
+    lay->addWidget(new QLabel(QStringLiteral("<h2>Keyboard layout</h2>"), page));
+    lay->addWidget(new QLabel(
+        QStringLiteral("Suggested from language/timezone — change if needed. Type below to test."),
+        page));
+    m_keyboard = new QComboBox(page);
+    m_keyboard->setEditable(true);
+    m_keyboard->setInsertPolicy(QComboBox::NoInsert);
+    for (const auto &kb : availableKeyboardLayouts()) {
+      m_keyboard->addItem(kb.first, kb.second);
+    }
+    if (auto *c = m_keyboard->completer()) {
+      c->setFilterMode(Qt::MatchContains);
+      c->setCaseSensitivity(Qt::CaseInsensitive);
+      c->setCompletionMode(QCompleter::PopupCompletion);
+    }
+    connect(m_keyboard, QOverload<int>::of(&QComboBox::activated), this, [this](int) {
+      m_keyboardTouched = true;
+    });
+    lay->addWidget(m_keyboard);
+    m_keyboardTest = new QLineEdit(page);
+    m_keyboardTest->setPlaceholderText(QStringLiteral("Type here to test your keyboard…"));
+    lay->addWidget(m_keyboardTest);
     lay->addStretch(1);
     m_stack->addWidget(page);
   }
+
+  // Apply language-driven defaults once combos exist
+  onLanguageChanged();
 
   // 2 Wi-Fi
   {
@@ -186,13 +223,19 @@ void InstallWizard::buildUi()
     auto *lay = new QVBoxLayout(page);
     lay->addWidget(new QLabel(QStringLiteral("<h2>Data backup (optional)</h2>"), page));
     lay->addWidget(new QLabel(
-        QStringLiteral("Step 7 will copy personal files to SpikeBackup/ on a USB before wipe. "
-                       "Backup engine is stubbed in this pre-alpha build — you can still mark "
-                       "the choice and pick a restore source for after install."),
+        QStringLiteral("Optionally copy personal files from another OS on this machine to a "
+                       "USB (SpikeBackup/) before Spike erases the install disk. Uses the same "
+                       "engine as Rescue My Files."),
         page));
     m_doBackup = new QCheckBox(QStringLiteral("Back up files from this computer before install"),
                                page);
     lay->addWidget(m_doBackup);
+    lay->addWidget(new QLabel(QStringLiteral("System to back up (outside the wipe disk):"), page));
+    m_backupSystemList = new QListWidget(page);
+    lay->addWidget(m_backupSystemList);
+    lay->addWidget(new QLabel(QStringLiteral("Backup destination (USB / writable):"), page));
+    m_backupDestList = new QListWidget(page);
+    lay->addWidget(m_backupDestList);
     lay->addWidget(new QLabel(QStringLiteral("Existing SpikeBackup sessions (for reinstall restore):"),
                               page));
     m_restoreList = new QListWidget(page);
@@ -265,8 +308,34 @@ void InstallWizard::buildUi()
   connect(m_next, &QPushButton::clicked, this, &InstallWizard::goNext);
 }
 
-void InstallWizard::refreshBackupUi()
+void InstallWizard::fillBackupDestAndSessions()
 {
+  if (m_backupDestList) {
+    m_backupDestList->clear();
+    const QStringList roots = BackupScanner::volumeRoots();
+    for (const QString &r : roots) {
+      auto *item = new QListWidgetItem(r);
+      item->setData(Qt::UserRole, r);
+      m_backupDestList->addItem(item);
+    }
+    if (roots.isEmpty()) {
+      m_backupDestList->addItem(
+          QStringLiteral("(No mounted USB / writable found — plug in media and Refresh)"));
+    } else {
+      for (int i = 0; i < m_backupDestList->count(); ++i) {
+        const QString p = m_backupDestList->item(i)->data(Qt::UserRole).toString();
+        if (p.contains(QLatin1String("writable"), Qt::CaseInsensitive) ||
+            p == QLatin1String("/var/log")) {
+          m_backupDestList->setCurrentRow(i);
+          break;
+        }
+      }
+      if (m_backupDestList->currentRow() < 0) {
+        m_backupDestList->setCurrentRow(0);
+      }
+    }
+  }
+
   m_restoreList->clear();
   m_state.backupSessionsFound = BackupScanner::sessionPaths();
   const QStringList labels = BackupScanner::sessionLabels();
@@ -277,6 +346,79 @@ void InstallWizard::refreshBackupUi()
   }
   if (labels.isEmpty()) {
     m_restoreList->addItem(QStringLiteral("(No SpikeBackup sessions found on mounted media)"));
+  }
+}
+
+void InstallWizard::refreshBackupUi()
+{
+  fillBackupDestAndSessions();
+
+  if (!m_backupSystemList) {
+    return;
+  }
+
+  if (m_listSystemsProc) {
+    m_listSystemsProc->disconnect();
+    m_listSystemsProc->kill();
+    m_listSystemsProc->deleteLater();
+    m_listSystemsProc = nullptr;
+  }
+
+  m_backupSystemList->clear();
+  m_backupSystemList->addItem(QStringLiteral("(Scanning disks for systems — UI stays responsive…)"));
+  m_listSystemsBusy = true;
+
+  m_listSystemsProc = new QProcess(this);
+  m_listSystemsProc->setProcessChannelMode(QProcess::MergedChannels);
+  connect(m_listSystemsProc, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), this,
+          &InstallWizard::onListSystemsFinished);
+  m_listSystemsProc->start(QStringLiteral("spike-rescue"), {QStringLiteral("--list-systems")});
+  if (!m_listSystemsProc->waitForStarted(5000)) {
+    m_listSystemsBusy = false;
+    m_backupSystemList->clear();
+    m_backupSystemList->addItem(
+        QStringLiteral("(spike-rescue failed to start — is it installed?)"));
+    m_listSystemsProc->deleteLater();
+    m_listSystemsProc = nullptr;
+  }
+}
+
+void InstallWizard::onListSystemsFinished(int /*exitCode*/, QProcess::ExitStatus /*status*/)
+{
+  m_listSystemsBusy = false;
+  QProcess *proc = m_listSystemsProc;
+  m_listSystemsProc = nullptr;
+  if (!proc || !m_backupSystemList) {
+    if (proc) {
+      proc->deleteLater();
+    }
+    return;
+  }
+
+  const QString out = QString::fromUtf8(proc->readAll());
+  proc->deleteLater();
+
+  m_backupSystemList->clear();
+  for (const QString &line : out.split(QLatin1Char('\n'), Qt::SkipEmptyParts)) {
+    if (line.startsWith(QLatin1String("systems=")) || line.startsWith(QLatin1Char('[')) ||
+        line.startsWith(QLatin1String("ERROR")) || line.startsWith(QLatin1String("WARN"))) {
+      continue;
+    }
+    const QStringList p = line.split(QLatin1Char('\t'));
+    if (p.size() < 3) {
+      continue;
+    }
+    auto *item = new QListWidgetItem(
+        QStringLiteral("[%1] %2 — %3 (%4)")
+            .arg(p.at(0), p.value(2), p.value(1), p.value(3)));
+    item->setData(Qt::UserRole, p.value(1)); // partition path
+    m_backupSystemList->addItem(item);
+  }
+  if (m_backupSystemList->count() == 0) {
+    m_backupSystemList->addItem(
+        QStringLiteral("(No systems found — plug in another disk or uncheck backup)"));
+  } else {
+    m_backupSystemList->setCurrentRow(0);
   }
 }
 
@@ -473,18 +615,28 @@ void InstallWizard::applyPageToUi(int index)
     m_back->setEnabled(true);
   }
   if (index == 9) {
+    const QString backupLine =
+        QStringLiteral("Backup: %1\n").arg(m_state.backupStatus.isEmpty()
+                                               ? QStringLiteral("n/a")
+                                               : m_state.backupStatus);
+    const QString restoreLine =
+        QStringLiteral("Restore: %1\n").arg(m_state.restoreStatus.isEmpty()
+                                                ? QStringLiteral("n/a")
+                                                : m_state.restoreStatus);
     m_finishBody->setPlainText(
         m_installOk
             ? QStringLiteral("Spike was installed on %1.\n\n"
+                             "%2%3\n"
                              "Remove the live USB, then reboot into the installed system.\n\n"
                              "Log: /var/log/spike/install.log (on the live session).\n\n"
-                             "Plan:\n%2")
-                  .arg(m_state.targetDisk, stateDump())
+                             "Plan:\n%4")
+                  .arg(m_state.targetDisk, backupLine, restoreLine, stateDump())
             : QStringLiteral("Install did not complete successfully.\n\n"
+                             "%1%2\n"
                              "Check the Installation log and /var/log/spike/install.log.\n"
                              "You can go Back and retry, or reboot to the live desktop.\n\n"
-                             "Plan:\n%1")
-                  .arg(stateDump()));
+                             "Plan:\n%3")
+                  .arg(backupLine, restoreLine, stateDump()));
     m_next->setText(QStringLiteral("Close"));
     m_next->setEnabled(true);
   } else if (index < 8) {
@@ -500,7 +652,22 @@ void InstallWizard::syncStateFromPage(int index)
     m_state.language = m_language->currentData().toString();
     break;
   case 1:
-    m_state.timezone = m_timezone->currentText();
+    m_state.timezone = m_timezone->currentText().trimmed();
+    if (m_keyboard->currentData().isValid() && !m_keyboard->currentData().toString().isEmpty()) {
+      m_state.keyboard = m_keyboard->currentData().toString();
+    } else {
+      // Editable combo may leave data empty — match by text or take typed id
+      const QString typed = m_keyboard->currentText().trimmed();
+      int idx = m_keyboard->findData(typed);
+      if (idx < 0) {
+        idx = m_keyboard->findText(typed);
+      }
+      if (idx >= 0) {
+        m_state.keyboard = m_keyboard->itemData(idx).toString();
+      } else if (!typed.isEmpty() && !typed.contains(QLatin1Char(' '))) {
+        m_state.keyboard = typed;
+      }
+    }
     break;
   case 2:
     if (!m_wifiSkipped && m_wifiList && m_wifiList->currentItem()) {
@@ -523,6 +690,14 @@ void InstallWizard::syncStateFromPage(int index)
   case 6:
     m_state.doBackup = m_doBackup->isChecked();
     m_state.restoreAfterInstall = m_restoreCheck->isChecked();
+    if (m_backupSystemList && m_backupSystemList->currentItem()) {
+      m_state.backupSystemPartition =
+          m_backupSystemList->currentItem()->data(Qt::UserRole).toString();
+    }
+    if (m_backupDestList && m_backupDestList->currentItem()) {
+      m_state.backupDestMount =
+          m_backupDestList->currentItem()->data(Qt::UserRole).toString();
+    }
     if (m_restoreList->currentItem()) {
       m_state.restoreSessionPath =
           m_restoreList->currentItem()->data(Qt::UserRole).toString();
@@ -544,6 +719,21 @@ void InstallWizard::syncStateFromPage(int index)
 bool InstallWizard::validateCurrent()
 {
   const int index = m_stack->currentIndex();
+  if (index == 1) {
+    const QString tz = m_timezone->currentText().trimmed();
+    if (tz.isEmpty()) {
+      QMessageBox::warning(this, QStringLiteral("Timezone"),
+                           QStringLiteral("Select a timezone."));
+      return false;
+    }
+    if (m_timezone->findText(tz) < 0) {
+      QMessageBox::warning(
+          this, QStringLiteral("Timezone"),
+          QStringLiteral("Unknown timezone “%1”. Pick one from the list (type to filter).")
+              .arg(tz));
+      return false;
+    }
+  }
   if (index == 3) {
     if (m_username->text().trimmed().isEmpty()) {
       QMessageBox::warning(this, QStringLiteral("Account"),
@@ -561,11 +751,28 @@ bool InstallWizard::validateCurrent()
                          QStringLiteral("Enter a computer name."));
     return false;
   }
+  if (index == 6 && m_doBackup && m_doBackup->isChecked()) {
+    if (m_listSystemsBusy) {
+      QMessageBox::information(this, QStringLiteral("Backup"),
+                               QStringLiteral("Still scanning for systems — wait a moment, or "
+                                              "uncheck backup to continue."));
+      return false;
+    }
+    if (!m_backupDestList || !m_backupDestList->currentItem() ||
+        m_backupDestList->currentItem()->data(Qt::UserRole).toString().isEmpty()) {
+      QMessageBox::warning(this, QStringLiteral("Backup"),
+                           QStringLiteral("Select a backup destination USB (or uncheck backup)."));
+      return false;
+    }
+  }
   if (index == 6 && m_restoreCheck->isChecked()) {
-    if (!m_restoreList->currentItem() ||
-        m_restoreList->currentItem()->data(Qt::UserRole).toString().isEmpty()) {
+    const bool hasSession = m_restoreList->currentItem() &&
+                            !m_restoreList->currentItem()->data(Qt::UserRole).toString().isEmpty();
+    const bool willCreateSession = m_doBackup && m_doBackup->isChecked();
+    if (!hasSession && !willCreateSession) {
       QMessageBox::warning(this, QStringLiteral("Restore"),
-                           QStringLiteral("Select a SpikeBackup session, or uncheck restore."));
+                           QStringLiteral("Select a SpikeBackup session, enable backup "
+                                          "(to create one), or uncheck restore."));
       return false;
     }
   }
@@ -601,6 +808,7 @@ QString InstallWizard::stateDump() const
   QStringList lines;
   lines << QStringLiteral("language=%1").arg(m_state.language);
   lines << QStringLiteral("timezone=%1").arg(m_state.timezone);
+  lines << QStringLiteral("keyboard=%1").arg(m_state.keyboard);
   lines << QStringLiteral("wifi=%1").arg(m_state.wifiConnected.isEmpty()
                                              ? (m_state.wifiSsid.isEmpty()
                                                     ? QStringLiteral("none")
@@ -611,9 +819,13 @@ QString InstallWizard::stateDump() const
   lines << QStringLiteral("variant=%1").arg(m_state.variant);
   lines << QStringLiteral("doBackup=%1").arg(m_state.doBackup ? QStringLiteral("yes")
                                                               : QStringLiteral("no"));
+  lines << QStringLiteral("backupDest=%1").arg(m_state.backupDestMount);
+  lines << QStringLiteral("backupSystem=%1").arg(m_state.backupSystemPartition);
+  lines << QStringLiteral("backupStatus=%1").arg(m_state.backupStatus);
   lines << QStringLiteral("restoreAfterInstall=%1")
                .arg(m_state.restoreAfterInstall ? QStringLiteral("yes") : QStringLiteral("no"));
   lines << QStringLiteral("restoreSession=%1").arg(m_state.restoreSessionPath);
+  lines << QStringLiteral("restoreStatus=%1").arg(m_state.restoreStatus);
   lines << QStringLiteral("targetDisk=%1").arg(m_state.targetDisk);
   lines << QStringLiteral("passwordSet=%1").arg(m_state.password.isEmpty() ? QStringLiteral("no")
                                                                             : QStringLiteral("yes"));
@@ -682,6 +894,12 @@ void InstallWizard::onInstallLog(const QString &line)
 void InstallWizard::onInstallFinished(bool ok, const QString &message)
 {
   m_installOk = ok;
+  if (m_engine) {
+    const InstallState st = m_engine->lastState();
+    m_state.backupStatus = st.backupStatus;
+    m_state.restoreStatus = st.restoreStatus;
+    m_state.restoreSessionPath = st.restoreSessionPath;
+  }
   m_progressBody->append(QStringLiteral("\n%1\n").arg(message));
   m_installBtn->setEnabled(!ok);
   m_back->setEnabled(true);
@@ -694,6 +912,70 @@ void InstallWizard::onInstallFinished(bool ok, const QString &message)
 void InstallWizard::onFinishClose()
 {
   close();
+}
+
+void InstallWizard::selectTimezone(const QString &tz)
+{
+  if (!m_timezone || tz.isEmpty()) {
+    return;
+  }
+  int idx = m_timezone->findText(tz);
+  if (idx < 0) {
+    // Prefer exact zone if present under another casing
+    for (int i = 0; i < m_timezone->count(); ++i) {
+      if (m_timezone->itemText(i).compare(tz, Qt::CaseInsensitive) == 0) {
+        idx = i;
+        break;
+      }
+    }
+  }
+  if (idx >= 0) {
+    m_timezone->setCurrentIndex(idx);
+  } else {
+    m_timezone->setEditText(tz);
+  }
+}
+
+void InstallWizard::selectKeyboard(const QString &layoutId)
+{
+  if (!m_keyboard || layoutId.isEmpty()) {
+    return;
+  }
+  int idx = m_keyboard->findData(layoutId);
+  if (idx >= 0) {
+    m_keyboard->setCurrentIndex(idx);
+    return;
+  }
+  // Rare layout id not in list — show raw id
+  m_keyboard->setEditText(layoutId);
+}
+
+void InstallWizard::onLanguageChanged()
+{
+  if (!m_language) {
+    return;
+  }
+  const QString lang = m_language->currentData().toString();
+  m_state.language = lang;
+
+  // Suggest timezone + keyboard from language (keyboard only if user hasn't overridden)
+  if (m_timezone) {
+    selectTimezone(suggestTimezoneForLanguage(lang));
+  }
+  if (!m_keyboardTouched) {
+    selectKeyboard(suggestKeyboardForLanguage(lang));
+  }
+}
+
+void InstallWizard::onTimezoneChanged(const QString &tz)
+{
+  if (m_keyboardTouched || tz.trimmed().isEmpty()) {
+    return;
+  }
+  const QString kb = suggestKeyboardForTimezone(tz.trimmed());
+  if (!kb.isEmpty()) {
+    selectKeyboard(kb);
+  }
 }
 
 } // namespace spike

@@ -4,6 +4,48 @@ Append-only. Newest sessions at the **top**.
 
 ---
 
+## 2026-08-09 — post-install first-run wizard (shell 0.0.31 / installer 0.0.11)
+
+Smoke before this change: erase install reached installed desktop; KERNEL.md module blacklist looked correct. Gap: no first-boot UX. Shell **0.0.31**: FirstRunWizard (Welcome → TZ → Wi‑Fi → Tour placeholder → Accessibility offer → Import → Notices → Done); hooks in `firstrun/FirstRunHooks` for Flatpak/updates/tour drop-ins; gate on `/etc/spike/installed` + `~/.config/spike/first_run_completed`. Installer **0.0.11**: writes `/var/lib/spike/first-boot` + `installer-notifications/`. Packages ready; rebuild to verify wizard on next install.
+
+---
+
+## 2026-08-09 — installer freeze on Variant → Backup (0.0.10 / 0.0.12)
+
+Smoke `install-logs-2026-08-09.1`: Continue from Spike variant blocked GUI on `spike-rescue --list-systems` (`waitForFinished` 120s) while scan did `find-files` on NVMe home (Documents/…). Both killed SIGTERM ~76s later. Fix: rescue **0.0.12** `--list-systems` skips inventory walk; installer **0.0.10** async list-systems on backup page. Rebuild both packages into ISO.
+
+---
+
+## 2026-08-09 — installer 0.0.9: languages, timezones, keyboard
+
+Installer welcome lists all 11 INSTALLER.md languages. Timezone page loads full `zone.tab` (~400 IANA zones, filterable) plus XKB layouts from `evdev.lst`, with language/timezone suggestions and a type-to-test field. Helper writes `/etc/default/keyboard`, runs `locale-gen` / `setupcon`. Package: `spike-installer_0.0.9-1`.
+
+---
+
+## 2026-08-09 — Spike Tools + install-time blacklist (0.0.8 / 0.0.11 / 0.0.3)
+
+spike-config **0.0.11**: `blacklist.py` KERNEL.md policy from PCI presence → `security.module_blacklist`; detect() applies it; tests for empty PCI / MegaRAID vendor. Installer helper runs `--detect` then `--generate-all` before initramfs; logs blacklist entry count. Installer **0.0.8**: Step 7 system picker + resolve eligible after `--exclude-disk`; SKIPPED clears auto-restore; `RESTORE_STATUS=ok|failed|skipped` on Finish. Migration **0.0.3**: async wizard shell Welcome→Scan→Select→Dest→Progress→Done (+ Mode B import). Packages ready; no ISO rebuild in this change.
+
+---
+
+## 2026-08-09 — installer 0.0.7 + shell 0.0.30: black screen + live Apply
+
+Smoke after **0.0.6**: install.log OK (`update-initramfs`, `update-grub`), then installed boot = **hung black screen**. Root cause: live `spike-live-groups` (video/input/render) is stripped on target, but squashfs user lacks those groups → kwin DRM/seat fails. Fix: helper always `usermod -aG video,input,render,…`, enables `seatd`, warns in profile.d. Live Apply: Panel/tray Apply saved state but panel did not refresh (dbus-python `StateChanged` `v` typing); shell **0.0.30** `ConfigClient::setSetting` local-echoes `stateChanged`; config **0.0.10** emits `variant_level=1` strings. Packages: installer **0.0.7**, shell **0.0.30**, config **0.0.10**. Rebuild → erase install → expect wallpaper+panel.
+
+---
+
+## 2026-08-09 — installer 0.0.6: casper initrd → local boot
+
+Smoke (`install-logs-2026-08-09.0`): GRUB menu OK, but selecting Spike → `stdin: invalid argument` → `(initramfs) unable to find a medium containing a live file system`. Root cause: live initrd has `conf.d/default-boot-to-casper.conf` (`BOOT=casper`); minimal `grub.cfg` had `root=UUID` only. Also `update-grub` failed on missing `GRUB_FONT` theme path from spike-config. Fix: helper regenerates initramfs with `BOOT=local`, disables casper hook, adds `boot=local` cmdline, sanitizes theme paths; config **0.0.9** omits theme lines when assets missing. Step 7 hang: rescue **0.0.11** `--exclude-disk` (installer passes wipe target) → `SKIPPED` if nothing else. Packages: installer **0.0.6**, rescue **0.0.11**, config **0.0.9**. Rebuild ISO → erase install → reboot (USB out).
+
+---
+
+## 2026-08-09 — Spike Tools + installer 0.0.5 for full data-path smoke
+
+Rescue **0.0.10**: `--list-systems`, `--batch-recover`, `--batch-restore` (shared with installer/migration). Installer **0.0.5**: Step 7 runs batch-recover before wipe (abort on failure); Layer 4 flatten via batch-restore + shell fallback. Migration **0.0.2**: thin Mode A/B UI over the same CLI. Packages: `spike-rescue_0.0.10-1`, `spike-installer_0.0.5-1`, `spike-migration_0.0.2-1`. Rebuild ISO → smoke backup→ERASE→restore→reboot.
+
+---
+
 ## 2026-08-09 — installer 0.0.4: GRUB cfg + Wi‑Fi page
 
 Smoke (`install-logs-2026-08-09.1` / `install.log`): install to `/dev/nvme0n1` finished “OK” but `WARN: update-grub failed` → post-reboot **grub>** (no `grub.cfg`). Root cause: squashfs has `grub-*-bin` only → no `/etc/default/grub`, no `/boot/grub`. Helper now creates defaults, logs grub-install/update-grub, writes minimal `grub.cfg` if needed, UEFI `--removable` fallback; strips live casper units from target. Wizard Wi‑Fi page: nmcli scan/connect/skip. Package: `spike-installer_0.0.4-1`.

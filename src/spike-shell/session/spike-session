@@ -111,7 +111,11 @@ fi
 if ! id -nG | tr ' ' '\n' | grep -qx video; then
   echo "spike-session: WARNING: user not in 'video' group — seatd may deny the seat. Log out/in after spike-live-groups, or rebuild." >&2
 fi
-
+for _g in input render; do
+  if ! id -nG | tr ' ' '\n' | grep -qx "$_g"; then
+    echo "spike-session: WARNING: user not in '${_g}' group — DRM/input may fail (black screen)." >&2
+  fi
+done
 # Live image: drop stale WirePlumber profile state so UCM/HDMI policy changes apply.
 if grep -Eqw 'boot=casper|spike.live' /proc/cmdline 2>/dev/null; then
   rm -rf "${XDG_STATE_HOME:-${HOME}/.local/state}/wireplumber" 2>/dev/null || true

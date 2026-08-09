@@ -4,6 +4,19 @@ GUI tool for the **live ISO**. Mounts broken-system disks **read-only**, finds p
 files under known home folders, copies them to another USB under `SpikeBackup/` with
 **SHA256** verification.
 
+## Batch CLI (installer / migration)
+
+```bash
+spike-rescue --list-systems
+# Fast: OS/users only (no personal-file inventory walk). Use GUI inventory/recover for counts.
+spike-rescue --batch-recover --dest /run/media/…/writable [--system 0] [--exclude-disk /dev/nvme0n1]
+# prints SESSION_PATH=…/SpikeBackup/<stamp>/<label>
+# or SKIPPED=no-eligible-systems (exit 0) when only the wipe disk remains
+spike-rescue --batch-restore --session /path/to/session --home /home/user
+```
+
+Version: **0.0.12**.
+
 ## Build
 
 ```bash

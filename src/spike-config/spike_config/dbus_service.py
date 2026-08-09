@@ -61,11 +61,18 @@ def _variant_to_python(value: Any) -> Any:
 
 
 def _signal_variant(value: Any) -> Any:
-    """Value suitable for a D-Bus 'v' signal argument (dbus-python 1.4+)."""
-    # Prefer plain strings so Qt QDBusVariant clients get a stable type.
+    """Value suitable for a D-Bus 'v' signal argument (dbus-python 1.4+).
+
+    dbus.Variant was removed; wrap with variant_level=1 so the wire type is ``v``
+    (Qt QDBusVariant slots match). Complex values are JSON strings.
+    """
     if value is None:
-        return ""
-    return str(value)
+        text = ""
+    elif isinstance(value, (dict, list)):
+        text = json.dumps(value, separators=(",", ":"), sort_keys=False)
+    else:
+        text = str(value)
+    return dbus.String(text, variant_level=1)
 
 
 class ConfigService(dbus.service.Object):

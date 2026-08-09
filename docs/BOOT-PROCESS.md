@@ -955,14 +955,15 @@ SPIKE_VERSION=0.1.0-alpha
 **First boot (fresh installation):**
 
 ```
-├── spike-session detects /var/lib/spike/first-boot file
+├── Installer writes /var/lib/spike/first-boot + installer-notifications/
+├── spike-shell detects /etc/spike/installed and missing
+│   ~/.config/spike/first_run_completed
 ├── After desktop is ready:
-│   ├── Display welcome message (see INSTALLER.md)
-│   ├── Check for pending security updates (if network available)
-│   ├── Check NVIDIA hardware (if applicable)
-│   ├── Check HDD upgrade recommendation (if HDD detected)
-│   └── Display relevant notifications
-├── Remove first-boot marker file
+│   ├── FirstRunWizard (Welcome, timezone, Wi‑Fi, tour placeholder,
+│   │   accessibility offer, import files, notices, Get started)
+│   ├── Notices page reads /var/lib/spike/installer-notifications/*.txt
+│   │   + placeholder hooks (Flatpak / security updates)
+│   └── Write ~/.config/spike/first_run_completed; remove first-boot marker
 └── Subsequent boots skip this
 ```
 

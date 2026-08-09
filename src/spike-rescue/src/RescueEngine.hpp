@@ -27,6 +27,13 @@ public:
   QStringList debugLog() const { return m_debugLog; }
   QVector<BackupSession> backupSessions() const { return m_backupSessions; }
 
+  /**
+   * When false, scanSystems skips per-user find-files inventory (fast --list-systems).
+   * Full inventory still runs via inventorySystem() / recover path.
+   */
+  void setIncludeInventoryOnScan(bool include) { m_includeInventoryOnScan = include; }
+  bool includeInventoryOnScan() const { return m_includeInventoryOnScan; }
+
   /** Unmount any RO source mounts we created. */
   Q_INVOKABLE void cleanupMounts();
   void appendDebug(const QString &line);
@@ -39,6 +46,8 @@ public slots:
   void scanBackups();
   void refreshRestoreTargets();
   void startRestore(int sessionIndex, const QString &targetHome);
+  /** Restore from an absolute SpikeBackup session path (installer / migration batch). */
+  void startRestoreFromPath(const QString &sessionPath, const QString &targetHome);
   void requestCancel();
   void cleanupMountsSlot() { cleanupMounts(); }
 
@@ -81,6 +90,7 @@ private:
   Inventory buildInventory(const DetectedSystem &sys);
   QStringList categoryDirs(OsKind os) const;
   bool copyOneFile(const QString &src, const QString &dst, QString *errKind, QString *errDetail);
+  void runRestoreMappings(const BackupSession &session, const QString &targetHome);
   QByteArray sha256Path(const QString &path, bool *ok, QString *errDetail = nullptr) const;
   static QByteArray sha256File(const QString &path, bool *ok);
   static QString mountpointsFromJson(const QJsonObject &obj);
@@ -95,6 +105,7 @@ private:
   QStringList m_ourMounts;
   QVector<BackupSession> m_backupSessions;
   bool m_cancel = false;
+  bool m_includeInventoryOnScan = true;
 };
 
 } // namespace spike

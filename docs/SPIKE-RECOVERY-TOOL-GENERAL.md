@@ -126,11 +126,11 @@ On an installed Spike system:
 ## Implementation Status
 
 ```
-├── spike-rescue: recover + restore MVP (live ISO) — src/spike-rescue/
 ├── spike-common: shared SpikeBackup layout/find/map — src/spike-common/
-├── spike-installer: wizard **0.0.1** (Step 7/Layer 4 engines TBD) — src/spike-installer/
-├── spike-migration: scaffold + spec — src/spike-migration/, SPIKE-MIGRATION.md
-└── Desktop category: Spike Tools (X-Spike-Tools) for Rescue / Installer / future tools
+├── spike-rescue: recover + restore MVP + **batch CLI 0.0.12** (quick --list-systems) — src/spike-rescue/
+├── spike-installer: wizard **0.0.10** (async Step 7 scan; locale/TZ/keyboard; RESTORE_STATUS; blacklist) — src/spike-installer/
+├── spike-migration: wizard shell **0.0.3** — src/spike-migration/, SPIKE-MIGRATION.md
+└── Desktop category: Spike Tools (X-Spike-Tools) for Rescue / Installer / Move My Files
 ```
 
 ## Related Documents

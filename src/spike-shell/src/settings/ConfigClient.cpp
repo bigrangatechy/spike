@@ -97,7 +97,17 @@ bool ConfigClient::setSetting(const QString &module, const QString &key, const Q
     }
     return false;
   }
-  return reply.value();
+  if (!reply.value()) {
+    if (error) {
+      *error = QStringLiteral("SetSetting returned false");
+    }
+    return false;
+  }
+  // Local echo: Settings and Panel share this client. Relying only on the system
+  // bus StateChanged signal is flaky (dbus-python 1.4 variant typing) and left
+  // Panel / tray Apply looking like a no-op.
+  emit stateChanged(module, key, QVariant(), value);
+  return true;
 }
 
 bool ConfigClient::generateAll(QString *error)

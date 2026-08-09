@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(spike-shell VERSION 0.0.29 LANGUAGES CXX)
+project(spike-shell VERSION 0.0.31 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -109,6 +109,10 @@ add_executable(spike-shell
   src/desktop/DesktopBackground.hpp
   src/desktop/DesktopIcons.cpp
   src/desktop/DesktopIcons.hpp
+  src/firstrun/FirstRunHooks.cpp
+  src/firstrun/FirstRunHooks.hpp
+  src/firstrun/FirstRunWizard.cpp
+  src/firstrun/FirstRunWizard.hpp
   src/settings/KeyboardLayoutPage.cpp
   src/settings/KeyboardLayoutPage.hpp
   src/settings/MemoryPage.cpp

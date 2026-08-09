@@ -1,23 +1,23 @@
 # Spike Migration — Move My Files
 
-Dedicated, detailed wizard for users switching **to** Spike.
+Dedicated tool for users switching **to** Spike.
 
 Spec: `docs/SPIKE-MIGRATION.md`
 
-## Status
+## Status (0.0.3)
 
-Scaffold only. Implementation will link `src/spike-common/` for SpikeBackup layout
-and verified copy, with richer UX than Spike Rescue (education, multi-user,
-conflict policy).
+Wizard shell (async `QProcess`) over `spike-rescue` batch CLI:
 
-## Modes
+| Page | Mode A (before install) | Mode B (into this Spike) |
+| --- | --- | --- |
+| Welcome | Spec copy → Continue | Branch: Import into this Spike |
+| Scan | `--list-systems` | Session picker |
+| Select / Dest | Pick system + USB/writable root | — |
+| Progress | `--batch-recover` | `--batch-restore` |
+| Done | SESSION_PATH / Open Install Spike | Close |
 
-- **Pre-install (live):** guided copy from old OS → USB `SpikeBackup/`
-- **Post-install:** import from USB `SpikeBackup/` or old disk → `$HOME`
-
-Installer Step 7 / Layer 4 remain in `spike-installer` (in-flow). Rescue remains
-the disaster recover+restore tool.
+Inventory size preview, exclude folders, conflict rename, and old-disk remount Mode B from the full spec are **not** in this build.
 
 ## Desktop
 
-`Categories=X-Spike-Tools;…` so the app appears under **Spike Tools**.
+`Categories=X-Spike-Tools;…` → **Spike Tools**.
