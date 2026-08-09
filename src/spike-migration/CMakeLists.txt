@@ -1,9 +1,17 @@
 cmake_minimum_required(VERSION 3.16)
 project(spike-migration VERSION 0.0.1 LANGUAGES CXX)
 
-# Scaffold — full UI not implemented yet. When built, link spike-common:
-#   add_executable(spike-migration …)
-#   target_include_directories(… PRIVATE ../spike-common)
-#   target_sources(… PRIVATE ../spike-common/SpikeBackupLayout.cpp)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_AUTOMOC ON)
 
-message(STATUS "spike-migration ${PROJECT_VERSION}: scaffold only (see README.md)")
+find_package(Qt6 REQUIRED COMPONENTS Widgets)
+
+add_executable(spike-migration src/main.cpp)
+target_link_libraries(spike-migration PRIVATE Qt6::Widgets)
+
+install(TARGETS spike-migration RUNTIME DESTINATION bin)
+install(FILES data/spike-migration.desktop DESTINATION share/applications)
+install(FILES data/spike-migration-desktop.desktop
+        DESTINATION share/spike/live
+        RENAME spike-migration.desktop)

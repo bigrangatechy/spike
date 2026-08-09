@@ -70,6 +70,7 @@ void BatteryClient::refresh()
   int percent = 0;
   bool charging = false;
   QString stateText;
+  QString timeText;
   QString path;
 
   for (const QDBusObjectPath &op : devices.value()) {
@@ -104,15 +105,36 @@ void BatteryClient::refresh()
       stateText = QStringLiteral("Battery");
       break;
     }
+    qlonglong secs = 0;
+    if (state == 1 || state == 5) {
+      secs = dev.property("TimeToFull").toLongLong();
+    } else if (state == 2 || state == 6) {
+      secs = dev.property("TimeToEmpty").toLongLong();
+    }
+    if (secs > 0 && secs < 60 * 60 * 48) {
+      const int h = static_cast<int>(secs / 3600);
+      const int m = static_cast<int>((secs % 3600) / 60);
+      if (h > 0) {
+        timeText = QStringLiteral("%1 h %2 min").arg(h).arg(m);
+      } else {
+        timeText = QStringLiteral("%1 min").arg(m);
+      }
+      if (state == 1 || state == 5) {
+        timeText += QStringLiteral(" until full");
+      } else {
+        timeText += QStringLiteral(" remaining");
+      }
+    }
     break;
   }
 
   if (found != m_hasBattery || percent != m_percent || charging != m_charging ||
-      stateText != m_stateText || path != m_devicePath) {
+      stateText != m_stateText || timeText != m_timeText || path != m_devicePath) {
     m_hasBattery = found;
     m_percent = percent;
     m_charging = charging;
     m_stateText = stateText;
+    m_timeText = timeText;
     m_devicePath = path;
     emit changed();
   }

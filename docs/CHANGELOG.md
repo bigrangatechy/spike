@@ -120,25 +120,36 @@ Pre-alpha implementation is underway (ISO, shell, spike-config, Rescue). Alpha s
 ├── src/spike-common shared SpikeBackup helpers
 ├── Spike Tools desktop category (X-Spike-Tools)
 ├── Living docs/dev-guide/ (repo map, rescue/shell/build internals)
-└── spike-installer **0.0.1**: 10-step wizard + SpikeBackup session pick (no wipe yet)
+├── spike-installer **0.0.1**: 10-step wizard + SpikeBackup session pick (no wipe yet)
+├── Settings → Power (shell **0.0.24** + config **0.0.5**): custom page + logind drop-in
+├── Settings finish (shell **0.0.25**): Advanced forms, About, live Appearance, Diagnostics/VPN/Sources
+├── spike-installer **0.0.2**: privileged install-helper (partition/squashfs/grub) + ERASE confirm
+├── spike-installer **0.0.3**: CLI args + UEFI grub pkgs + installed session autostart
+├── spike-installer **0.0.4**: grub.cfg guarantee + Wi‑Fi nmcli page
+├── spike-migration **0.0.1** + live Desktop: Install Spike / Rescue My Files / Move My Files
+├── Full tray + Settings → PANEL (shell **0.0.27** + config **0.0.7**)
+├── Desktop icons layer (shell **0.0.28**)
+└── Coastal-Run default wallpaper stretch-to-fit (shell **0.0.29** + config **0.0.8**)
 ```
 
 **Changed:**
 
 ```
 ├── Writable backups prefer LABEL=writable at partition root (not casper /var/log)
-└── Product docs aligned for recover/restore everywhere + shared layout
+├── Product docs aligned for recover/restore everywhere + shared layout
+├── Power Apply (shell **0.0.26**): do not restart systemd-logind mid-session
+└── Appearance panel geometry moved to Settings → Panel (**0.0.27**)
 ```
 
-**Fixed / Known:** tracked in SESSION_LOG and STATE (hardware audio, installer not yet E2E).
+**Fixed / Known:** post-install **grub>** from failed `update-grub` (installer **0.0.4**); Coastal-Run wallpaper; otherwise SESSION_LOG/STATE (Step 7 backup stub, hardware audio).
 
 #### Unreleased (structured)
 
-**Added:** live ISO packages; Rescue recover+restore; spike-common; Spike Tools; installer wizard 0.0.1; dev-guide core
+**Added:** live ISO packages; Rescue recover+restore; spike-common; Spike Tools; installer wizard 0.0.1; Settings → Power; full tray applets + PANEL Settings; dev-guide core
 
-**Changed:** SpikeBackup destination policy; docs status (prototyping in progress)
+**Changed:** SpikeBackup destination policy; docs status (prototyping in progress); Power Apply logind policy; Appearance vs Panel split
 
-**Fixed:** (see SESSION_LOG for package-level fixes)
+**Fixed:** spike-config **0.0.6** — dbus-python 1.4 had no `dbus.Variant` (Settings Apply crash); shell **0.0.26** — Power Apply session tear-down via logind restart
 
 **Removed:** (nothing)
 

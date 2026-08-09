@@ -28,8 +28,8 @@ QWidget *makeNotificationsPage(QWidget *parent, ConfigClient *config, QLabel *st
   auto *hint = new QLabel(
       QStringLiteral(
           "Retention and Do Not Disturb preferences are saved in spike-config (privacy). "
-          "The Spike notification daemon / tray history is not shipped yet — popups and history "
-          "viewer come with that daemon."),
+          "The panel Notifications tray owns org.freedesktop.Notifications when no other "
+          "daemon is present (history + badge)."),
       w);
   hint->setWordWrap(true);
   lay->addWidget(hint);

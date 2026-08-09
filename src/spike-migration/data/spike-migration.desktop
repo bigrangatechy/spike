@@ -8,5 +8,3 @@ Terminal=false
 Categories=X-Spike-Tools;System;Utility;
 Keywords=migrate;move;backup;import;spike;
 StartupNotify=true
-# Not shipped until spike-migration is packaged; kept here for category consistency.
-NoDisplay=true

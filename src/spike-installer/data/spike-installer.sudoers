@@ -1,0 +1,3 @@
+# Spike Installer — passwordless privileged helper for live user.
+# Constrained to /usr/lib/spike/spike-install-helper only.
+spike ALL=(root) NOPASSWD: /usr/lib/spike/spike-install-helper

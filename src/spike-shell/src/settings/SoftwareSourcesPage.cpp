@@ -1,5 +1,6 @@
 #include "settings/SoftwareSourcesPage.hpp"
 
+#include <QCheckBox>
 #include <QDir>
 #include <QFile>
 #include <QHBoxLayout>
@@ -38,6 +39,47 @@ bool startDetachedFirst(const QStringList &candidates, const QStringList &args =
   return false;
 }
 
+bool sourcesListHasComponent(const QString &comp)
+{
+  const QString text = readFileTrunc(QStringLiteral("/etc/apt/sources.list"), 200000);
+  const QStringList lines = text.split(QLatin1Char('\n'));
+  for (QString line : lines) {
+    line = line.trimmed();
+    if (line.startsWith(QLatin1Char('#')) || !line.startsWith(QLatin1String("deb"))) {
+      continue;
+    }
+    if (line.contains(QLatin1Char(' ') + comp) || line.endsWith(comp)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool addAptComponent(const QString &comp, QString *err)
+{
+  QProcess proc;
+  proc.start(QStringLiteral("sudo"),
+             {QStringLiteral("-n"), QStringLiteral("add-apt-repository"), QStringLiteral("-y"),
+              comp});
+  if (!proc.waitForStarted(3000) || !proc.waitForFinished(120000)) {
+    proc.kill();
+    if (err) {
+      *err = QStringLiteral("add-apt-repository timed out / sudo -n unavailable");
+    }
+    return false;
+  }
+  if (proc.exitCode() != 0) {
+    if (err) {
+      *err = QString::fromUtf8(proc.readAllStandardError()).trimmed();
+      if (err->isEmpty()) {
+        *err = QStringLiteral("add-apt-repository failed");
+      }
+    }
+    return false;
+  }
+  return true;
+}
+
 } // namespace
 
 QWidget *makeSoftwareSourcesPage(QWidget *parent, QLabel *statusBar)
@@ -47,11 +89,16 @@ QWidget *makeSoftwareSourcesPage(QWidget *parent, QLabel *statusBar)
   lay->addWidget(new QLabel(QStringLiteral("<h2>Software Sources</h2>"), w));
   auto *hint = new QLabel(
       QStringLiteral(
-          "Read-only view of APT sources. Editing / adding PPAs and proprietary drivers "
-          "will grow here; for now use the buttons to open system tools when installed."),
+          "APT sources view. Toggle universe/multiverse when sudo -n add-apt-repository works. "
+          "PPA editor and NVIDIA UX stay in external tools for now."),
       w);
   hint->setWordWrap(true);
   lay->addWidget(hint);
+
+  auto *universe = new QCheckBox(QStringLiteral("Enable universe"), w);
+  auto *multiverse = new QCheckBox(QStringLiteral("Enable multiverse"), w);
+  lay->addWidget(universe);
+  lay->addWidget(multiverse);
 
   auto *body = new QTextEdit(w);
   body->setReadOnly(true);
@@ -64,17 +111,19 @@ QWidget *makeSoftwareSourcesPage(QWidget *parent, QLabel *statusBar)
 
   auto *row = new QHBoxLayout();
   auto *reload = new QPushButton(QStringLiteral("Reload"), w);
+  auto *applyComp = new QPushButton(QStringLiteral("Apply components"), w);
   auto *props = new QPushButton(QStringLiteral("Software properties…"), w);
   auto *drivers = new QPushButton(QStringLiteral("Additional drivers…"), w);
   auto *update = new QPushButton(QStringLiteral("Check for updates…"), w);
   row->addWidget(reload);
+  row->addWidget(applyComp);
   row->addWidget(props);
   row->addWidget(drivers);
   row->addWidget(update);
   row->addStretch(1);
   lay->addLayout(row);
 
-  auto load = [body, status, statusBar]() {
+  auto load = [body, universe, multiverse, status, statusBar]() {
     QString out;
     out += QStringLiteral("=== /etc/apt/sources.list ===\n");
     const QString mainList = readFileTrunc(QStringLiteral("/etc/apt/sources.list"));
@@ -98,6 +147,8 @@ QWidget *makeSoftwareSourcesPage(QWidget *parent, QLabel *statusBar)
       }
     }
     body->setPlainText(out);
+    universe->setChecked(sourcesListHasComponent(QStringLiteral("universe")));
+    multiverse->setChecked(sourcesListHasComponent(QStringLiteral("multiverse")));
     status->setText(QStringLiteral("Loaded APT sources (%1 drop-ins)").arg(files.size()));
     if (statusBar) {
       statusBar->setText(QStringLiteral("Software Sources loaded"));
@@ -105,6 +156,32 @@ QWidget *makeSoftwareSourcesPage(QWidget *parent, QLabel *statusBar)
   };
 
   QObject::connect(reload, &QPushButton::clicked, w, load);
+  QObject::connect(applyComp, &QPushButton::clicked, w, [universe, multiverse, status, load]() {
+    QStringList msgs;
+    if (universe->isChecked() && !sourcesListHasComponent(QStringLiteral("universe"))) {
+      QString err;
+      if (!addAptComponent(QStringLiteral("universe"), &err)) {
+        status->setText(QStringLiteral("universe failed: %1").arg(err));
+        return;
+      }
+      msgs << QStringLiteral("universe enabled");
+    }
+    if (multiverse->isChecked() && !sourcesListHasComponent(QStringLiteral("multiverse"))) {
+      QString err;
+      if (!addAptComponent(QStringLiteral("multiverse"), &err)) {
+        status->setText(QStringLiteral("multiverse failed: %1").arg(err));
+        return;
+      }
+      msgs << QStringLiteral("multiverse enabled");
+    }
+    if (msgs.isEmpty()) {
+      status->setText(QStringLiteral(
+          "Nothing to enable (disable via Software properties — one-way enable here)."));
+    } else {
+      status->setText(msgs.join(QStringLiteral("; ")));
+    }
+    load();
+  });
   QObject::connect(props, &QPushButton::clicked, w, [status]() {
     if (startDetachedFirst({QStringLiteral("software-properties-qt"),
                             QStringLiteral("software-properties-gtk"),
@@ -125,7 +202,6 @@ QWidget *makeSoftwareSourcesPage(QWidget *parent, QLabel *statusBar)
     if (startDetachedFirst({QStringLiteral("ubuntu-drivers")})) {
       return;
     }
-    // Show CLI hint in the status; listing drivers needs privileges.
     QProcess proc;
     proc.start(QStringLiteral("ubuntu-drivers"), {QStringLiteral("list")});
     if (proc.waitForFinished(8000) && proc.exitCode() == 0) {

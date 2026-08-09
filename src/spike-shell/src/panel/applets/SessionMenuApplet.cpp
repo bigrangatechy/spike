@@ -1,7 +1,10 @@
 #include "panel/applets/SessionMenuApplet.hpp"
 
+#include "panel/applets/TrayHelpers.hpp"
+
 #include <QIcon>
 #include <QMenu>
+#include <QMessageBox>
 #include <QProcess>
 #include <QStringList>
 
@@ -9,7 +12,6 @@ namespace spike {
 
 namespace {
 
-// Run and wait — startDetached cannot tell success from "Access denied".
 bool runWait(const QString &program, const QStringList &args, int timeoutMs = 8000)
 {
   QProcess proc;
@@ -31,13 +33,10 @@ bool runDetached(const QString &program, const QStringList &args)
 
 void runPowerAction(const QString &logindMethod, const QString &systemctlVerb)
 {
-  // 1) Passwordless sudo (Spike live user) — most reliable without a greeter/polkit agent.
   if (runWait(QStringLiteral("sudo"),
               {QStringLiteral("-n"), QStringLiteral("systemctl"), systemctlVerb})) {
     return;
   }
-
-  // 2) logind D-Bus (needs polkitd + allow rule for local active seats).
   if (runWait(QStringLiteral("busctl"),
               {QStringLiteral("call"), QStringLiteral("org.freedesktop.login1"),
                QStringLiteral("/org/freedesktop/login1"),
@@ -45,9 +44,13 @@ void runPowerAction(const QString &logindMethod, const QString &systemctlVerb)
                QStringLiteral("false")})) {
     return;
   }
-
-  // 3) Last resort (may fail without auth).
   runDetached(QStringLiteral("systemctl"), {systemctlVerb});
+}
+
+bool confirm(QWidget *parent, const QString &title, const QString &text)
+{
+  return QMessageBox::question(parent, title, text, QMessageBox::Yes | QMessageBox::No,
+                               QMessageBox::No) == QMessageBox::Yes;
 }
 
 } // namespace
@@ -75,7 +78,9 @@ void SessionMenuApplet::showMenu()
   QMenu menu(this);
   QAction *settings = menu.addAction(QStringLiteral("Settings"));
   menu.addSeparator();
+  QAction *lock = menu.addAction(QStringLiteral("Lock Screen"));
   QAction *logout = menu.addAction(QStringLiteral("Log out"));
+  QAction *suspend = menu.addAction(QStringLiteral("Suspend"));
   QAction *reboot = menu.addAction(QStringLiteral("Restart"));
   QAction *poweroff = menu.addAction(QStringLiteral("Shut down"));
 
@@ -85,16 +90,21 @@ void SessionMenuApplet::showMenu()
   }
 
   if (chosen == settings) {
-    // Walk up to Panel and open Settings (same process).
-    QWidget *w = parentWidget();
-    while (w) {
-      if (w->objectName() == QLatin1String("SpikePanel")) {
-        QMetaObject::invokeMethod(w, "openSettings", Qt::QueuedConnection);
-        break;
-      }
-      w = w->parentWidget();
+    tray::openPanelSettings(this);
+  } else if (chosen == lock) {
+    const QString sessionId = qEnvironmentVariable("XDG_SESSION_ID");
+    if (!sessionId.isEmpty() &&
+        runDetached(QStringLiteral("loginctl"), {QStringLiteral("lock-session"), sessionId})) {
+      return;
     }
+    runWait(QStringLiteral("busctl"),
+            {QStringLiteral("call"), QStringLiteral("org.freedesktop.login1"),
+             QStringLiteral("/org/freedesktop/login1"),
+             QStringLiteral("org.freedesktop.login1.Manager"), QStringLiteral("LockSessions")});
   } else if (chosen == logout) {
+    if (!confirm(this, QStringLiteral("Log out"), QStringLiteral("Log out of this session?"))) {
+      return;
+    }
     const QString sessionId = qEnvironmentVariable("XDG_SESSION_ID");
     if (!sessionId.isEmpty()) {
       runDetached(QStringLiteral("loginctl"),
@@ -103,9 +113,18 @@ void SessionMenuApplet::showMenu()
       runDetached(QStringLiteral("loginctl"),
                   {QStringLiteral("terminate-user"), qEnvironmentVariable("USER")});
     }
+  } else if (chosen == suspend) {
+    runPowerAction(QStringLiteral("Suspend"), QStringLiteral("suspend"));
   } else if (chosen == reboot) {
+    if (!confirm(this, QStringLiteral("Restart"), QStringLiteral("Restart the computer now?"))) {
+      return;
+    }
     runPowerAction(QStringLiteral("Reboot"), QStringLiteral("reboot"));
   } else if (chosen == poweroff) {
+    if (!confirm(this, QStringLiteral("Shut down"),
+                 QStringLiteral("Shut down the computer now?"))) {
+      return;
+    }
     runPowerAction(QStringLiteral("PowerOff"), QStringLiteral("poweroff"));
   }
 }

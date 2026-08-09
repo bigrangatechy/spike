@@ -152,9 +152,12 @@ linux-firmware-marvell-wireless
 linux-firmware-amd-graphics
 
 # ISO bootloader (Ubuntu dropped syslinux-themes-ubuntu-oneiric / gfxboot-theme-ubuntu).
-# Keep these in the chroot: live-build removes stage-temporary grub-pc before lb_binary_iso
-# runs grub-mkimage to build grub_eltorito.
+# Keep *-bin + grub2-common in the squashfs so the installer can chroot-run
+# grub-install --target=x86_64-efi|i386-pc. Do NOT add both grub-pc and
+# grub-efi-amd64 metapackages — they Conflict with each other.
 grub-pc-bin
+grub-efi-amd64-bin
+efibootmgr
 grub2-common
 genisoimage
 syslinux

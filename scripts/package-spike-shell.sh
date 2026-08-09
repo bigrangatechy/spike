@@ -123,7 +123,7 @@ Priority: optional
 Architecture: ${ARCH}
 Maintainer: BigRangaTech <spike@bigrangatech.com>
 Depends: libqt6widgets6 | libqt6widgets6t64, libqt6gui6 | libqt6gui6t64, libqt6core6t64 | libqt6core6, libqt6dbus6 | libqt6dbus6t64, qt6-wayland, liblayershellqtinterface6, layer-shell-qt, libkf6kcmutils6, libkf6kcmutilscore6, libkf6coreaddons6
-Recommends: kwin-wayland, xwayland, dbus-user-session, seatd, libseat1, breeze-cursor-theme, breeze-icon-theme, qt6-svg-plugins, spike-config, libkf6kcmutils-bin, pulseaudio-utils, upower
+Recommends: kwin-wayland, xwayland, dbus-user-session, seatd, libseat1, breeze-cursor-theme, breeze-icon-theme, qt6-svg-plugins, spike-config, libkf6kcmutils-bin, pulseaudio-utils, upower, bluez, udisks2, rfkill, wmctrl
 Description: Spike Linux desktop shell (Qt6 Widgets)
  Bottom panel, Kickoff launcher, Network/Volume/Battery tray applets, Settings
  (custom pages + in-window KCMs), session menu under standalone KWin.

@@ -36,6 +36,8 @@ private:
   NmClient *m_nm = nullptr;
   QLabel *m_status = nullptr;
   QCheckBox *m_wifiOn = nullptr;
+  QLabel *m_vpnRow = nullptr;
+  QPushButton *m_vpnDisconnect = nullptr;
   QListWidget *m_list = nullptr;
   QLabel *m_hint = nullptr;
   bool m_blockWifiToggle = false;

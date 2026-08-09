@@ -1,25 +1,38 @@
 #include "settings/AccessibilityPage.hpp"
+#include "settings/AppearanceLive.hpp"
 #include "settings/BootPage.hpp"
 #include "settings/ConfigClient.hpp"
 #include "settings/DateTimePage.hpp"
 #include "settings/KeyboardLayoutPage.hpp"
 #include "settings/KeyboardPage.hpp"
 #include "settings/KcmHost.hpp"
+#include "settings/KernelModulesPage.hpp"
 #include "settings/LanguagePage.hpp"
 #include "settings/MemoryPage.hpp"
 #include "settings/MousePage.hpp"
 #include "settings/NotificationsPage.hpp"
+#include "settings/PanelPages.hpp"
+#include "settings/PowerPage.hpp"
 #include "settings/SettingsWindow.hpp"
 #include "settings/SoftwareSourcesPage.hpp"
+#include "settings/StoragePage.hpp"
+#include "settings/UpdatesPage.hpp"
 #include "settings/UsersPage.hpp"
 #include "settings/VpnPage.hpp"
 
 #include "network/NetworkPanelWidget.hpp"
 #include "network/NmClient.hpp"
 
+#include <QApplication>
 #include <QCheckBox>
+#include <QClipboard>
 #include <QComboBox>
+#include <QDir>
+#include <QFileDialog>
+#include <QFileInfo>
 #include <QFormLayout>
+#include <QGroupBox>
+#include <QGuiApplication>
 #include <QHBoxLayout>
 #include <QIcon>
 #include <QJsonDocument>
@@ -33,8 +46,10 @@
 #include <QSplitter>
 #include <QStackedWidget>
 #include <QTextEdit>
+#include <QSysInfo>
 #include <QVBoxLayout>
 #include <QWidget>
+#include <unistd.h>
 
 namespace spike {
 
@@ -138,6 +153,19 @@ void SettingsWindow::buildPages()
        QStringLiteral("locale language region"), false, false, {},
        QStringLiteral("System language via localectl (not kcm_regionandlang)."),
        {}},
+      // Panel / tray
+      {QStringLiteral("panel"), QStringLiteral("Panel"), QStringLiteral("PANEL"),
+       QStringLiteral("taskbar height position autohide"), false, false, {},
+       QStringLiteral("Panel geometry and auto-hide."),
+       QStringLiteral("desktop")},
+      {QStringLiteral("tray-applets"), QStringLiteral("Tray Applets"), QStringLiteral("PANEL"),
+       QStringLiteral("notifications night light updates window list"), false, false, {},
+       QStringLiteral("Show or hide optional tray applets."),
+       QStringLiteral("desktop")},
+      {QStringLiteral("night-light"), QStringLiteral("Night Light"), QStringLiteral("PANEL"),
+       QStringLiteral("redshift temperature night color"), false, false, {},
+       QStringLiteral("Night Light enable and temperature."),
+       QStringLiteral("desktop")},
       // Hardware — KCMs from standalone packages on the live ISO
       {QStringLiteral("display"), QStringLiteral("Display"), QStringLiteral("HARDWARE"),
        QStringLiteral("resolution refresh scaling brightness"), false, true,
@@ -146,8 +174,9 @@ void SettingsWindow::buildPages()
        QStringLiteral("volume audio output input"), false, true, QStringLiteral("kcm_pulseaudio"),
        {}, {}},
       {QStringLiteral("power"), QStringLiteral("Power"), QStringLiteral("HARDWARE"),
-       QStringLiteral("battery suspend lid"), false, true,
-       QStringLiteral("kcm_powerdevilprofilesconfig"), {}, {}},
+       QStringLiteral("battery suspend lid"), false, false, {},
+       QStringLiteral("Spike Power via org.spike.Config + logind (not powerdevil KCM)."),
+       {}},
       {QStringLiteral("keyboard"), QStringLiteral("Keyboard"), QStringLiteral("HARDWARE"),
        QStringLiteral("repeat shortcuts"), false, false, {},
        QStringLiteral("Repeat rate via kcminputrc (KWin)."),
@@ -199,15 +228,15 @@ void SettingsWindow::buildPages()
       {QStringLiteral("kernel-modules"), QStringLiteral("Kernel Modules"), QStringLiteral("ADVANCED"),
        QStringLiteral("blacklist modules"), true, false, {},
        QStringLiteral("Module blacklist (org.spike.Config security.module_blacklist)."),
-       QStringLiteral("security")},
+       {}},
       {QStringLiteral("updates"), QStringLiteral("Updates"), QStringLiteral("ADVANCED"),
        QStringLiteral("schedule security"), true, false, {},
        QStringLiteral("Update schedule / auto-security (org.spike.Config updates)."),
-       QStringLiteral("updates")},
+       {}},
       {QStringLiteral("storage"), QStringLiteral("Storage"), QStringLiteral("ADVANCED"),
        QStringLiteral("disk smart mount"), true, false, {},
-       QStringLiteral("Disk overview from detected hardware (org.spike.Config hardware)."),
-       QStringLiteral("hardware")},
+       QStringLiteral("Disk overview from lsblk + DetectHardware."),
+       {}},
       {QStringLiteral("diagnostics"), QStringLiteral("Diagnostics"), QStringLiteral("ADVANCED"),
        QStringLiteral("logs hardware report"), true, false, {},
        QStringLiteral("System info / hardware inventory via DetectHardware."),
@@ -224,6 +253,12 @@ void SettingsWindow::buildPages()
       w = makeBootPage(this, m_config, m_status);
     } else if (page.id == QLatin1String("appearance")) {
       w = makeAppearancePage();
+    } else if (page.id == QLatin1String("panel")) {
+      w = makePanelGeometryPage(this, m_config, m_status);
+    } else if (page.id == QLatin1String("tray-applets")) {
+      w = makeTrayAppletsPage(this, m_config, m_status);
+    } else if (page.id == QLatin1String("night-light")) {
+      w = makeNightLightSettingsPage(this, m_config, m_status);
     } else if (page.id == QLatin1String("network")) {
       w = makeNetworkPage();
     } else if (page.id == QLatin1String("vpn")) {
@@ -246,33 +281,91 @@ void SettingsWindow::buildPages()
       w = makeKeyboardPage(this, m_status);
     } else if (page.id == QLatin1String("mouse")) {
       w = makeMousePage(this, m_status);
+    } else if (page.id == QLatin1String("power")) {
+      w = makePowerPage(this, m_config, m_status);
+    } else if (page.id == QLatin1String("updates")) {
+      w = makeUpdatesPage(this, m_config, m_status);
+    } else if (page.id == QLatin1String("kernel-modules")) {
+      w = makeKernelModulesPage(this, m_config, m_status);
+    } else if (page.id == QLatin1String("storage")) {
+      w = makeStoragePage(this, m_config, m_status);
     } else if (page.id == QLatin1String("keyboard-layout")) {
       w = makeKeyboardLayoutPage(this, m_status);
     } else if (page.id == QLatin1String("diagnostics")) {
       auto *diag = new QWidget(this);
       auto *lay = new QVBoxLayout(diag);
       lay->addWidget(new QLabel(QStringLiteral("<h2>Diagnostics</h2>"), diag));
-      auto *info = new QLabel(page.blurb, diag);
+      auto *info = new QLabel(
+          QStringLiteral("Hardware inventory from DetectHardware (sectioned). Copy for bug reports."),
+          diag);
       info->setWordWrap(true);
       lay->addWidget(info);
+      auto *summary = new QLabel(diag);
+      summary->setWordWrap(true);
+      summary->setTextFormat(Qt::RichText);
+      summary->setObjectName(QStringLiteral("DiagnosticsSummary"));
+      lay->addWidget(summary);
       auto *body = new QTextEdit(diag);
       body->setObjectName(QStringLiteral("DiagnosticsBody"));
       body->setReadOnly(true);
       lay->addWidget(body, 1);
+      auto *row = new QHBoxLayout();
       auto *refresh = new QPushButton(QStringLiteral("Run DetectHardware"), diag);
-      lay->addWidget(refresh);
-      connect(refresh, &QPushButton::clicked, this, [this, body]() {
+      auto *copy = new QPushButton(QStringLiteral("Copy report"), diag);
+      row->addWidget(refresh);
+      row->addWidget(copy);
+      row->addStretch(1);
+      lay->addLayout(row);
+      auto fill = [this, body, summary]() {
         QString err;
         const QString json = m_config ? m_config->detectHardware(&err) : QString();
         if (json.isEmpty()) {
           body->setPlainText(QStringLiteral("Error: %1").arg(err));
+          summary->setText(QStringLiteral("DetectHardware failed"));
           m_status->setText(QStringLiteral("DetectHardware failed"));
-        } else {
-          body->setPlainText(json);
-          m_status->setText(QStringLiteral("DetectHardware OK"));
+          return;
+        }
+        body->setPlainText(json);
+        const QJsonObject o = QJsonDocument::fromJson(json.toUtf8()).object();
+        const QJsonObject cpu = o.value(QStringLiteral("cpu")).toObject();
+        const QJsonObject ram = o.value(QStringLiteral("ram")).toObject();
+        const QJsonObject gpu = o.value(QStringLiteral("gpu")).toObject();
+        const QJsonObject storage = o.value(QStringLiteral("storage")).toObject();
+        const QJsonObject net = o.value(QStringLiteral("network")).toObject();
+        summary->setText(
+            QStringLiteral(
+                "<b>CPU:</b> %1 (%2 cores)<br/>"
+                "<b>RAM:</b> %3 MB<br/>"
+                "<b>GPU:</b> %4<br/>"
+                "<b>Storage:</b> %5 — %6 GB (%7)<br/>"
+                "<b>Network:</b> wifi=%8 eth=%9 bt=%10")
+                .arg(cpu.value(QStringLiteral("model")).toString(
+                         cpu.value(QStringLiteral("name")).toString(QStringLiteral("?"))),
+                     QString::number(cpu.value(QStringLiteral("cores")).toInt(
+                         cpu.value(QStringLiteral("logical_cores")).toInt())),
+                     QString::number(ram.value(QStringLiteral("total_mb")).toInt(
+                         ram.value(QStringLiteral("total_kb")).toInt() / 1024)),
+                     gpu.value(QStringLiteral("name")).toString(
+                         gpu.value(QStringLiteral("driver")).toString(QStringLiteral("?"))),
+                     storage.value(QStringLiteral("device")).toString(QStringLiteral("?")),
+                     QString::number(storage.value(QStringLiteral("size_gb")).toInt()),
+                     storage.value(QStringLiteral("type")).toString(QStringLiteral("?")),
+                     net.value(QStringLiteral("has_wifi")).toBool() ? QStringLiteral("yes")
+                                                                   : QStringLiteral("no"),
+                     net.value(QStringLiteral("has_ethernet")).toBool() ? QStringLiteral("yes")
+                                                                       : QStringLiteral("no"),
+                     net.value(QStringLiteral("has_bluetooth")).toBool() ? QStringLiteral("yes")
+                                                                        : QStringLiteral("no")));
+        m_status->setText(QStringLiteral("DetectHardware OK"));
+      };
+      connect(refresh, &QPushButton::clicked, this, fill);
+      connect(copy, &QPushButton::clicked, this, [body, this]() {
+        if (QClipboard *clip = QGuiApplication::clipboard()) {
+          clip->setText(body->toPlainText());
+          m_status->setText(QStringLiteral("Diagnostics copied to clipboard"));
         }
       });
-      refresh->click();
+      fill();
       w = diag;
     } else if (page.isKcm) {
       w = makeKcmPage(page);
@@ -377,28 +470,13 @@ QWidget *SettingsWindow::makeAppearancePage()
   lay->addWidget(new QLabel(QStringLiteral("<h2>Appearance</h2>"), w));
   auto *hint = new QLabel(
       QStringLiteral(
-          "Panel position / height / auto-hide apply live. Accent, font size, and animations "
-          "are saved for later theme apply."),
+          "Accent, font size, and wallpaper apply live in Spike Shell. "
+          "Panel geometry lives under Settings → Panel. Aurorae themes come later."),
       w);
   hint->setWordWrap(true);
   lay->addWidget(hint);
 
   auto *form = new QFormLayout();
-  auto *panelPos = new QComboBox(w);
-  panelPos->addItem(QStringLiteral("Bottom"), QStringLiteral("bottom"));
-  panelPos->addItem(QStringLiteral("Top"), QStringLiteral("top"));
-  form->addRow(QStringLiteral("Panel position"), panelPos);
-
-  auto *panelHeight = new QSpinBox(w);
-  panelHeight->setRange(24, 48);
-  panelHeight->setSuffix(QStringLiteral(" px"));
-  form->addRow(QStringLiteral("Panel height"), panelHeight);
-
-  auto *autoHide = new QCheckBox(QStringLiteral("Auto-hide panel"), w);
-  form->addRow(QString(), autoHide);
-
-  auto *anim = new QCheckBox(QStringLiteral("Window animations"), w);
-  form->addRow(QString(), anim);
 
   auto *accent = new QLineEdit(w);
   accent->setPlaceholderText(QStringLiteral("#6d4aff"));
@@ -409,31 +487,76 @@ QWidget *SettingsWindow::makeAppearancePage()
   fontSize->setSuffix(QStringLiteral(" pt"));
   form->addRow(QStringLiteral("Font size"), fontSize);
 
+  auto *wallpaper = new QComboBox(w);
+  wallpaper->setEditable(false);
+  form->addRow(QStringLiteral("Wallpaper"), wallpaper);
+
   lay->addLayout(form);
+
+  auto *browseRow = new QHBoxLayout();
+  auto *browse = new QPushButton(QStringLiteral("Browse image…"), w);
+  browseRow->addWidget(browse);
+  browseRow->addStretch(1);
+  lay->addLayout(browseRow);
 
   auto *status = new QLabel(w);
   status->setWordWrap(true);
   lay->addWidget(status);
 
-  auto load = [this, panelPos, panelHeight, autoHide, anim, accent, fontSize, status]() {
+  auto fillWallpapers = [wallpaper](const QString &current) {
+    wallpaper->clear();
+    wallpaper->addItem(QStringLiteral("(default / solid)"), QString());
+    const QStringList roots = {
+        QStringLiteral("/usr/share/spike/wallpapers"),
+        QStringLiteral("/usr/share/backgrounds"),
+    };
+    for (const QString &root : roots) {
+      QDir dir(root);
+      if (!dir.exists()) {
+        continue;
+      }
+      const QStringList files =
+          dir.entryList({QStringLiteral("*.png"), QStringLiteral("*.jpg"), QStringLiteral("*.jpeg"),
+                         QStringLiteral("*.webp")},
+                        QDir::Files, QDir::Name);
+      for (const QString &f : files) {
+        wallpaper->addItem(f, dir.absoluteFilePath(f));
+      }
+      const QStringList sub = dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
+      for (const QString &s : sub) {
+        QDir subdir(dir.absoluteFilePath(s));
+        const QStringList nested =
+            subdir.entryList({QStringLiteral("*.png"), QStringLiteral("*.jpg"),
+                              QStringLiteral("*.jpeg")},
+                             QDir::Files, QDir::Name);
+        for (const QString &f : nested) {
+          wallpaper->addItem(QStringLiteral("%1/%2").arg(s, f), subdir.absoluteFilePath(f));
+        }
+      }
+    }
+    if (!current.isEmpty()) {
+      int idx = wallpaper->findData(current);
+      if (idx < 0) {
+        wallpaper->addItem(QFileInfo(current).fileName(), current);
+        idx = wallpaper->count() - 1;
+      }
+      wallpaper->setCurrentIndex(idx);
+    }
+  };
+
+  auto load = [this, accent, fontSize, wallpaper, status, fillWallpapers]() {
     QString err;
     const QString json =
         m_config ? m_config->getModuleState(QStringLiteral("desktop"), &err) : QString();
     if (json.isEmpty()) {
       status->setText(QStringLiteral("spike-config unavailable: %1").arg(err));
+      fillWallpapers({});
       return;
     }
     const QJsonObject o = parseModuleJson(json);
-    const QString pos = o.value(QStringLiteral("panel_position")).toString(QStringLiteral("bottom"));
-    const int idx = panelPos->findData(pos);
-    if (idx >= 0) {
-      panelPos->setCurrentIndex(idx);
-    }
-    panelHeight->setValue(o.value(QStringLiteral("panel_height")).toInt(32));
-    autoHide->setChecked(o.value(QStringLiteral("panel_auto_hide")).toBool(false));
-    anim->setChecked(o.value(QStringLiteral("animations_enabled")).toBool(false));
     accent->setText(o.value(QStringLiteral("accent_color")).toString(QStringLiteral("#6d4aff")));
     fontSize->setValue(o.value(QStringLiteral("font_size_pt")).toInt(10));
+    fillWallpapers(o.value(QStringLiteral("wallpaper")).toString());
     status->setText(QStringLiteral("Loaded desktop module from spike-config"));
   };
 
@@ -447,31 +570,48 @@ QWidget *SettingsWindow::makeAppearancePage()
   lay->addStretch(1);
 
   connect(reload, &QPushButton::clicked, this, load);
-  connect(apply, &QPushButton::clicked, this,
-          [this, panelPos, panelHeight, autoHide, anim, accent, fontSize, status]() {
-            if (!m_config) {
-              return;
-            }
-            QString err;
-            auto set = [&](const QString &key, const QVariant &v) -> bool {
-              if (!m_config->setSetting(QStringLiteral("desktop"), key, v, &err)) {
-                status->setText(QStringLiteral("SetSetting(%1) failed: %2").arg(key, err));
-                return false;
-              }
-              return true;
-            };
-            if (!set(QStringLiteral("panel_position"), panelPos->currentData()) ||
-                !set(QStringLiteral("panel_height"), panelHeight->value()) ||
-                !set(QStringLiteral("panel_auto_hide"), autoHide->isChecked()) ||
-                !set(QStringLiteral("animations_enabled"), anim->isChecked()) ||
-                !set(QStringLiteral("accent_color"), accent->text().trimmed()) ||
-                !set(QStringLiteral("font_size_pt"), fontSize->value())) {
-              return;
-            }
-            status->setText(QStringLiteral(
-                "Panel settings applied live. Accent / font / animations saved (theme later)."));
-            m_status->setText(QStringLiteral("appearance applied"));
-          });
+  connect(browse, &QPushButton::clicked, this, [wallpaper, status]() {
+    const QString path = QFileDialog::getOpenFileName(
+        wallpaper, QStringLiteral("Choose wallpaper"), QStringLiteral("/usr/share"),
+        QStringLiteral("Images (*.png *.jpg *.jpeg *.webp)"));
+    if (path.isEmpty()) {
+      return;
+    }
+    wallpaper->addItem(QFileInfo(path).fileName(), path);
+    wallpaper->setCurrentIndex(wallpaper->count() - 1);
+    status->setText(QStringLiteral("Selected %1 — Apply to set").arg(path));
+  });
+  connect(apply, &QPushButton::clicked, this, [this, accent, fontSize, wallpaper, status]() {
+    if (!m_config) {
+      return;
+    }
+    QString err;
+    auto set = [&](const QString &key, const QVariant &v) -> bool {
+      if (!m_config->setSetting(QStringLiteral("desktop"), key, v, &err)) {
+        status->setText(QStringLiteral("SetSetting(%1) failed: %2").arg(key, err));
+        return false;
+      }
+      return true;
+    };
+    const QString wall = wallpaper->currentData().toString();
+    if (!set(QStringLiteral("accent_color"), accent->text().trimmed()) ||
+        !set(QStringLiteral("font_size_pt"), fontSize->value()) ||
+        !set(QStringLiteral("wallpaper"), wall)) {
+      return;
+    }
+
+    applyShellChromeLive(qApp, accent->text().trimmed(), fontSize->value(), false);
+    QString wallDetail;
+    const bool wallOk = applyWallpaperLive(wall, &wallDetail);
+    QString msg = QStringLiteral("Saved + live: accent, font");
+    if (wallOk) {
+      msg += QStringLiteral("; wallpaper OK");
+    } else {
+      msg += QStringLiteral("; wallpaper: %1").arg(wallDetail);
+    }
+    status->setText(msg);
+    m_status->setText(QStringLiteral("appearance applied live"));
+  });
 
   load();
   return w;
@@ -481,28 +621,87 @@ QWidget *SettingsWindow::makeAboutPage()
 {
   auto *w = new QWidget(this);
   auto *lay = new QVBoxLayout(w);
-  lay->addWidget(new QLabel(QStringLiteral("<h2>About</h2>"), w));
-  auto *body = new QTextEdit(w);
+  lay->addWidget(new QLabel(QStringLiteral("<h2>About Spike</h2>"), w));
+
+  auto *card = new QLabel(w);
+  card->setWordWrap(true);
+  card->setTextFormat(Qt::RichText);
+  card->setObjectName(QStringLiteral("AboutCard"));
+  lay->addWidget(card);
+
+  auto *guide = new QPushButton(QStringLiteral("User Guide (coming soon)"), w);
+  guide->setEnabled(true);
+  lay->addWidget(guide);
+
+  auto *rawBox = new QGroupBox(QStringLiteral("Raw config state (debug)"), w);
+  rawBox->setCheckable(true);
+  rawBox->setChecked(false);
+  auto *rawLay = new QVBoxLayout(rawBox);
+  auto *body = new QTextEdit(rawBox);
   body->setObjectName(QStringLiteral("AboutState"));
   body->setReadOnly(true);
-  lay->addWidget(body, 1);
-  auto *refresh = new QPushButton(QStringLiteral("Refresh from spike-config"), w);
+  body->setVisible(false);
+  rawLay->addWidget(body);
+  lay->addWidget(rawBox, 1);
+
+  auto *refresh = new QPushButton(QStringLiteral("Refresh"), w);
   lay->addWidget(refresh);
-  connect(refresh, &QPushButton::clicked, this, [this, body]() {
+
+  auto fill = [this, card, body]() {
+    char host[256] = {};
+    gethostname(host, sizeof(host) - 1);
+    QString variant = QStringLiteral("?");
     QString err;
-    const QString json = m_config ? m_config->getState(&err) : QString();
-    if (json.isEmpty()) {
-      body->setPlainText(QStringLiteral("Could not reach org.spike.Config:\n%1\n\n"
-                                        "Is spike-config installed with D-Bus activation?")
-                             .arg(err));
-      m_status->setText(QStringLiteral("spike-config unavailable"));
+    const QString stateJson = m_config ? m_config->getState(&err) : QString();
+    if (!stateJson.isEmpty()) {
+      body->setPlainText(stateJson);
+      const QJsonObject root = QJsonDocument::fromJson(stateJson.toUtf8()).object();
+      variant = root.value(QStringLiteral("variant")).toString(QStringLiteral("standard"));
     } else {
-      body->setPlainText(json);
-      m_status->setText(QStringLiteral("Loaded state from org.spike.Config"));
+      body->setPlainText(QStringLiteral("Could not reach org.spike.Config:\n%1").arg(err));
     }
+
+    QString cpuLine = QStringLiteral("?");
+    QString ramLine = QStringLiteral("?");
+    if (m_config) {
+      QString herr;
+      const QString hw = m_config->detectHardware(&herr);
+      if (!hw.isEmpty()) {
+        const QJsonObject o = QJsonDocument::fromJson(hw.toUtf8()).object();
+        const QJsonObject cpu = o.value(QStringLiteral("cpu")).toObject();
+        const QJsonObject ram = o.value(QStringLiteral("ram")).toObject();
+        cpuLine = cpu.value(QStringLiteral("model")).toString(
+            cpu.value(QStringLiteral("name")).toString(QStringLiteral("?")));
+        const int mb = ram.value(QStringLiteral("total_mb")).toInt(
+            ram.value(QStringLiteral("total_kb")).toInt() / 1024);
+        ramLine = QStringLiteral("%1 MB").arg(mb);
+      }
+    }
+
+    card->setText(
+        QStringLiteral(
+            "<b>Spike Linux</b> (pre-alpha)<br/>"
+            "Shell: <b>%1</b><br/>"
+            "Host: <b>%2</b><br/>"
+            "Kernel: %3<br/>"
+            "Variant: %4<br/>"
+            "CPU: %5<br/>"
+            "RAM: %6<br/>"
+            "<i>Installer engines paused — Settings polish in progress.</i>")
+            .arg(QApplication::applicationVersion(), QString::fromUtf8(host),
+                 QSysInfo::kernelVersion(), variant, cpuLine, ramLine));
+    m_status->setText(QStringLiteral("About refreshed"));
+  };
+
+  connect(refresh, &QPushButton::clicked, this, fill);
+  connect(rawBox, &QGroupBox::toggled, body, &QWidget::setVisible);
+  connect(guide, &QPushButton::clicked, this, [this]() {
+    m_status->setText(QStringLiteral("User Guide not shipped yet"));
+    QMessageBox::information(this, QStringLiteral("User Guide"),
+                             QStringLiteral("The Spike User Guide will appear here when written. "
+                                            "See docs/USER-GUIDE.md in the source tree."));
   });
-  // Initial load
-  refresh->click();
+  fill();
   return w;
 }
 

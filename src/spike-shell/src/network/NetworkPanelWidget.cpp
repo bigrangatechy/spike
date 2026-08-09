@@ -31,6 +31,14 @@ NetworkPanelWidget::NetworkPanelWidget(NmClient *nm, QWidget *parent)
   m_wifiOn = new QCheckBox(QStringLiteral("Wi‑Fi"), this);
   lay->addWidget(m_wifiOn);
 
+  m_vpnRow = new QLabel(this);
+  m_vpnRow->setWordWrap(true);
+  m_vpnRow->setObjectName(QStringLiteral("NetworkVpnRow"));
+  lay->addWidget(m_vpnRow);
+  m_vpnDisconnect = new QPushButton(QStringLiteral("Disconnect VPN"), this);
+  m_vpnDisconnect->setVisible(false);
+  lay->addWidget(m_vpnDisconnect);
+
   m_list = new QListWidget(this);
   m_list->setMinimumHeight(160);
   lay->addWidget(m_list, 1);
@@ -59,6 +67,18 @@ NetworkPanelWidget::NetworkPanelWidget(NmClient *nm, QWidget *parent)
     onConnectSelected();
   });
   connect(settings, &QPushButton::clicked, this, &NetworkPanelWidget::openFullSettings);
+  connect(m_vpnDisconnect, &QPushButton::clicked, this, [this]() {
+    if (!m_nm) {
+      return;
+    }
+    QString err;
+    for (const NmVpnConnection &v : m_nm->vpnConnections(&err)) {
+      if (v.active) {
+        m_nm->deactivateVpn(v.uuid.isEmpty() ? v.name : v.uuid, &err);
+      }
+    }
+    refresh();
+  });
 
   if (m_nm) {
     connect(m_nm, &NmClient::changed, this, &NetworkPanelWidget::refresh);
@@ -80,6 +100,24 @@ void NetworkPanelWidget::refresh()
   }
 
   m_status->setText(m_nm->statusLabel());
+
+  {
+    QString verr;
+    const auto vpns = m_nm->vpnConnections(&verr);
+    QStringList activeNames;
+    for (const NmVpnConnection &v : vpns) {
+      if (v.active) {
+        activeNames << (v.name.isEmpty() ? v.uuid : v.name);
+      }
+    }
+    if (activeNames.isEmpty()) {
+      m_vpnRow->setText(QStringLiteral("VPN: none active"));
+      m_vpnDisconnect->setVisible(false);
+    } else {
+      m_vpnRow->setText(QStringLiteral("VPN: %1").arg(activeNames.join(QStringLiteral(", "))));
+      m_vpnDisconnect->setVisible(true);
+    }
+  }
 
   m_blockWifiToggle = true;
   m_wifiOn->setChecked(m_nm->wirelessEnabled());

@@ -1,6 +1,6 @@
 # Spike Agent Ops — Current State
 
-**Last updated:** 2026-08-08  
+**Last updated:** 2026-08-09  
 **Phase label:** Pre-alpha (implementation underway; Alpha gate not met yet)  
 **Note:** Stay in **pre-alpha** until the **installer works end-to-end** (live → install → reboot to installed desktop). That is the BDFL gate to open **Alpha** — not a calendar date, not “shell boots,” not Stage counter. See `DECISIONS.md`.
 
@@ -15,19 +15,19 @@
 | `dev-guide/` | 📝 Core filled (01–09, 12, 19); remaining stubs point at product docs |
 | agent-ops core | ✅ Written |
 | ISO / build tooling | ✅ live-build; hybrid remaster + debug capture |
-| Installer stack | 📝 **0.0.1** wizard UI on ISO (no wipe/copy yet) — Alpha cue when install E2E works |
-| `scripts/build-iso.sh` | ✅ Packages config + shell + rescue + **installer** + lb build |
+| Installer stack | 📝 **0.0.4** GRUB cfg fix + Wi‑Fi page; Step 7 backup still stub; needs E2E retest |
+| `scripts/build-iso.sh` | ✅ Packages config + shell + rescue + installer + **migration** + lb build |
 | Stage 1 live ISO | ✅ Hardware boot + login |
-| Stage 2 (`spike-config`) | ✅ Target detect OK (N4020 / ~4GB) |
-| Stage 3 (Spike Shell) | 📝 **0.0.23** + Rescue **0.0.9** (recover+restore, Spike Tools, writable root) |
-| Stage 4 (installer) | 📝 Wizard started (**0.0.1**); wipe/copy/bootloader still missing — Alpha when E2E |
+| Stage 2 (`spike-config`) | 📝 **0.0.8** (Coastal-Run default wallpaper; desktop tray/night-light defaults; dbus Variant fix) |
+| Stage 3 (Spike Shell) | 📝 **0.0.29** (stretch wallpaper + desktop icons) + Rescue **0.0.9** + installer **0.0.3** |
+| Stage 4 (installer) | 📝 **0.0.4** — GRUB cfg + Wi‑Fi; retest spare-disk after rebuild (Step 7 stub) |
 
 ## In Progress
 
 | Item | Notes |
 | :-: | :-: |
-| Stage 3 — desktop smoke | Rebuild ISO: shell **0.0.23** + rescue **0.0.9** + installer **0.0.1** (SpikeBackup root; Restore; Spike Tools; Install Spike UI) |
-| Stage 4 — installer engines | Wi‑Fi, Step 7 backup, wipe/partition/squashfs, bootloader, Layer 4 restore |
+| Stage 3 — desktop smoke | shell **0.0.29** Coastal-Run stretch wallpaper + desktop icons; Install / Rescue / Move |
+| Stage 4 — installer E2E | **0.0.4** fixes grub> (missing grub.cfg); rebuild + reinstall; Step 7 still stub |
 
 ## Blocked / Waiting On Decision
 
@@ -36,8 +36,8 @@
 | Layer 2 GRUB recovery screen | Still deferred |
 | Layer 4 installer restore | Wizard can pick SpikeBackup session; copy-into-home engine not wired |
 | spike-migration (Move My Files) | Scaffold + spec; implement on shared `spike-common` |
-| Notification daemon / history tray | Prefs UI done; daemon not shipped |
-| Magnifier / high-contrast theme apply | Accessibility prefs started; visuals later |
+| Notification daemon / history tray | Prefs + in-process fdo Notifications + tray history (**0.0.27**); retention polish later |
+| Magnifier / high-contrast theme apply | Magnifier launcher + Spike Shell HC chrome live; full app themes later |
 | APT edit / PPA / NVIDIA driver UX | Sources page lists + launches tools; in-page edit later |
 | Custom Spike SVG icons | Inherit-only `spike-icons` for now (BRANDING overrides later) |
 | Custom Spike Aurorae decorations | After Breeze works; BRANDING.md pixel match is follow-up |
@@ -49,6 +49,9 @@
 
 | Date | Item |
 | :-: | :-: |
+| 2026-08-09 | installer **0.0.2** + migration **0.0.1**: real install-helper; Desktop Install/Rescue/Move My Files |
+| 2026-08-08 | shell **0.0.25**: Settings finish — Advanced forms, About, live accent/font/wallpaper, Diagnostics/VPN/Sources polish |
+| 2026-08-08 | shell **0.0.24** + config **0.0.5**: Settings → Power (custom); logind drop-in; session Suspend |
 | 2026-08-08 | installer **0.0.1**: 10-step Qt wizard + spike-common session scan; ISO/desktop wired; no disk wipe |
 | 2026-08-08 | Docs catch-up: ROADMAP/AGENTS/CHANGELOG/GLOSSARY/INDEX aligned to Rescue 0.0.9 + shell 0.0.23 + spike-common |
 | 2026-08-08 | rescue **0.0.9** + shell **0.0.23**: Restore mode; SpikeBackup at writable root; Spike Tools; spike-common |

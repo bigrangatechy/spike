@@ -19,6 +19,8 @@ public:
   int percentage() const { return m_percent; }
   bool charging() const { return m_charging; }
   QString stateText() const { return m_stateText; }
+  /** Human ETA when UPower reports TimeToEmpty / TimeToFull (seconds); empty if unknown. */
+  QString timeRemainingText() const { return m_timeText; }
   QString iconName() const;
 
   void refresh();
@@ -31,6 +33,7 @@ private:
   int m_percent = 0;
   bool m_charging = false;
   QString m_stateText;
+  QString m_timeText;
   QString m_devicePath;
 };
 

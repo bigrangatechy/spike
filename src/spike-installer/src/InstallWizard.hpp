@@ -15,6 +15,8 @@ class QPushButton;
 
 namespace spike {
 
+class InstallEngine;
+
 class InstallWizard : public QMainWindow
 {
   Q_OBJECT
@@ -26,7 +28,12 @@ private slots:
   void goNext();
   void goBack();
   void refreshBackupUi();
+  void refreshWifiUi();
+  void connectWifi();
   void onFinishClose();
+  void startInstall();
+  void onInstallLog(const QString &line);
+  void onInstallFinished(bool ok, const QString &message);
 
 private:
   void buildUi();
@@ -34,17 +41,28 @@ private:
   void applyPageToUi(int index);
   bool validateCurrent();
   QString stateDump() const;
+  static QString runNmcli(const QStringList &args, int timeoutMs = 20000);
 
   InstallState m_state;
+  InstallEngine *m_engine = nullptr;
+  bool m_installOk = false;
+  bool m_installStarted = false;
+  bool m_wifiSkipped = false;
+
   QStackedWidget *m_stack = nullptr;
   QLabel *m_stepLabel = nullptr;
   QPushButton *m_back = nullptr;
   QPushButton *m_next = nullptr;
+  QPushButton *m_installBtn = nullptr;
 
-  // Step widgets / inputs
   QComboBox *m_language = nullptr;
   QComboBox *m_timezone = nullptr;
   QLabel *m_wifiStatus = nullptr;
+  QListWidget *m_wifiList = nullptr;
+  QLineEdit *m_wifiPassword = nullptr;
+  QPushButton *m_wifiScanBtn = nullptr;
+  QPushButton *m_wifiConnectBtn = nullptr;
+  QPushButton *m_wifiSkipBtn = nullptr;
   QLineEdit *m_username = nullptr;
   QLineEdit *m_password = nullptr;
   QLineEdit *m_password2 = nullptr;
@@ -57,6 +75,7 @@ private:
   QListWidget *m_restoreList = nullptr;
   QListWidget *m_diskList = nullptr;
   QCheckBox *m_wipeConfirm = nullptr;
+  QLineEdit *m_eraseType = nullptr;
   QTextEdit *m_progressBody = nullptr;
   QTextEdit *m_finishBody = nullptr;
 };

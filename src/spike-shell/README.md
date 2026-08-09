@@ -6,33 +6,31 @@ Stage 3 skeleton — **pre-alpha**. Spec: `docs/DESKTOP.md`.
 
 Spike Shell is the custom desktop shell (Qt6 **Widgets**, not QML) that runs as a Wayland client under **standalone KWin**. It does **not** use Plasma (`plasma-workspace`, Akonadi, Baloo, etc.).
 
-MVP for this skeleton:
+MVP for this skeleton (**0.0.29**):
 
 | Piece | Status |
 |-------|--------|
-| Bottom panel (24–48px, top/bottom, auto-hide) | ✅ live from desktop module |
+| Bottom panel (24–48px, top/bottom, auto-hide) | ✅ Settings → Panel |
+| Desktop icons (`~/Desktop` .desktop) | ✅ Install / Rescue / Move My Files |
 | Spike button → Kickoff-style launcher | ✅ favorites + categories + power footer |
-| Clock applet | ✅ |
-| Network tray applet | ✅ |
-| Volume tray applet | ✅ PipeWire-Pulse via pactl |
-| Battery tray applet | ✅ UPower (hidden if no battery) |
-| Session menu (Settings / logout / reboot / poweroff) | ✅ |
+| Window list | ✅ best-effort (`wmctrl` when available) |
+| Clock / calendar popup | ✅ |
+| Network tray | ✅ + active VPN row |
+| Volume tray | ✅ 0–150%, middle-click mute |
+| Battery tray | ✅ UPower + ETA (hidden if none) |
+| Notifications tray | ✅ in-process `org.freedesktop.Notifications` |
+| Brightness / Removable / Updates / Night Light | ✅ conditional / optional |
+| Bluetooth / Airplane / Keyboard Layout | ✅ conditional |
+| Session menu | ✅ Lock + confirm logout/reboot/shutdown |
+| Settings → PANEL | ✅ Panel / Tray Applets / Night Light |
 | Settings window | ✅ custom pages + KCM hosts |
-| Appearance (panel live-apply) | ✅ accent/font/animations saved only |
+| Power (Settings) | ✅ spike-config + logind (no mid-session restart) |
+| Appearance | ✅ accent/font/wallpaper live |
 | Date & Time / Keyboard / Mouse / Layout | ✅ Spike-native |
-| Language / Users / VPN | ✅ localectl / thin accounts / NM VPN |
-| Notifications (prefs) | ✅ DND/retention/sound saved; daemon later |
-| Accessibility (started) | ✅ AccessX + Orca/OSK; high contrast saved |
-| Software Sources (started) | ✅ APT list + properties/drivers/update tools |
-| Memory / Boot forms | ✅ SetSetting + generate |
-| KCM pages | ✅ in-window host (`KcmHost` + Apply/Reset); packages added as pages flesh out |
-| Theme (`spike.qss`) — white text on dark | ✅ |
-| Icons (`spike-icons` inherits Breeze Dark) | ✅ |
-| ISO / `.deb` packaging | ✅ via `scripts/package-spike-shell.sh` |
-| `wlr-layer-shell` panel anchoring | ✅ via LayerShellQt (top or bottom) |
-| Session start (seatd + cursor) | ✅ live smoke |
-| `.desktop` app scanning + `Terminal=true` | ✅ |
-| Notification daemon / magnifier / APT edit UI | ⬜ later |
+| Language / Users / VPN | ✅ |
+| Notifications prefs | ✅ DND/retention |
+| Accessibility / Software Sources / Advanced forms | ✅ |
+| Theme / icons / layer-shell / packaging | ✅ |
 
 ## Build (host smoke)
 

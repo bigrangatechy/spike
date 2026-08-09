@@ -28,9 +28,18 @@ def _json_dumps(value: Any) -> str:
 
 
 def _variant_to_python(value: Any) -> Any:
-    """Unwrap dbus.Variant / dbus types into plain Python for state store."""
-    if isinstance(value, dbus.Variant):
-        return _variant_to_python(value.variant)
+    """Unwrap dbus types into plain Python for the state store.
+
+    dbus-python 1.4 no longer exports ``dbus.Variant``; method args with
+    signature ``v`` arrive already unwrapped (or as ordinary dbus.* types).
+    """
+    # Older dbus-python had dbus.Variant with a private payload — handle both.
+    variant_cls = getattr(dbus, "Variant", None)
+    if variant_cls is not None and isinstance(value, variant_cls):
+        inner = getattr(value, "_value", None)
+        if inner is None:
+            inner = getattr(value, "variant", value)
+        return _variant_to_python(inner)
     if isinstance(value, (dbus.String, str)):
         text = str(value)
         # Allow JSON payloads in a string variant (handy from qdbus/busctl).
@@ -49,6 +58,14 @@ def _variant_to_python(value: Any) -> Any:
     if isinstance(value, (dbus.Dictionary, dict)):
         return {str(k): _variant_to_python(v) for k, v in value.items()}
     return value
+
+
+def _signal_variant(value: Any) -> Any:
+    """Value suitable for a D-Bus 'v' signal argument (dbus-python 1.4+)."""
+    # Prefer plain strings so Qt QDBusVariant clients get a stable type.
+    if value is None:
+        return ""
+    return str(value)
 
 
 class ConfigService(dbus.service.Object):
@@ -86,8 +103,8 @@ class ConfigService(dbus.service.Object):
         self.StateChanged(
             module,
             key,
-            dbus.Variant("s", str(old)),
-            dbus.Variant("s", str(new)),
+            _signal_variant(old),
+            _signal_variant(new),
         )
         # Regenerate module configs when we know how.
         if module in generate.MODULES:
@@ -153,8 +170,8 @@ class ConfigService(dbus.service.Object):
         self.StateChanged(
             module,
             setting,
-            dbus.Variant("s", str(before)),
-            dbus.Variant("s", str(entry["old_value"])),
+            _signal_variant(before),
+            _signal_variant(entry["old_value"]),
         )
         if files:
             self.ConfigRegenerated(module, files)

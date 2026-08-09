@@ -43,12 +43,18 @@ spike-installer/
 └── restore/         → Layer 4 post-reinstall restore into /home/<user>
 ```
 
-**Status (0.0.1):** Qt wizard ships on the live ISO and walks all 10 steps collecting
-`InstallState`. Step 7 can discover existing `SpikeBackup/` sessions (spike-common).
-**Disk wipe / system copy / bootloader are not implemented** — the progress step is
-explicitly a dry-run plan dump. Alpha gate remains installer E2E (`STATE.md`).
+**Status (0.0.4):** Qt wizard + privileged `spike-install-helper` can partition,
+unsquashfs, configure account/hostname/variant, install GRUB (with `grub.cfg`
+guaranteed — `update-grub` or minimal fallback), optional Layer 4 restore.
+Wi‑Fi step uses nmcli (scan/connect/skip). Storage step requires typing **ERASE**.
+Step 7 backup copy still stubbed. Alpha gate remains installer E2E smoke (`STATE.md`).
 
+**GRUB note:** Live squashfs ships `grub-*-bin` without metapackages, so
+`/etc/default/grub` and `/boot/grub` are often missing. Helper creates them,
+runs `update-grub` (logged), and writes a minimal `grub.cfg` if that fails.
+UEFI also installs the removable `EFI/BOOT` path.
 Package: `./scripts/package-spike-installer.sh` → Desktop **Install Spike**.
+Live Desktop also gets **Rescue My Files** and **Move My Files** (migration launcher).
 
 ### SpikeBackup (shared with Rescue / Migration)
 
@@ -73,6 +79,17 @@ Typical install path (implementation detail may evolve; behavior must match the 
 3. Configure users, hostname, locale, firmware selection from detection.  
 4. **Apply variant:** write state / call `spike-config` so Standard or Plus differences take effect (ZRAM caps, governor, animations, Plymouth theme selection, etc.). Same packages on disk; Plus **enables** options.  
 5. Install bootloader, finish, reboot.
+
+### Privileged helper (**0.0.3**)
+
+`InstallEngine` runs:
+
+```
+sudo -n /usr/lib/spike/spike-install-helper install-all \
+  --disk … --user … --hostname … --confirm ERASE …
+```
+
+(CLI args — sudo `env_reset` strips `SPIKE_INSTALL_*`.) After copy, configure writes `/etc/spike/installed`, tty1 autologin for the new user, and a profile.d that starts `spike-session` without requiring `boot=casper`. Live-only installer sudoers and Desktop “Install Spike” icons are removed from the target.
 
 Variant differences are enumerated in **`VARIANT-DIFFERENCES.md`** (14 items). If a difference cannot be expressed as config, escalate via docs-first change — do not silently split the ISO.
 

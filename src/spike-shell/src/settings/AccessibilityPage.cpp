@@ -1,7 +1,9 @@
 #include "settings/AccessibilityPage.hpp"
 
+#include "settings/AppearanceLive.hpp"
 #include "settings/ConfigClient.hpp"
 
+#include <QApplication>
 #include <QCheckBox>
 #include <QFormLayout>
 #include <QHBoxLayout>
@@ -117,7 +119,7 @@ QWidget *makeAccessibilityPage(QWidget *parent, ConfigClient *config, QLabel *st
   auto *hint = new QLabel(
       QStringLiteral(
           "Keyboard AccessX options via setxkbmap (not kcm_access). Magnifier / screen reader "
-          "launch external tools when installed. High contrast is saved for theme apply later."),
+          "launch external tools when installed. High contrast applies Spike Shell chrome live."),
       w);
   hint->setWordWrap(true);
   lay->addWidget(hint);
@@ -128,7 +130,7 @@ QWidget *makeAccessibilityPage(QWidget *parent, ConfigClient *config, QLabel *st
   auto *bounce = new QCheckBox(QStringLiteral("Bounce keys"), w);
   auto *mouse = new QCheckBox(QStringLiteral("Mouse keys (keypad moves pointer)"), w);
   auto *visualBell = new QCheckBox(QStringLiteral("Visual bell (prefer flash over beep)"), w);
-  auto *highContrast = new QCheckBox(QStringLiteral("High contrast (saved; theme later)"), w);
+  auto *highContrast = new QCheckBox(QStringLiteral("High contrast (Spike Shell chrome)"), w);
   form->addRow(QString(), sticky);
   form->addRow(QString(), slow);
   form->addRow(QString(), bounce);
@@ -146,10 +148,12 @@ QWidget *makeAccessibilityPage(QWidget *parent, ConfigClient *config, QLabel *st
   auto *apply = new QPushButton(QStringLiteral("Apply"), w);
   auto *orca = new QPushButton(QStringLiteral("Screen reader (Orca)…"), w);
   auto *osk = new QPushButton(QStringLiteral("On-screen keyboard…"), w);
+  auto *magnifier = new QPushButton(QStringLiteral("Open Magnifier…"), w);
   row->addWidget(reload);
   row->addWidget(apply);
   row->addWidget(orca);
   row->addWidget(osk);
+  row->addWidget(magnifier);
   row->addStretch(1);
   lay->addLayout(row);
   lay->addStretch(1);
@@ -217,10 +221,11 @@ QWidget *makeAccessibilityPage(QWidget *parent, ConfigClient *config, QLabel *st
           // Best-effort X11 visual bell; Wayland may ignore.
           runOk(QStringLiteral("xset"), {QStringLiteral("b"), QStringLiteral("off")});
         }
+        applyShellChromeLive(qApp, QStringLiteral("#6d4aff"), qApp->font().pointSize(),
+                             highContrast->isChecked());
         status->setText(xok ? QStringLiteral(
-                                  "Saved + setxkbmap AccessX options applied (XWayland / X11). "
-                                  "Pure Wayland clients may need a session restart. High contrast "
-                                  "saved for theme later.")
+                                  "Saved + setxkbmap AccessX applied. High contrast "
+                                  "applied to Spike Shell chrome (other apps later).")
                             : QStringLiteral("Saved prefs, but setxkbmap failed: %1").arg(xerr));
         if (statusBar) {
           statusBar->setText(QStringLiteral("Accessibility applied"));
@@ -241,6 +246,14 @@ QWidget *makeAccessibilityPage(QWidget *parent, ConfigClient *config, QLabel *st
       return;
     }
     status->setText(detail);
+  });
+  QObject::connect(magnifier, &QPushButton::clicked, w, [status]() {
+    if (startDetachedFirst({QStringLiteral("kmag"), QStringLiteral("gnome-magnifier"),
+                            QStringLiteral("magnus")})) {
+      status->setText(QStringLiteral("Started magnifier"));
+      return;
+    }
+    status->setText(QStringLiteral("No magnifier found (try: apt install kmag)."));
   });
 
   load();

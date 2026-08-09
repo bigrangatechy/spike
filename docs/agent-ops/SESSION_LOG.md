@@ -4,6 +4,78 @@ Append-only. Newest sessions at the **top**.
 
 ---
 
+## 2026-08-09 — installer 0.0.4: GRUB cfg + Wi‑Fi page
+
+Smoke (`install-logs-2026-08-09.1` / `install.log`): install to `/dev/nvme0n1` finished “OK” but `WARN: update-grub failed` → post-reboot **grub>** (no `grub.cfg`). Root cause: squashfs has `grub-*-bin` only → no `/etc/default/grub`, no `/boot/grub`. Helper now creates defaults, logs grub-install/update-grub, writes minimal `grub.cfg` if needed, UEFI `--removable` fallback; strips live casper units from target. Wizard Wi‑Fi page: nmcli scan/connect/skip. Package: `spike-installer_0.0.4-1`.
+
+---
+
+## 2026-08-09 — default wallpaper Coastal-Run (stretch)
+
+Temporary desktop default: `Coastal-Run.png` from Pixel Archive Dark → `/usr/share/spike/wallpapers/` (includes.chroot; also `spike-default.png`). spike-config **0.0.8** default-state path; shell **0.0.29** paints stretch-to-fit (`IgnoreAspectRatio`). Verify hook checks wallpaper present.
+
+---
+
+## 2026-08-09 — ISO build: drop conflicting grub metapackages
+
+`lb` failed: `grub-pc` Conflicts `grub-efi-amd64` (both were added for installer). Keep `grub-pc-bin` + `grub-efi-amd64-bin` + `efibootmgr` + `grub2-common` only — helper already passes `--target=`. Re-run `build-iso.sh`.
+
+---
+
+## 2026-08-09 — installer smoke fail: bare install-all (ISO had 0.0.2)
+
+Capture `spike-capture-20260809T073708Z` (SanDisk writable / `install-logs-2026-08-09.0`). Sudoers OK (`spike` ran helper as root). Command was only `spike-install-helper install-all` — no `--disk`/`--confirm`/… — session closed in ~5ms; no `install.log`. Smoked ISO built **14:41** with installer **0.0.2** (env `SPIKE_INSTALL_*`); **0.0.3** deb stamped **15:06** after that ISO. Shell on image **0.0.27**. Rebuild with installer **0.0.3** + shell **0.0.28** before next spare-disk attempt.
+
+---
+
+## 2026-08-09 — shell 0.0.28: desktop icons actually drawn
+
+Smoke: Desktop shortcuts “weren’t there” — ISO hook did copy `~/Desktop/*.desktop`, but Spike Shell only painted wallpaper (`DesktopBackground`) with no icon layer / pointer input. Added `DesktopIcons` (scan + seed from `/usr/share/spike/live`, click to launch); background layer `Bottom` + `OnDemand` input. Package: `spike-shell_0.0.28-1`.
+
+---
+
+## 2026-08-09 — installer 0.0.3 ready for spare-disk smoke
+
+Fixed blockers before install cycle: (1) `InstallEngine` passes `install-all` CLI args (sudo was stripping `SPIKE_INSTALL_*`); (2) live package list adds `grub-efi-amd64`/`efibootmgr`/`grub-pc` for UEFI grub-install in squashfs; (3) configure writes `/etc/spike/installed` + tty1 autologin for new user + profile.d that starts `spike-session` without `boot=casper`; drops live installer sudoers/Desktop icons on target. Step 7 backup still stub — skip. Package: `spike-installer_0.0.3-1`.
+
+---
+
+## 2026-08-09 — shell 0.0.27 full tray + Settings PANEL
+
+Finished existing applets (Volume 150%/middle-mute, Battery ETA, Clock calendar, Session Lock+confirms, Network VPN row). Added Notifications (in-process fdo daemon), Brightness, Removable, Updates, Night Light, Bluetooth, Airplane, Keyboard Layout, Window list. Settings → **PANEL**: Panel / Tray Applets / Night Light. config **0.0.7** desktop defaults. Packages: `spike-shell_0.0.27`, `spike-config_0.0.7`. Fold into next ISO rebuild.
+
+---
+
+## 2026-08-09 — Power Apply logind restart flood (shell 0.0.26)
+
+Smoke capture `spike-capture-20260808T143121Z`: config **0.0.6** OK (Appearance Apply works; power state saved to `performance`). Apply then ran `systemctl restart systemd-logind` → session tear-down / journal flood (polkit + logind stop at 14:32:38). Removed mid-session logind restart; drop-in applies on reboot; governor still tried live via cpupower.
+
+---
+
+## 2026-08-09 — spike-config 0.0.6: dbus.Variant crash on Apply
+
+Smoke: Settings → Power (and any Apply) failed with `module 'dbus' has no attribute 'Variant'`. dbus-python 1.4 dropped `dbus.Variant`; Apply always `SetSetting`s every field (even unchanged), and each call emitted `StateChanged` via `dbus.Variant(...)`. Fixed unwrap + emit plain values for signature `v`. Package: `spike-config_0.0.6-1_all.deb`. Live ISO still on 0.0.5 until rebuild/hot-install.
+
+---
+
+## 2026-08-09 — installer 0.0.2 engine + Desktop icons (migration 0.0.1)
+
+Privileged `spike-install-helper` (partition GPT/MBR, unsquashfs, fstab, user/hostname/variant, grub, optional Layer 4 restore). Wizard requires type **ERASE** + Install Spike now. Packages + sudoers. Live Desktop: **Install Spike**, **Rescue My Files**, **Move My Files** (migration launcher → Rescue/Installer until full wizard). build-iso + 0600/0720 hooks stage migration. Step 7 backup copy still stubbed. Needs spare-disk E2E before claiming Alpha.
+
+---
+
+## 2026-08-08 — Settings finish (shell 0.0.25); installer paused
+
+Replaced Advanced JSON dumps with **Updates** / **Kernel Modules** / **Storage** forms. Human **About** card + collapsible raw state. **Appearance** wallpaper picker + live accent/font via QSS/palette; desktop **DesktopBackground** layer-shell wallpaper. Diagnostics sectioned + Copy; Software Sources universe/multiverse enable; VPN Import; Accessibility magnifier + HC chrome live. Installer engines stay parked until Settings smoke. Package: `spike-shell_0.0.25-1`.
+
+---
+
+## 2026-08-08 — Settings → Power (shell 0.0.24 + config 0.0.5)
+
+Replaced powerdevil KCM host with Spike custom **Power** page: profile, idle/screen blank, suspend/hibernate flags, lid (AC/battery), power button, CPU governor, Wi‑Fi powersave prefs. Saves via `org.spike.Config` power module; generates `/etc/systemd/logind.conf.d/99-spike-power.conf`; Apply tries live `cpupower` + `systemctl restart systemd-logind`. Session menu gains **Suspend**. Dimming / charge limits still later per POWER-MANAGEMENT.md. Rebuild smoke should include Power + Suspend alongside Rescue/Installer.
+
+---
+
 ## 2026-08-08 — spike-installer 0.0.1 started (wizard before rebuild)
 
 Started the installer ahead of the next ISO rebuild (after Rescue restore smoke). Qt 10-step wizard collects language/timezone/user/hostname/variant/optional backup + SpikeBackup session pick (spike-common); storage confirm is dry-run — **does not wipe**. Packaged via `package-spike-installer.sh`; `build-iso.sh` + hooks install Desktop **Install Spike**; verify hook requires `/usr/bin/spike-installer`. Docs: installer README, `07-installer-internals`, repo map, building-components, STATE. Next engines: Wi‑Fi, Step 7 copy, wipe/squashfs/bootloader, Layer 4 restore.

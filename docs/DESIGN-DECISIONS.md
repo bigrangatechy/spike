@@ -317,7 +317,7 @@ Each decision includes the context that led to it, the alternatives considered, 
 
 **Decision:** Load selected KDE KCMs in-window via KF6 `KCModuleLoader`, but only from packages that do **not** Depend on `plasma-desktop` / `plasma-workspace`.
 
-**Allowed KCM providers (live ISO):** `kscreen`, `plasma-pa`, `powerdevil`, `bluedevil`, `print-manager` (plus PipeWire for Sound).
+**Allowed KCM providers (live ISO):** `kscreen`, `plasma-pa`, `bluedevil`, `print-manager` (plus PipeWire for Sound). **Power** is a Spike custom page (`org.spike.Config` + logind), not `powerdevil` KCM — powerdevil may still be listed in packages but is not the Settings host.
 
 **Not allowed:** `plasma-desktop`, `plasma-workspace`, `plasma-nm` — plasmashell autostart / QtWebEngine / shell fight.
 

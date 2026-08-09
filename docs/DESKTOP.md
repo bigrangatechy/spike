@@ -1014,11 +1014,19 @@ The settings panel is a hybrid: custom Spike pages for Spike-specific settings a
 **Personal:**
 
 ```
-├── Appearance (custom) — theme, panel, fonts, icons
-├── Notifications (custom) — history, DND, sound
+├── Appearance (custom) — accent/font/wallpaper live; Aurorae later
+├── Notifications (custom) — DND / retention; tray owns fdo Notifications when free
 ├── Keyboard Layout (custom) — XKB layout via setxkbmap / localectl / kxkbrc
 └── Language (custom) — system language / region
     └── Note: upstream kcm_regionandlang lives in plasma-workspace; Spike does not ship plasmashell
+```
+
+**Panel:**
+
+```
+├── Panel (custom) — position / height / auto-hide (moved from Appearance)
+├── Tray Applets (custom) — visibility toggles for optional applets
+└── Night Light (custom) — enable + temperature (KWin ColorCorrect when available)
 ```
 
 **Hardware:**
@@ -1026,7 +1034,8 @@ The settings panel is a hybrid: custom Spike pages for Spike-specific settings a
 ```
 ├── Display (KCM) — kscreen / kcm_kscreen (standalone package)
 ├── Sound (KCM) — plasma-pa / kcm_pulseaudio (standalone; needs PipeWire)
-├── Power (KCM) — powerdevil / kcm_powerdevilprofilesconfig (standalone)
+├── Power (custom) — org.spike.Config power + logind drop-in (not powerdevil KCM); Apply does not restart logind mid-session
+│   └── Lid / power button / idle suspend / governor; dimming & charge limits later
 ├── Keyboard (custom) — repeat rate via ~/.config/kcminputrc (KWin); shortcuts later
 │   └── Note: upstream kcm_keyboard lives in plasma-desktop; not shipped
 ├── Mouse/Touchpad (custom) — speed / tap-to-click via kcminputrc
@@ -1041,7 +1050,7 @@ The settings panel is a hybrid: custom Spike pages for Spike-specific settings a
 ├── Network (custom) — Wi-Fi, Ethernet, hotspot via NetworkManager D-Bus
 │   └── Shared UI with the panel Network tray applet; nmcli used as connect helper when needed
 │   └── Do not use plasma-nm (pulls QtWebEngine ~200MB — too heavy for Tier-1)
-└── VPN (custom) — OpenVPN, WireGuard via NetworkManager (UI fleshed later)
+└── VPN (custom) — OpenVPN / WireGuard list + import + nm-connection-editor
 ```
 
 **System:**
@@ -1051,10 +1060,10 @@ The settings panel is a hybrid: custom Spike pages for Spike-specific settings a
 │   └── Note: upstream kcm_users lives in plasma-workspace; not shipped
 ├── Date & Time (custom) — timezone, NTP via timedatectl / systemd-timedated
 │   └── Note: upstream kcm_clock lives in plasma-desktop; not shipped
-├── Accessibility (custom) — magnifier, sticky keys, etc.
+├── Accessibility (custom) — AccessX, magnifier launcher, Spike Shell high-contrast chrome
 │   └── Note: upstream kcm_access lives in plasma-desktop; not shipped
-├── Software Sources (custom + optional KCM) — repositories, additional drivers (NVIDIA)
-└── About (custom) — system info, user guide reader, version
+├── Software Sources (custom) — APT view + universe/multiverse enable + external tools
+└── About (custom) — version / hardware summary; raw state collapsible
 ```
 
 **Advanced (hidden behind "Show Advanced"):**
@@ -1062,10 +1071,10 @@ The settings panel is a hybrid: custom Spike pages for Spike-specific settings a
 ```
 ├── Memory (custom) — ZRAM, swap, earlyoom, swappiness
 ├── Boot (custom) — GRUB behavior, boot failure counter
-├── Kernel Modules (custom) — blacklist viewer
-├── Updates (custom) — update schedule, auto-security
-├── Storage (custom) — disk usage, health, mount options
-└── Diagnostics (custom) — system logs, hardware inventory, performance
+├── Kernel Modules (custom) — blacklist editor → spike-blacklist.conf
+├── Updates (custom) — update schedule / auto-security prefs
+├── Storage (custom) — lsblk + DetectHardware primary disk (read-only)
+└── Diagnostics (custom) — sectioned DetectHardware + copy report
 ```
 
 ### Search
@@ -1350,12 +1359,11 @@ The theme engine applies Spike's visual identity consistently across all shell c
 Default wallpapers shipped in `/usr/share/spike/wallpapers/`:
 
 ```
-├── spike-default.png (purple gradient with subtle circuit pattern)
-├── spike-dark.png (solid dark background, minimal)
-├── spike-light.png (lighter variant for daytime use)
-└── spike-dog.png (Spike the dog illustration)
+├── Coastal-Run.png (temporary default — Pixel Archive Dark; stretch-to-fit)
+└── spike-default.png (same asset for older paths)
 ```
 
+- **Fit mode (pre-alpha):** stretch to fill the screen (`IgnoreAspectRatio`)
 - **Wallpaper selection:** **Settings → Appearance → Wallpaper** 
 
 - **Custom wallpaper:** User can browse and select any image 

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(spike-shell VERSION 0.0.23 LANGUAGES CXX)
+project(spike-shell VERSION 0.0.29 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -37,6 +37,8 @@ add_executable(spike-shell
   src/main.cpp
   src/panel/Panel.cpp
   src/panel/Panel.hpp
+  src/panel/applets/TrayHelpers.cpp
+  src/panel/applets/TrayHelpers.hpp
   src/panel/applets/ClockApplet.cpp
   src/panel/applets/ClockApplet.hpp
   src/panel/applets/NetworkApplet.cpp
@@ -47,6 +49,28 @@ add_executable(spike-shell
   src/panel/applets/VolumeApplet.hpp
   src/panel/applets/BatteryApplet.cpp
   src/panel/applets/BatteryApplet.hpp
+  src/panel/applets/NotificationsApplet.cpp
+  src/panel/applets/NotificationsApplet.hpp
+  src/panel/applets/BrightnessApplet.cpp
+  src/panel/applets/BrightnessApplet.hpp
+  src/panel/applets/RemovableDevicesApplet.cpp
+  src/panel/applets/RemovableDevicesApplet.hpp
+  src/panel/applets/UpdateNotifierApplet.cpp
+  src/panel/applets/UpdateNotifierApplet.hpp
+  src/panel/applets/NightLightApplet.cpp
+  src/panel/applets/NightLightApplet.hpp
+  src/panel/applets/BluetoothApplet.cpp
+  src/panel/applets/BluetoothApplet.hpp
+  src/panel/applets/AirplaneModeApplet.cpp
+  src/panel/applets/AirplaneModeApplet.hpp
+  src/panel/applets/KeyboardLayoutApplet.cpp
+  src/panel/applets/KeyboardLayoutApplet.hpp
+  src/panel/applets/WindowListApplet.cpp
+  src/panel/applets/WindowListApplet.hpp
+  src/notify/NotificationDaemon.cpp
+  src/notify/NotificationDaemon.hpp
+  src/notify/NotificationAdaptor.cpp
+  src/notify/NotificationAdaptor.hpp
   src/audio/VolumeClient.cpp
   src/audio/VolumeClient.hpp
   src/power/BatteryClient.cpp
@@ -63,12 +87,28 @@ add_executable(spike-shell
   src/settings/KcmHost.hpp
   src/settings/SettingsWindow.cpp
   src/settings/SettingsWindow.hpp
+  src/settings/PanelPages.cpp
+  src/settings/PanelPages.hpp
   src/settings/DateTimePage.cpp
   src/settings/DateTimePage.hpp
   src/settings/KeyboardPage.cpp
   src/settings/KeyboardPage.hpp
   src/settings/MousePage.cpp
   src/settings/MousePage.hpp
+  src/settings/PowerPage.cpp
+  src/settings/PowerPage.hpp
+  src/settings/UpdatesPage.cpp
+  src/settings/UpdatesPage.hpp
+  src/settings/KernelModulesPage.cpp
+  src/settings/KernelModulesPage.hpp
+  src/settings/StoragePage.cpp
+  src/settings/StoragePage.hpp
+  src/settings/AppearanceLive.cpp
+  src/settings/AppearanceLive.hpp
+  src/desktop/DesktopBackground.cpp
+  src/desktop/DesktopBackground.hpp
+  src/desktop/DesktopIcons.cpp
+  src/desktop/DesktopIcons.hpp
   src/settings/KeyboardLayoutPage.cpp
   src/settings/KeyboardLayoutPage.hpp
   src/settings/MemoryPage.cpp

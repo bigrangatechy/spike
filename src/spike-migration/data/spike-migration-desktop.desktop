@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Move My Files
+Comment=Guided copy of personal files when switching to Spike
+Exec=spike-migration
+Icon=folder-move
+Terminal=false
+Categories=X-Spike-Tools;System;Utility;
+StartupNotify=true

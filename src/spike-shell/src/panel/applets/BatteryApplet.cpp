@@ -77,13 +77,19 @@ void BatteryApplet::refresh()
     return;
   }
   show();
-  setToolTip(QStringLiteral("%1 — %2%").arg(m_client->stateText()).arg(m_client->percentage()));
+  QString tip = QStringLiteral("%1 — %2%").arg(m_client->stateText()).arg(m_client->percentage());
+  if (!m_client->timeRemainingText().isEmpty()) {
+    tip += QStringLiteral("\n%1").arg(m_client->timeRemainingText());
+  }
+  setToolTip(tip);
   updateIcon();
   if (m_popup) {
     if (auto *detail = m_popup->findChild<QLabel *>(QStringLiteral("BatteryDetail"))) {
-      detail->setText(QStringLiteral("%1\n%2%")
-                          .arg(m_client->stateText())
-                          .arg(m_client->percentage()));
+      QString body = QStringLiteral("%1\n%2%").arg(m_client->stateText()).arg(m_client->percentage());
+      if (!m_client->timeRemainingText().isEmpty()) {
+        body += QStringLiteral("\n%1").arg(m_client->timeRemainingText());
+      }
+      detail->setText(body);
     }
   }
 }

@@ -1,16 +1,29 @@
 #include "panel/Panel.hpp"
 
+#include "desktop/DesktopBackground.hpp"
 #include "launcher/Launcher.hpp"
+#include "notify/NotificationDaemon.hpp"
+#include "panel/applets/AirplaneModeApplet.hpp"
 #include "panel/applets/BatteryApplet.hpp"
+#include "panel/applets/BluetoothApplet.hpp"
+#include "panel/applets/BrightnessApplet.hpp"
 #include "panel/applets/ClockApplet.hpp"
+#include "panel/applets/KeyboardLayoutApplet.hpp"
 #include "panel/applets/NetworkApplet.hpp"
+#include "panel/applets/NightLightApplet.hpp"
+#include "panel/applets/NotificationsApplet.hpp"
+#include "panel/applets/RemovableDevicesApplet.hpp"
 #include "panel/applets/SessionMenuApplet.hpp"
+#include "panel/applets/UpdateNotifierApplet.hpp"
 #include "panel/applets/VolumeApplet.hpp"
+#include "panel/applets/WindowListApplet.hpp"
+#include "settings/AppearanceLive.hpp"
 #include "settings/ConfigClient.hpp"
 #include "settings/SettingsWindow.hpp"
 
 #include <LayerShellQt/Window>
 
+#include <QApplication>
 #include <QCursor>
 #include <QGuiApplication>
 #include <QHBoxLayout>
@@ -92,6 +105,9 @@ Panel::Panel(QWidget *parent)
   connect(spikeBtn, &QPushButton::clicked, this, &Panel::toggleLauncher);
   layout->addWidget(spikeBtn);
 
+  m_windowList = new WindowListApplet(this);
+  layout->addWidget(m_windowList);
+
   layout->addStretch(1);
 
   auto *network = new NetworkApplet(this);
@@ -105,6 +121,32 @@ Panel::Panel(QWidget *parent)
   if (!battery->hasBattery()) {
     battery->hide();
   }
+
+  auto *brightness = new BrightnessApplet(this);
+  layout->addWidget(brightness);
+
+  m_nightLight = new NightLightApplet(this);
+  layout->addWidget(m_nightLight);
+
+  auto *bluetooth = new BluetoothApplet(this);
+  layout->addWidget(bluetooth);
+
+  auto *airplane = new AirplaneModeApplet(this);
+  layout->addWidget(airplane);
+
+  auto *kbd = new KeyboardLayoutApplet(this);
+  layout->addWidget(kbd);
+
+  auto *removable = new RemovableDevicesApplet(this);
+  layout->addWidget(removable);
+
+  m_updates = new UpdateNotifierApplet(this);
+  layout->addWidget(m_updates);
+
+  m_notify = new NotificationDaemon(this);
+  m_notify->registerService();
+  m_notifications = new NotificationsApplet(m_notify, this);
+  layout->addWidget(m_notifications);
 
   auto *clock = new ClockApplet(this);
   layout->addWidget(clock);
@@ -204,6 +246,55 @@ void Panel::reloadDesktopSettings()
     m_autoHideTimer->stop();
   }
   applyPanelChrome();
+
+  // Live chrome for accent / font / wallpaper (also applied from Settings Apply).
+  applyShellChromeLive(qApp, o.value(QStringLiteral("accent_color")).toString(QStringLiteral("#6d4aff")),
+                       o.value(QStringLiteral("font_size_pt")).toInt(10), false);
+  applyWallpaperLive(o.value(QStringLiteral("wallpaper")).toString());
+
+  applyTrayVisibility(o);
+
+  if (m_nightLight) {
+    m_nightLight->applyFromConfig(o.value(QStringLiteral("night_light_enabled")).toBool(false),
+                                  o.value(QStringLiteral("night_light_temperature")).toInt(4500));
+  }
+
+  // Sync DND from privacy prefs when available.
+  if (m_notify && m_config) {
+    QString perr;
+    const QString privacy = m_config->getModuleState(QStringLiteral("privacy"), &perr);
+    if (!privacy.isEmpty()) {
+      const QJsonObject po = QJsonDocument::fromJson(privacy.toUtf8()).object();
+      m_notify->setDoNotDisturb(po.value(QStringLiteral("do_not_disturb")).toBool(false));
+    }
+  }
+}
+
+void Panel::applyTrayVisibility(const QJsonObject &desktop)
+{
+  QJsonObject tray;
+  const QJsonValue trayVal = desktop.value(QStringLiteral("tray_applets"));
+  if (trayVal.isObject()) {
+    tray = trayVal.toObject();
+  } else if (trayVal.isString()) {
+    tray = QJsonDocument::fromJson(trayVal.toString().toUtf8()).object();
+  }
+  const bool showNotifications = tray.value(QStringLiteral("notifications")).toBool(true);
+  const bool showNight = tray.value(QStringLiteral("night_light")).toBool(true);
+  const bool showUpdates = tray.value(QStringLiteral("updates")).toBool(true);
+  const bool showWindows = tray.value(QStringLiteral("window_list")).toBool(true);
+  if (m_notifications) {
+    m_notifications->setEnabledVisible(showNotifications);
+  }
+  if (m_nightLight) {
+    m_nightLight->setEnabledVisible(showNight);
+  }
+  if (m_updates) {
+    m_updates->setEnabledVisible(showUpdates);
+  }
+  if (m_windowList) {
+    m_windowList->setEnabledVisible(showWindows);
+  }
 }
 
 void Panel::onConfigStateChanged(const QString &module, const QString &key, const QVariant &,
@@ -213,7 +304,10 @@ void Panel::onConfigStateChanged(const QString &module, const QString &key, cons
     return;
   }
   if (key == QLatin1String("panel_height") || key == QLatin1String("panel_position") ||
-      key == QLatin1String("panel_auto_hide")) {
+      key == QLatin1String("panel_auto_hide") || key == QLatin1String("accent_color") ||
+      key == QLatin1String("font_size_pt") || key == QLatin1String("wallpaper") ||
+      key == QLatin1String("tray_applets") || key == QLatin1String("night_light_enabled") ||
+      key == QLatin1String("night_light_temperature")) {
     reloadDesktopSettings();
   }
 }

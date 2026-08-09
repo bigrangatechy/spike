@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 from spike_config import changelog, paths, state as state_mod, templates
-from spike_config.modules import boot, memory, multimedia, network, security
+from spike_config.modules import boot, memory, multimedia, network, power, security
 
 ModuleFn = Callable[[dict[str, Any], str], list[str]]
 
@@ -15,6 +15,7 @@ MODULES: dict[str, ModuleFn] = {
     "boot": boot.generate,
     "network": network.generate,
     "multimedia": multimedia.generate,
+    "power": power.generate,
     "security": security.generate,
 }
 

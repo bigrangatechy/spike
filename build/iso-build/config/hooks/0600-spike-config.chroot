@@ -23,6 +23,7 @@ install_newest 'spike-config_*.deb'
 install_newest 'spike-shell_*.deb'
 install_newest 'spike-rescue_*.deb'
 install_newest 'spike-installer_*.deb'
+install_newest 'spike-migration_*.deb'
 
 if command -v spike-config >/dev/null 2>&1; then
   spike-config --version || true
@@ -74,6 +75,20 @@ if [ -x /usr/bin/spike-installer ]; then
   done
 else
   echo "W: spike-installer still missing after install attempt" >&2
+fi
+
+if [ -x /usr/bin/spike-migration ]; then
+  echo "I: spike-migration installed: /usr/bin/spike-migration"
+  for home in /home/spike /etc/skel; do
+    mkdir -p "${home}/Desktop"
+    if [ -f /usr/share/spike/live/spike-migration.desktop ]; then
+      cp -f /usr/share/spike/live/spike-migration.desktop "${home}/Desktop/Move My Files.desktop"
+      chmod 755 "${home}/Desktop/Move My Files.desktop" || true
+      chown -R spike:spike /home/spike/Desktop 2>/dev/null || true
+    fi
+  done
+else
+  echo "W: spike-migration still missing after install attempt" >&2
 fi
 
 # Ensure live user gets SpikeDark-inlined kdeglobals (Dolphin/Kate chrome).

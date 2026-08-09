@@ -3,6 +3,7 @@
 #include <QPushButton>
 
 class QLabel;
+class QMouseEvent;
 class QSlider;
 class QWheelEvent;
 class QWidget;
@@ -20,6 +21,7 @@ public:
 
 protected:
   void wheelEvent(QWheelEvent *event) override;
+  void mousePressEvent(QMouseEvent *event) override;
 
 private slots:
   void refresh();

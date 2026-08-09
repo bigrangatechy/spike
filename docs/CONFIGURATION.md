@@ -187,6 +187,7 @@ The state store is the single source of truth for all Spike configuration.
     "allow_hibernate": false,
     "hybrid_sleep": true,
     "lid_close_action": "suspend",
+    "lid_close_action_ac": "suspend",
     "power_button_action": "suspend",
     "wifi_power_saving": "adaptive",
     "bluetooth_power_saving": "adaptive",
@@ -230,7 +231,7 @@ The state store is the single source of truth for all Spike configuration.
     "font_size_pt": 10,
     "icon_theme": "Breeze",
     "icon_size_px": 24,
-    "wallpaper": "/usr/share/spike/wallpapers/spike-default.png",
+    "wallpaper": "/usr/share/spike/wallpapers/Coastal-Run.png",
     "cursor_theme": "Breeze",
     "cursor_size_px": 24
   }
@@ -608,10 +609,10 @@ If any step fails:
 **Config files generated:**
 
 ```
-├── /etc/systemd/logind.conf                    → Lid switch, power button, idle handling
+├── /etc/systemd/logind.conf.d/99-spike-power.conf → Lid, power button, idle suspend
 ├── /etc/tlp/                                   → (if tlp installed — not by default)
-├── /etc/tmpfiles.d/spike-power.conf           → Battery health data directory
-└── /etc/cron.weekly/spike-battery-check       → Weekly battery health recording
+├── /etc/tmpfiles.d/spike-power.conf           → Battery health data directory (later)
+└── /etc/cron.weekly/spike-battery-check       → Weekly battery health recording (later)
 ```
 
 **Template variables:**
@@ -619,9 +620,10 @@ If any step fails:
 ```
 ├── {{profile}}                                → adaptive
 ├── {{cpu_governor}}                           → powersave / schedutil / performance
-├── {{screen_blank_minutes}}                   → 15
-├── {{dim_before_blank}}                       → true
-├── {{lid_close_action}}                       → suspend
+├── {{screen_blank_minutes}}                   → 15 (maps to IdleActionSec when suspend allowed)
+├── {{dim_before_blank}}                       → true (saved; compositor dim later)
+├── {{lid_close_action}}                       → suspend (HandleLidSwitch)
+├── {{lid_close_action_ac}}                    → suspend (HandleLidSwitchExternalPower)
 ├── {{power_button_action}}                    → suspend
 ├── {{wifi_power_saving}}                      → adaptive
 ├── {{bluetooth_power_saving}}                 → adaptive
@@ -636,10 +638,11 @@ If any step fails:
 ```
 ├── systemctl restart systemd-logind
 ├── cpupower frequency-set -g {{governor}}      → (Immediate governor change)
-├── nmcli dev modify ... powersave             → (Wi-Fi power saving)
-└── hdparm -S {{spindown}} /dev/sda            → (HDD spindown, if HDD)
+├── nmcli dev modify ... powersave             → (Wi-Fi power saving — later from UI)
+└── hdparm -S {{spindown}} /dev/sda            → (HDD spindown, if HDD — later)
 ```
 
+**Settings UI:** Spike Shell **Settings → Power** (custom page, not powerdevil KCM).
 ### Privacy Module
 
 **Config files generated:**
@@ -691,7 +694,7 @@ If any step fails:
 ├── {{font}}                                    → Noto Sans
 ├── {{font_size_pt}}                            → 10
 ├── {{icon_theme}}                             → Breeze
-├── {{wallpaper}}                              → /usr/share/spike/wallpapers/spike-default.png
+├── {{wallpaper}}                              → /usr/share/spike/wallpapers/Coastal-Run.png
 ├── {{cursor_theme}}                          → Breeze
 └── {{cursor_size_px}}                        → 24
 ```

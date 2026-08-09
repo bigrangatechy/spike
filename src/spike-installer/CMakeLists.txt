@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(spike-installer VERSION 0.0.1 LANGUAGES CXX)
+project(spike-installer VERSION 0.0.4 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -13,6 +13,8 @@ add_executable(spike-installer
   src/main.cpp
   src/InstallWizard.cpp
   src/InstallWizard.hpp
+  src/InstallEngine.cpp
+  src/InstallEngine.hpp
   src/InstallState.hpp
   src/detect/Detect.cpp
   src/detect/Detect.hpp

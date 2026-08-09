@@ -2,6 +2,9 @@
 
 #include <QLabel>
 
+class QCalendarWidget;
+class QWidget;
+
 namespace spike {
 
 class ClockApplet : public QLabel
@@ -16,6 +19,14 @@ protected:
 
 private slots:
   void tick();
+  void togglePopup();
+
+private:
+  void placePopup();
+
+  QWidget *m_popup = nullptr;
+  QLabel *m_largeTime = nullptr;
+  QCalendarWidget *m_cal = nullptr;
 };
 
 } // namespace spike

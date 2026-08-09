@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Build spike-installer as a local .deb for live-build injection.
-# Spec: docs/INSTALLER.md (wizard UI; wipe engine still stubbed in 0.0.1)
+# Spec: docs/INSTALLER.md
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -25,10 +25,12 @@ usage() {
   cat <<EOF
 Usage: ./scripts/package-spike-installer.sh [--out DIR]
 
-Builds ${DEB_NAME} from src/spike-installer/ (Qt6 Widgets).
+Builds ${DEB_NAME} from src/spike-installer/ (Qt6 Widgets + install helper).
 
 Install paths:
   /usr/bin/spike-installer
+  /usr/lib/spike/spike-install-helper
+  /etc/sudoers.d/spike-installer
   /usr/share/applications/spike-installer.desktop
   /usr/share/spike/live/spike-installer.desktop
 EOF
@@ -71,11 +73,17 @@ DEST="${STAGE}/${PKG_NAME}"
 mkdir -p \
   "${DEST}/DEBIAN" \
   "${DEST}/usr/bin" \
+  "${DEST}/usr/lib/spike" \
+  "${DEST}/etc/sudoers.d" \
   "${DEST}/usr/share/applications" \
   "${DEST}/usr/share/spike/live" \
   "${DEST}/usr/share/doc/${PKG_NAME}"
 
 install -m 755 "${BUILD}/spike-installer" "${DEST}/usr/bin/spike-installer"
+install -m 755 "${SRC}/data/spike-install-helper" \
+  "${DEST}/usr/lib/spike/spike-install-helper"
+install -m 440 "${SRC}/data/spike-installer.sudoers" \
+  "${DEST}/etc/sudoers.d/spike-installer"
 install -m 644 "${SRC}/data/spike-installer.desktop" \
   "${DEST}/usr/share/applications/spike-installer.desktop"
 install -m 644 "${SRC}/data/spike-installer-desktop.desktop" \
@@ -99,16 +107,19 @@ Section: utils
 Priority: optional
 Architecture: ${ARCH}
 Maintainer: BigRangaTech <spike@bigrangatech.com>
-Depends: libqt6widgets6 | libqt6widgets6t64, libqt6gui6 | libqt6gui6t64, libqt6core6t64 | libqt6core6, util-linux
-Recommends: spike-config
+Depends: libqt6widgets6 | libqt6widgets6t64, libqt6gui6 | libqt6gui6t64, libqt6core6t64 | libqt6core6, util-linux, parted, e2fsprogs, dosfstools, rsync, squashfs-tools, grub-common, sudo
+Recommends: spike-config, grub-efi-amd64-bin, grub-pc-bin, grub2-common, efibootmgr
 Description: Spike Installer — install Spike Linux from the live USB
- Pre-alpha Qt wizard (INSTALLER.md): collects language, account, variant,
- optional SpikeBackup restore choice. Disk wipe / system copy not yet enabled.
+ Qt wizard (INSTALLER.md): partition, squashfs copy, account, bootloader via
+ privileged spike-install-helper (CLI args; type ERASE to confirm wipe).
 EOF
 
 cat >"${DEST}/DEBIAN/postinst" <<'EOF'
 #!/bin/sh
 set -e
+if [ -f /etc/sudoers.d/spike-installer ]; then
+  chmod 440 /etc/sudoers.d/spike-installer
+fi
 for skel in /etc/skel/Desktop /usr/share/spike/skel/Desktop; do
   if [ -d "$(dirname "$skel")" ] || mkdir -p "$skel" 2>/dev/null; then
     if [ -f /usr/share/spike/live/spike-installer.desktop ]; then
@@ -124,7 +135,8 @@ EOF
 chmod 755 "${DEST}/DEBIAN/postinst"
 
 find "${DEST}" -type d -exec chmod 755 {} +
-chmod 755 "${DEST}/usr/bin/spike-installer"
+chmod 755 "${DEST}/usr/bin/spike-installer" "${DEST}/usr/lib/spike/spike-install-helper"
+chmod 440 "${DEST}/etc/sudoers.d/spike-installer"
 
 mkdir -p "$OUT_DIR"
 dpkg-deb --root-owner-group --build "$DEST" "${OUT_DIR}/${DEB_NAME}"

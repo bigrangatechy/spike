@@ -2,12 +2,14 @@
 
 #include "audio/VolumeClient.hpp"
 
+#include "panel/applets/TrayHelpers.hpp"
+
 #include <QApplication>
 #include <QHBoxLayout>
 #include <QIcon>
 #include <QLabel>
+#include <QMouseEvent>
 #include <QPushButton>
-#include <QScreen>
 #include <QSlider>
 #include <QTimer>
 #include <QVBoxLayout>
@@ -41,7 +43,7 @@ VolumeApplet::VolumeApplet(QWidget *parent)
 
   auto *row = new QHBoxLayout();
   m_slider = new QSlider(Qt::Horizontal, m_popup);
-  m_slider->setRange(0, 100);
+  m_slider->setRange(0, 150);
   m_pctLabel = new QLabel(m_popup);
   m_pctLabel->setMinimumWidth(40);
   row->addWidget(m_slider, 1);
@@ -80,6 +82,16 @@ void VolumeApplet::wheelEvent(QWheelEvent *event)
   const int delta = event->angleDelta().y() > 0 ? 5 : -5;
   m_client->adjustBy(delta);
   event->accept();
+}
+
+void VolumeApplet::mousePressEvent(QMouseEvent *event)
+{
+  if (event->button() == Qt::MiddleButton && m_client) {
+    m_client->toggleMute();
+    event->accept();
+    return;
+  }
+  QPushButton::mousePressEvent(event);
 }
 
 void VolumeApplet::updateIcon()
@@ -123,7 +135,7 @@ void VolumeApplet::refresh()
                  ? QStringLiteral("Muted")
                  : QStringLiteral("Volume %1%").arg(m_client->volumePercent()));
   if (m_slider && !m_slider->isSliderDown()) {
-    m_slider->setValue(qMin(100, m_client->volumePercent()));
+    m_slider->setValue(qBound(0, m_client->volumePercent(), 150));
   }
   if (m_pctLabel) {
     m_pctLabel->setText(m_client->muted() ? QStringLiteral("Mute")
@@ -134,21 +146,7 @@ void VolumeApplet::refresh()
 
 void VolumeApplet::placePopup()
 {
-  if (!m_popup) {
-    return;
-  }
-  m_popup->adjustSize();
-  const QPoint global = mapToGlobal(QPoint(width() - m_popup->width(), 0));
-  int x = global.x();
-  int y = global.y() - m_popup->height() - 4;
-  if (QScreen *screen = QApplication::screenAt(mapToGlobal(rect().center()))) {
-    const QRect geo = screen->availableGeometry();
-    x = qBound(geo.left(), x, geo.right() - m_popup->width());
-    if (y < geo.top()) {
-      y = mapToGlobal(QPoint(0, height())).y() + 4;
-    }
-  }
-  m_popup->move(x, y);
+  tray::placePopupAbove(this, m_popup);
 }
 
 void VolumeApplet::togglePopup()
@@ -174,15 +172,7 @@ void VolumeApplet::openSoundSettings()
   if (m_popup) {
     m_popup->hide();
   }
-  QWidget *w = parentWidget();
-  while (w) {
-    if (w->objectName() == QLatin1String("SpikePanel")) {
-      QMetaObject::invokeMethod(w, "openSettings", Qt::QueuedConnection,
-                                Q_ARG(QString, QStringLiteral("sound")));
-      break;
-    }
-    w = w->parentWidget();
-  }
+  tray::openPanelSettings(this, QStringLiteral("sound"));
 }
 
 } // namespace spike

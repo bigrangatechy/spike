@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QJsonObject>
 #include <QWidget>
 
 class QTimer;
@@ -10,6 +11,11 @@ namespace spike {
 class ConfigClient;
 class Launcher;
 class SettingsWindow;
+class NotificationDaemon;
+class NotificationsApplet;
+class NightLightApplet;
+class UpdateNotifierApplet;
+class WindowListApplet;
 
 class Panel : public QWidget
 {
@@ -39,11 +45,18 @@ private slots:
 private:
   void applyPanelChrome();
   bool cursorNearPanelEdge() const;
+  void applyTrayVisibility(const QJsonObject &desktop);
 
   Launcher *m_launcher = nullptr;
   ConfigClient *m_config = nullptr;
   SettingsWindow *m_settings = nullptr;
   QTimer *m_autoHideTimer = nullptr;
+  NotificationDaemon *m_notify = nullptr;
+
+  NotificationsApplet *m_notifications = nullptr;
+  NightLightApplet *m_nightLight = nullptr;
+  UpdateNotifierApplet *m_updates = nullptr;
+  WindowListApplet *m_windowList = nullptr;
 
   int m_panelHeight = 32;
   bool m_panelOnTop = false;

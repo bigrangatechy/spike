@@ -1,3 +1,4 @@
+#include "desktop/DesktopBackground.hpp"
 #include "panel/Panel.hpp"
 
 #include <QApplication>
@@ -54,7 +55,7 @@ int main(int argc, char *argv[])
 {
   QApplication app(argc, argv);
   QApplication::setApplicationName(QStringLiteral("spike-shell"));
-  QApplication::setApplicationVersion(QStringLiteral("0.0.22"));
+  QApplication::setApplicationVersion(QStringLiteral("0.0.29"));
   QApplication::setOrganizationName(QStringLiteral("BigRangaTech"));
 
   // Breeze SVG icons need qt6-svg-plugins on the live image.
@@ -76,6 +77,10 @@ int main(int argc, char *argv[])
 
   applyDarkPalette(app);
   loadStyleSheet(app);
+
+  spike::DesktopBackground desktop;
+  desktop.applyLayerShell();
+  desktop.show();
 
   spike::Panel panel;
   panel.applyLayerShell();

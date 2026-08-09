@@ -221,6 +221,8 @@ inject_local_debs() {
   "${ROOT}/scripts/package-spike-rescue.sh" --out "$pkg_dir"
   echo "Packaging spike-installer ..."
   "${ROOT}/scripts/package-spike-installer.sh" --out "$pkg_dir"
+  echo "Packaging spike-migration ..."
+  "${ROOT}/scripts/package-spike-migration.sh" --out "$pkg_dir"
 
   # Clear any prior packages.chroot debs so archives won't invoke gpg.
   if [[ -d "$pkg_chroot" ]]; then
@@ -255,6 +257,10 @@ inject_local_debs() {
   fi
   if ! stage_newest 'spike-installer_*.deb'; then
     echo "error: spike-installer .deb missing after package step" >&2
+    exit 4
+  fi
+  if ! stage_newest 'spike-migration_*.deb'; then
+    echo "error: spike-migration .deb missing after package step" >&2
     exit 4
   fi
 }

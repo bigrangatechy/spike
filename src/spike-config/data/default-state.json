@@ -126,6 +126,7 @@
     "allow_hibernate": false,
     "hybrid_sleep": true,
     "lid_close_action": "suspend",
+    "lid_close_action_ac": "suspend",
     "power_button_action": "suspend",
     "wifi_power_saving": "adaptive",
     "bluetooth_power_saving": "adaptive",
@@ -179,8 +180,16 @@
     "font_size_pt": 10,
     "icon_theme": "Breeze",
     "icon_size_px": 24,
-    "wallpaper": "/usr/share/spike/wallpapers/spike-default.png",
+    "wallpaper": "/usr/share/spike/wallpapers/Coastal-Run.png",
     "cursor_theme": "Breeze",
-    "cursor_size_px": 24
+    "cursor_size_px": 24,
+    "night_light_enabled": false,
+    "night_light_temperature": 4500,
+    "tray_applets": {
+      "notifications": true,
+      "night_light": true,
+      "updates": true,
+      "window_list": true
+    }
   }
 }
