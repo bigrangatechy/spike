@@ -94,7 +94,6 @@ plasma-discover-backend-flatpak
 appstream
 apt-config-icons
 packagekit
-packagekit-tools
 xdg-user-dirs
 # Lockscreen greeter QML (Spike minimal LockScreen under breeze LNF)
 qml6-module-qtquick-controls

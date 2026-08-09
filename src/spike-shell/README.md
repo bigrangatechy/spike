@@ -6,7 +6,7 @@ Stage 3 skeleton — **Alpha**. Spec: `docs/DESKTOP.md`.
 
 Spike Shell is the custom desktop shell (Qt6 **Widgets**, not QML) that runs as a Wayland client under **standalone KWin**. It does **not** use Plasma (`plasma-workspace`, Akonadi, Baloo, etc.).
 
-MVP for this skeleton (**0.0.37**):
+MVP for this skeleton (**0.0.38**):
 
 | Piece | Status |
 |-------|--------|
@@ -44,7 +44,7 @@ cd src/spike-shell
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
 cmake --build build -j"$(nproc)"
 ./scripts/package-spike-shell.sh
-# → build/packages/spike-shell_0.0.37-1_amd64.deb
+# → build/packages/spike-shell_0.0.38-1_amd64.deb
 ```
 
 ## First-run

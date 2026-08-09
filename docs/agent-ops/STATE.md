@@ -15,11 +15,11 @@
 | `dev-guide/` | 📝 Core filled (01–09, 12, 19); remaining stubs point at product docs |
 | agent-ops core | ✅ Written |
 | ISO / build tooling | ✅ live-build; hybrid remaster + debug capture |
-| Installer stack | ✅ **0.0.13** home seed + Wi‑Fi handoff; shell **0.0.35** |
+| Installer stack | ✅ **0.0.13** home seed + Wi‑Fi handoff; shell **0.0.38** |
 | `scripts/build-iso.sh` | ✅ Packages config + shell + rescue + installer + **migration** + lb build |
 | Stage 1 live ISO | ✅ Hardware boot + login |
 | Stage 2 (`spike-config`) | ✅ **0.0.12** power profile live apply (governor + Wi‑Fi powersave) |
-| Stage 3 (Spike Shell) | 📝 **0.0.37** lock/night-light fixes; Rescue **0.0.12** |
+| Stage 3 (Spike Shell) | 📝 **0.0.38** PackageKit `pkgcli`; prior lock/night-light; Rescue **0.0.12** |
 | Stage 4 (installer) | ✅ **0.0.13** — XDG/app home seed + NM connection copy |
 | Preinstalled apps | 📝 Seeded: Mozilla FF/TB `.deb` + VLC + LibreOffice; Discover Flatpak/AppStream |
 
@@ -27,7 +27,7 @@
 
 | Item | Notes |
 | :-: | :-: |
-| Rebuild smoke | shell **0.0.37**: no idle lock→sleep→broken; night light; power message; prior **0.0.36** task icons/Discover/sysmon |
+| Rebuild smoke | shell **0.0.38** + drop nonexistent `packagekit-tools`; prior **0.0.37** lock/night-light |
 | Stage 3 — first-run polish | Wizard shipped **0.0.31**; tour/a11y/Flatpak/update hooks still placeholders |
 
 ## Default apps (Alpha — planned)
@@ -66,8 +66,9 @@ Implementation: `spike-live.list.chroot` + `config/spike-archives/` (staged by `
 
 | Date | Item |
 | :-: | :-: |
+| 2026-08-10 | ISO: drop `packagekit-tools` (not on resolute); shell **0.0.38** uses `pkgcli refresh` |
 | 2026-08-10 | shell **0.0.37**: disable idle kscreenlocker; Spike greeter QML on shell path; night light kwinrc+preview |
-| 2026-08-10 | shell **0.0.36**: panel task icons (KWin), Discover Flatpak/pkcon refresh, plasma-systemmonitor |
+| 2026-08-10 | shell **0.0.36**: panel task icons (KWin), Discover Flatpak/PackageKit refresh, plasma-systemmonitor |
 | 2026-08-10 | shell **0.0.35** + installer **0.0.13**: home seed, Discover/AppStream/Flatpak, LO profile dirs, Spike lockscreen QML |
 | 2026-08-10 | shell **0.0.34**: Mozilla Firefox/Thunderbird AppArmor + profile-home fix |
 | 2026-08-10 | config **0.0.12** + shell **0.0.33** + installer **0.0.12**: power/input live apply; Wi‑Fi NM handoff |
@@ -84,7 +85,7 @@ Implementation: `spike-live.list.chroot` + `config/spike-archives/` (staged by `
 
 ## Next Suggested Work
 
-1. Rebuild ISO → smoke: home dirs filled, Discover/AppStream, LibreOffice opens, lock unlocks, power/Wi‑Fi live.  
+1. Rebuild ISO → smoke: Discover online (`pkgcli`), lock/night-light, task icons, System Monitor.  
 2. Confirm first-run wizard + brightness / block-sleep.  
 3. Fill first-run placeholder hooks as apps land.  
 4. spike-migration inventory/conflict UI (not Alpha-blocking).  

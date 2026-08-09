@@ -198,6 +198,9 @@ refresh_software_indexes() {
     fi
     if command -v pkcon >/dev/null 2>&1; then
       pkcon refresh 2>&1 | tail -n 20 || true
+    elif command -v pkgcli >/dev/null 2>&1; then
+      # Ubuntu 26.04 PackageKit CLI (pkcon package renamed/absent)
+      pkgcli refresh 2>&1 | tail -n 20 || true
     fi
   ) &
 }

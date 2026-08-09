@@ -4,6 +4,12 @@ Append-only. Newest sessions at the **top**.
 
 ---
 
+## 2026-08-10 — ISO build: packagekit-tools missing
+
+`lb` failed: `E: Unable to locate package packagekit-tools`. On Ubuntu resolute, `pkcon`/`packagekit-tools` are gone; PackageKit ships `pkgcli` in `packagekit`. Removed `packagekit-tools` from `spike-live.list.chroot`; shell **0.0.38** session refresh tries `pkcon` then `pkgcli refresh`. Rebuild ISO.
+
+---
+
 ## 2026-08-10 — lock→sleep→broken greeter + night light
 
 Smoke: mouse/power live OK (cpupower message noisy); night light silent fail; idle lock then immediate sleep → “screen locker is broken” on wake. Fixes in shell **0.0.37**: disable kscreenlocker Autolock/LockOnResume; Spike LockScreen.qml into plasma *shell* path (greeter was hitting outdated Plasma QML); Night Light via kwinrc `[NightColor]` + `preview()`; quieter Power Apply text; unlock-session on Spike unlock.

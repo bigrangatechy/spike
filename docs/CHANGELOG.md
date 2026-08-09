@@ -140,6 +140,7 @@ Security fixes follow responsible disclosure. If a vulnerability is fixed before
 ├── shell **0.0.35** + installer **0.0.13**: XDG home seed, Discover Flatpak/AppStream, LibreOffice profile dirs, Spike kscreenlocker QML
 ├── shell **0.0.36**: panel open-app icons (KWin task list), Discover index refresh, plasma-systemmonitor
 ├── shell **0.0.37**: idle lock disabled; Spike LockScreen for greeter; Night Light via NightColor+preview
+├── shell **0.0.38**: Discover refresh via `pkgcli` (Ubuntu resolute has no `packagekit-tools`)
 ├── **Alpha opened** (2026-08-09): installer E2E + blacklist smoke confirmed
 
 ├── spike-migration **0.0.1** + live Desktop: Install Spike / Rescue My Files / Move My Files
@@ -165,7 +166,7 @@ Security fixes follow responsible disclosure. If a vulnerability is fixed before
 
 **Changed:** SpikeBackup destination policy; docs status (prototyping in progress); Power Apply logind policy; Appearance vs Panel split
 
-**Fixed:** spike-config **0.0.6** — dbus-python 1.4 had no `dbus.Variant` (Settings Apply crash); shell **0.0.26** — Power Apply session tear-down via logind restart; shell **0.0.34** + AppArmor stubs — Firefox/Thunderbird “profile cannot be loaded”; shell **0.0.35** — Discover AppStream/Flatpak, LibreOffice user install dirs, KWin “screen locker is broken” (minimal breeze LockScreen.qml)
+**Fixed:** spike-config **0.0.6** — dbus-python 1.4 had no `dbus.Variant` (Settings Apply crash); shell **0.0.26** — Power Apply session tear-down via logind restart; shell **0.0.34** + AppArmor stubs — Firefox/Thunderbird “profile cannot be loaded”; shell **0.0.35** — Discover AppStream/Flatpak, LibreOffice user install dirs, KWin “screen locker is broken” (minimal breeze LockScreen.qml); ISO — drop nonexistent `packagekit-tools` (use `packagekit`/`pkgcli`)
 
 **Removed:** (nothing)
 
