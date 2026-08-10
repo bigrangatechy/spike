@@ -26,6 +26,38 @@ bool partitionOnDisk(const QString &part, const QString &disk)
   return false;
 }
 
+/** Parent disk of the live ISO medium (never the wipe target). Empty if unknown. */
+QString detectLiveInstallDisk()
+{
+  const QStringList mounts = {QStringLiteral("/cdrom"), QStringLiteral("/lib/live/mount/medium"),
+                              QStringLiteral("/run/live/medium")};
+  for (const QString &mp : mounts) {
+    QProcess proc;
+    proc.start(QStringLiteral("findmnt"),
+               {QStringLiteral("-n"), QStringLiteral("-o"), QStringLiteral("SOURCE"),
+                QStringLiteral("-T"), mp});
+    if (!proc.waitForFinished(3000) || proc.exitCode() != 0) {
+      continue;
+    }
+    QString src = QString::fromUtf8(proc.readAllStandardOutput()).trimmed();
+    // Strip partition → whole disk via lsblk PKNAME when possible.
+    if (src.startsWith(QLatin1String("/dev/"))) {
+      QProcess pk;
+      pk.start(QStringLiteral("lsblk"),
+               {QStringLiteral("-no"), QStringLiteral("PKNAME"), src});
+      if (pk.waitForFinished(3000) && pk.exitCode() == 0) {
+        const QString parent = QString::fromUtf8(pk.readAllStandardOutput()).trimmed();
+        if (!parent.isEmpty()) {
+          return QStringLiteral("/dev/") + parent;
+        }
+      }
+      // Already a whole disk (rare) or fallback: strip trailing partition suffix.
+      return src;
+    }
+  }
+  return {};
+}
+
 struct ListedSystem {
   int rawIndex = 0;
   QString partition;
@@ -144,10 +176,15 @@ void InstallEngine::startBackupThenInstall()
     emit logLine(line);
   }
 
+  // INSTALLER.md: backup personal files from the OS that will be erased — usually
+  // ON the wipe target. Do not exclude the install disk (that made reinstall
+  // backups always SKIPPED). Only skip the live USB medium if we can detect it.
+  const QString liveDisk = detectLiveInstallDisk();
+  QList<ListedSystem> systems = parseListSystems(listOut);
   QList<ListedSystem> eligible;
-  for (const ListedSystem &s : parseListSystems(listOut)) {
-    if (partitionOnDisk(s.partition, m_state.targetDisk)) {
-      emit logLine(QStringLiteral("skip (install target disk): %1").arg(s.partition));
+  for (const ListedSystem &s : systems) {
+    if (!liveDisk.isEmpty() && partitionOnDisk(s.partition, liveDisk)) {
+      emit logLine(QStringLiteral("skip (live USB): %1").arg(s.partition));
       continue;
     }
     eligible.append(s);
@@ -155,7 +192,7 @@ void InstallEngine::startBackupThenInstall()
 
   if (eligible.isEmpty()) {
     emit logLine(QStringLiteral(
-        "WARN: no recoverable systems outside the wipe disk — skipping Step 7 backup "
+        "WARN: no recoverable systems found — skipping Step 7 backup "
         "(nothing will be restored from a new session)."));
     m_backupSkipped = true;
     m_state.backupStatus = QStringLiteral("skipped");
@@ -171,7 +208,7 @@ void InstallEngine::startBackupThenInstall()
     return;
   }
 
-  int pick = 0;
+  int pick = 0; // index into eligible → maps to raw --list-systems index
   if (!m_state.backupSystemPartition.isEmpty()) {
     for (int i = 0; i < eligible.size(); ++i) {
       if (eligible.at(i).partition == m_state.backupSystemPartition) {
@@ -182,7 +219,7 @@ void InstallEngine::startBackupThenInstall()
   }
   const ListedSystem &chosen = eligible.at(pick);
   emit logLine(QStringLiteral("Step 7: backing up [%1] %2 (%3) → %4")
-                   .arg(pick)
+                   .arg(chosen.rawIndex)
                    .arg(chosen.label, chosen.partition, m_state.backupDestMount));
 
   m_phase = Phase::Backup;
@@ -195,11 +232,12 @@ void InstallEngine::startBackupThenInstall()
   connect(m_proc, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), this,
           &InstallEngine::onProcessFinished);
 
+  // --system indexes rescue's eligible list after --exclude-disk (live USB only).
   QStringList args = {QStringLiteral("--batch-recover"), QStringLiteral("--dest"),
                       m_state.backupDestMount, QStringLiteral("--system"),
-                      QString::number(pick)};
-  if (!m_state.targetDisk.isEmpty()) {
-    args << QStringLiteral("--exclude-disk") << m_state.targetDisk;
+                      QString::number(liveDisk.isEmpty() ? chosen.rawIndex : pick)};
+  if (!liveDisk.isEmpty()) {
+    args << QStringLiteral("--exclude-disk") << liveDisk;
   }
   m_proc->start(QStringLiteral("spike-rescue"), args);
   if (!m_proc->waitForStarted(5000)) {
@@ -250,6 +288,9 @@ void InstallEngine::startInstallAll()
     m_state.restoreStatus = QStringLiteral("pending");
   } else {
     m_state.restoreStatus = QStringLiteral("skipped");
+  }
+  if (m_state.autoLogin) {
+    args << QStringLiteral("--auto-login");
   }
 
   emit logLine(QStringLiteral("Starting privileged install on %1 …").arg(m_state.targetDisk));

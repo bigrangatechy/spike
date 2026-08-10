@@ -77,6 +77,7 @@ private:
   QLineEdit *m_username = nullptr;
   QLineEdit *m_password = nullptr;
   QLineEdit *m_password2 = nullptr;
+  QCheckBox *m_autoLogin = nullptr;
   QLineEdit *m_hostname = nullptr;
   QComboBox *m_variant = nullptr;
   QLabel *m_variantHint = nullptr;

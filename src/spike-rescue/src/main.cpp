@@ -131,7 +131,7 @@ int batchRecover(const QString &dest, int systemIndex, const QString &excludeDis
   for (int i = 0; i < engine.systems().size(); ++i) {
     const QString &path = engine.systems().at(i).partition.path;
     if (partitionOnDisk(path, excludeDisk)) {
-      err << QStringLiteral("skip (install target disk): %1\n").arg(path);
+      err << QStringLiteral("skip (excluded disk): %1\n").arg(path);
       err.flush();
       continue;
     }

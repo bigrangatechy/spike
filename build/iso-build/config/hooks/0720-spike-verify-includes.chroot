@@ -198,6 +198,70 @@ else
   fail=1
 fi
 
+# Desktop / hardware runtime — must be on the ISO (not optional Recommends).
+# Policy: build/iso-build/config/package-lists/README.md
+need_pkg() {
+  pkg="$1"
+  if ! dpkg-query -W -f='${Status}' "$pkg" 2>/dev/null | grep -q "install ok installed"; then
+    echo "E: required package missing from ISO: $pkg" >&2
+    fail=1
+  else
+    echo "I: required package present: $pkg"
+  fi
+}
+need_bin() {
+  bin="$1"
+  if ! command -v "$bin" >/dev/null 2>&1; then
+    echo "E: required binary missing from ISO: $bin" >&2
+    fail=1
+  else
+    echo "I: required binary present: $bin"
+  fi
+}
+
+need_pkg udisks2
+need_pkg gvfs
+need_pkg bluez
+need_pkg network-manager
+need_pkg pipewire
+need_pkg seatd
+need_pkg kwin-wayland
+need_pkg polkitd
+need_pkg linux-firmware-minimal
+need_pkg linux-firmware-intel-wireless
+need_pkg linux-firmware-realtek
+need_pkg linux-firmware-broadcom-wireless
+need_pkg linux-firmware-qualcomm-wireless
+need_pkg linux-firmware-misc
+need_pkg pciutils
+need_pkg usbutils
+need_pkg lshw
+need_pkg dmidecode
+
+need_bin udisksctl
+need_bin rfkill
+need_bin wmctrl
+need_bin brightnessctl
+need_bin bluetoothctl
+need_bin nmcli
+need_bin lsblk
+need_bin lspci
+need_bin lsusb
+
+if [ ! -x /usr/bin/spike-greeter ]; then
+  echo "E: spike-greeter missing (spike-shell package)" >&2
+  fail=1
+else
+  echo "I: spike-greeter present"
+fi
+if [ ! -f /lib/systemd/system/spike-greeter.service ] \
+   && [ ! -f /usr/lib/systemd/system/spike-greeter.service ]; then
+  echo "E: spike-greeter.service missing" >&2
+  fail=1
+else
+  echo "I: spike-greeter.service present"
+fi
+
 if [ "$fail" -ne 0 ]; then
   exit 1
 fi

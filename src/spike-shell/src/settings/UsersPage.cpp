@@ -64,6 +64,70 @@ bool changePassword(const QString &user, const QString &password, QString *error
   return true;
 }
 
+bool sudoSystemctl(const QStringList &args)
+{
+  QProcess proc;
+  proc.start(QStringLiteral("sudo"),
+             QStringList{QStringLiteral("-n"), QStringLiteral("systemctl")} + args);
+  return proc.waitForFinished(12000) && proc.exitCode() == 0;
+}
+
+bool applyAutoLoginDropIn(const QString &user, bool enable, QString *error)
+{
+  const QString conf = QStringLiteral("/etc/systemd/system/getty@tty1.service.d/autologin.conf");
+  if (!enable) {
+    QProcess proc;
+    proc.start(QStringLiteral("sudo"), {QStringLiteral("-n"), QStringLiteral("rm"),
+                                        QStringLiteral("-f"), conf});
+    if (!proc.waitForFinished(8000) || proc.exitCode() != 0) {
+      if (error) {
+        *error = QStringLiteral("could not remove autologin.conf (need sudo -n)");
+      }
+      return false;
+    }
+    // Graphical Spike greeter on tty1 (replaces text agetty).
+    sudoSystemctl({QStringLiteral("disable"), QStringLiteral("getty@tty1.service")});
+    if (!sudoSystemctl({QStringLiteral("enable"), QStringLiteral("spike-greeter.service")})) {
+      if (error) {
+        *error = QStringLiteral("could not enable spike-greeter (need sudo -n)");
+      }
+      return false;
+    }
+    sudoSystemctl({QStringLiteral("daemon-reload")});
+    return true;
+  }
+  const QString body =
+      QStringLiteral("[Service]\nExecStart=\nExecStart=-/sbin/agetty --autologin %1 --noclear "
+                     "%%I $TERM\nType=idle\n")
+          .arg(user);
+  QProcess mkdir;
+  mkdir.start(QStringLiteral("sudo"),
+              {QStringLiteral("-n"), QStringLiteral("mkdir"), QStringLiteral("-p"),
+               QStringLiteral("/etc/systemd/system/getty@tty1.service.d")});
+  mkdir.waitForFinished(5000);
+  QProcess tee;
+  tee.start(QStringLiteral("sudo"), {QStringLiteral("-n"), QStringLiteral("tee"), conf});
+  if (!tee.waitForStarted(3000)) {
+    if (error) {
+      *error = QStringLiteral("sudo/tee not available");
+    }
+    return false;
+  }
+  tee.write(body.toUtf8());
+  tee.closeWriteChannel();
+  if (!tee.waitForFinished(8000) || tee.exitCode() != 0) {
+    if (error) {
+      *error = QStringLiteral("could not write autologin.conf");
+    }
+    return false;
+  }
+  sudoSystemctl({QStringLiteral("disable"), QStringLiteral("--now"),
+                 QStringLiteral("spike-greeter.service")});
+  sudoSystemctl({QStringLiteral("enable"), QStringLiteral("getty@tty1.service")});
+  sudoSystemctl({QStringLiteral("daemon-reload")});
+  return true;
+}
+
 } // namespace
 
 QWidget *makeUsersPage(QWidget *parent, ConfigClient *config, QLabel *statusBar)
@@ -131,7 +195,7 @@ QWidget *makeUsersPage(QWidget *parent, ConfigClient *config, QLabel *statusBar)
 
   QObject::connect(reload, &QPushButton::clicked, w, load);
   QObject::connect(apply, &QPushButton::clicked, w,
-                   [config, autoLogin, status, statusBar, load]() {
+                   [config, autoLogin, status, statusBar, load, user]() {
                      if (!config) {
                        return;
                      }
@@ -141,13 +205,25 @@ QWidget *makeUsersPage(QWidget *parent, ConfigClient *config, QLabel *statusBar)
                        status->setText(QStringLiteral("SetSetting failed: %1").arg(err));
                        return;
                      }
-                     status->setText(isLiveSession()
-                                         ? QStringLiteral(
-                                               "auto_login saved for installed system (live session "
-                                               "already auto-logs in).")
-                                         : QStringLiteral(
-                                               "auto_login saved — session manager must honour it "
-                                               "(installer / display manager)."));
+                     if (!isLiveSession()) {
+                       QString applyErr;
+                       if (!applyAutoLoginDropIn(user, autoLogin->isChecked(), &applyErr)) {
+                         status->setText(QStringLiteral(
+                             "Saved preference, but could not update getty autologin: %1")
+                                             .arg(applyErr));
+                         return;
+                       }
+                       status->setText(
+                           autoLogin->isChecked()
+                               ? QStringLiteral(
+                                     "Auto-login enabled for next boot (tty1 getty).")
+                               : QStringLiteral(
+                                     "Auto-login off — next boot shows Spike graphical login."));
+                     } else {
+                       status->setText(QStringLiteral(
+                           "auto_login saved for installed system (live session already "
+                           "auto-logs in)."));
+                     }
                      if (statusBar) {
                        statusBar->setText(QStringLiteral("Users applied"));
                      }

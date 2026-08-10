@@ -145,13 +145,13 @@ write_snapshot_into() {
     loginctl list-sessions --no-legend 2>&1 || true
   } >"$cap/session.txt" 2>&1 || true
 
-  # Always keep a focused shell filter for quick reads.
+  # Always keep a focused shell/NM/night-light filter for quick reads.
   journalctl -b --no-pager \
-    -g 'spike-shell|spike-session|spike-config|kwin|wayland|libinput|seat|drm|LayerShell|spike-detect|pipewire|wireplumber|sof-|ASoC|pulse' \
+    -g 'spike-shell|spike-session|spike-config|spike-install|spike-rescue|kwin|NightLight|NightColor|NetworkManager|wayland|libinput|seat|drm|LayerShell|spike-detect|pipewire|wireplumber|sof-|ASoC|pulse' \
     >"$cap/journal-shell.txt" 2>&1 || true
 
-  # Audio diagnostics must run as the graphical session user — root has no
-  # XDG_RUNTIME_DIR / pulse socket (previous captures showed "Connection refused").
+  # Heavy audio dump only on --full / debug boots (SOF spam dominates otherwise).
+  if [ "$FULL" = 1 ]; then
   {
     echo "=== aplay -l ==="
     aplay -l 2>&1 || true
@@ -200,6 +200,9 @@ write_snapshot_into() {
     journalctl -b --no-pager -u 'pipewire*' -u 'wireplumber*' 2>&1 | tail -n 200 || true
     journalctl -b --no-pager -k 2>&1 | grep -iE 'sof-|ASoC|snd_|essx|pipewire' | tail -n 200 || true
   } >"$cap/audio/diagnostics.txt" 2>&1 || true
+  else
+    echo "audio diagnostics skipped (pass --full or boot with debug)" >"$cap/audio/README.txt"
+  fi
 
   if [ "$FULL" = 1 ]; then
     journalctl -b --no-pager >"$cap/journal-full.txt" 2>&1 || true

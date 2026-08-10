@@ -33,6 +33,7 @@ Install paths:
   /usr/bin/spike-session
   /usr/bin/spike-seed-home
   /usr/bin/spike-fix-mozilla-home
+  /usr/bin/spike-save-logs
   /usr/share/wayland-sessions/spike.desktop
   /etc/pam.d/spike-lock
 EOF
@@ -105,10 +106,20 @@ mkdir -p \
   "${DEST}/etc/pam.d"
 
 install -m 755 "${BUILD}/spike-shell" "${DEST}/usr/bin/spike-shell"
+install -m 755 "${BUILD}/spike-greeter" "${DEST}/usr/bin/spike-greeter"
 install -m 755 "${SRC}/session/spike-session" "${DEST}/usr/bin/spike-session"
 install -m 755 "${SRC}/session/spike-seed-home" "${DEST}/usr/bin/spike-seed-home"
 install -m 755 "${SRC}/session/spike-fix-mozilla-home" "${DEST}/usr/bin/spike-fix-mozilla-home"
+install -m 755 "${SRC}/session/spike-save-logs" "${DEST}/usr/bin/spike-save-logs"
 install -m 644 "${SRC}/session/spike.desktop" "${DEST}/usr/share/wayland-sessions/spike.desktop"
+mkdir -p "${DEST}/lib/systemd/system"
+install -m 644 "${SRC}/session/spike-greeter.service" \
+  "${DEST}/lib/systemd/system/spike-greeter.service"
+mkdir -p "${DEST}/usr/share/spike/desktop" "${DEST}/usr/share/applications"
+install -m 644 "${SRC}/session/spike-save-logs.desktop" \
+  "${DEST}/usr/share/spike/desktop/spike-save-logs.desktop"
+install -m 644 "${SRC}/session/spike-save-logs.desktop" \
+  "${DEST}/usr/share/applications/spike-save-logs.desktop"
 install -m 644 "${SRC}/pam/spike-lock" "${DEST}/etc/pam.d/spike-lock"
 # Minimal kscreenlocker LNF + plasma shell lockscreen (greeter looks at shell first)
 mkdir -p "${DEST}/usr/share/plasma/look-and-feel/org.kde.breeze.desktop/contents/lockscreen"
@@ -147,17 +158,21 @@ Section: x11
 Priority: optional
 Architecture: ${ARCH}
 Maintainer: BigRangaTech <spike@bigrangatech.com>
-Depends: libqt6widgets6 | libqt6widgets6t64, libqt6gui6 | libqt6gui6t64, libqt6core6t64 | libqt6core6, libqt6dbus6 | libqt6dbus6t64, qt6-wayland, liblayershellqtinterface6, layer-shell-qt, libkf6kcmutils6, libkf6kcmutilscore6, libkf6coreaddons6, libpam0g
-Recommends: kwin-wayland, xwayland, dbus-user-session, seatd, libseat1, breeze-cursor-theme, breeze-icon-theme, qt6-svg-plugins, spike-config, libkf6kcmutils-bin, pulseaudio-utils, upower, bluez, udisks2, rfkill, wmctrl, brightnessctl
+Depends: libqt6widgets6 | libqt6widgets6t64, libqt6gui6 | libqt6gui6t64, libqt6core6t64 | libqt6core6, libqt6dbus6 | libqt6dbus6t64, qt6-wayland, liblayershellqtinterface6, layer-shell-qt, libkf6kcmutils6, libkf6kcmutilscore6, libkf6coreaddons6, libpam0g, udisks2, gvfs, kwin-wayland, xwayland, dbus-user-session, seatd, libseat1, breeze-cursor-theme, breeze-icon-theme, qt6-svg-plugins, libkf6kcmutils-bin, pulseaudio-utils, upower, bluez, rfkill, wmctrl, brightnessctl, xdg-utils
+Recommends: spike-config, gvfs-backends, smartmontools, nm-connection-editor
 Description: Spike Linux desktop shell (Qt6 Widgets)
  Bottom panel, Kickoff launcher, Network/Volume/Battery tray applets, Settings
- (custom pages + in-window KCMs), Spike lock screen, session menu under standalone KWin.
- Stage 3 Alpha — see docs/DESKTOP.md.
+ (custom pages + in-window KCMs), Spike lock screen, spike-greeter login,
+ session menu under standalone KWin. Stage 3 Alpha — see docs/DESKTOP.md.
+ Runtime Depends ship on the ISO (see package-lists/README.md); do not thin
+ this list without updating spike-live.list.chroot + the verify hook.
 EOF
 
 find "${DEST}" -type d -exec chmod 755 {} +
-chmod 755 "${DEST}/usr/bin/spike-shell" "${DEST}/usr/bin/spike-session" \
-  "${DEST}/usr/bin/spike-seed-home" "${DEST}/usr/bin/spike-fix-mozilla-home"
+chmod 755 "${DEST}/usr/bin/spike-shell" "${DEST}/usr/bin/spike-greeter" \
+  "${DEST}/usr/bin/spike-session" \
+  "${DEST}/usr/bin/spike-seed-home" "${DEST}/usr/bin/spike-fix-mozilla-home" \
+  "${DEST}/usr/bin/spike-save-logs"
 
 mkdir -p "$OUT_DIR"
 dpkg-deb --root-owner-group --build "$DEST" "${OUT_DIR}/${DEB_NAME}"

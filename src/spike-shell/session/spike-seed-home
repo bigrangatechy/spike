@@ -45,6 +45,14 @@ for d in Desktop Documents Downloads Music Pictures Videos Templates Public; do
   ensure_dir "${HOME}/${d}"
 done
 
+# Desktop helper: copy diagnostics to a spare USB (live + installed).
+_logs_src="/usr/share/spike/desktop/spike-save-logs.desktop"
+_logs_dest="${HOME}/Desktop/Copy Spike Logs to USB.desktop"
+if [[ -f "$_logs_src" && ! -e "$_logs_dest" ]]; then
+  cp -f "$_logs_src" "$_logs_dest" 2>/dev/null || true
+  chmod 755 "$_logs_dest" 2>/dev/null || true
+fi
+
 # Mozilla Firefox / Thunderbird
 ensure_dir "${HOME}/.mozilla"
 ensure_dir "${HOME}/.mozilla/firefox"

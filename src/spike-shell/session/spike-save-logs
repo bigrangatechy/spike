@@ -1,0 +1,250 @@
+#!/bin/bash
+# Spike — save focused diagnostics to a USB stick (installed system or live).
+# Spec intent: Jessie plugs a spare USB, double-clicks Desktop icon, hands stick
+# to the agent via scripts/spike-collect-usb-logs.sh.
+#
+# Usage:
+#   spike-save-logs              # auto-pick a writable USB under /run/media or /media
+#   spike-save-logs /path/to/usb
+#   spike-save-logs --full       # also dump full journal + dmesg (large)
+set -euo pipefail
+
+FULL=0
+DEST_ROOT=""
+for arg in "$@"; do
+  case "$arg" in
+    --full|-f) FULL=1 ;;
+    --help|-h)
+      cat <<'EOF'
+Usage: spike-save-logs [--full] [USB_MOUNT]
+
+Writes spike-logs-<UTC>/ onto a USB stick with session, NM, KWin Night Light,
+journal (filtered), packages, and install.log when present.
+
+  --full   Also include full journal + dmesg (large; usually not needed)
+
+On the build host after you plug the stick in:
+  sudo ./scripts/spike-collect-usb-logs.sh /run/media/$USER/<stick>
+EOF
+      exit 0
+      ;;
+    -*)
+      echo "unknown option: $arg (try --help)" >&2
+      exit 1
+      ;;
+    *)
+      DEST_ROOT="$arg"
+      ;;
+  esac
+done
+
+TS="$(date -u +%Y%m%dT%H%M%SZ)"
+HOST="$(hostname 2>/dev/null || echo spike)"
+USER_NAME="$(id -un 2>/dev/null || echo unknown)"
+
+is_writable_dir() {
+  [ -d "$1" ] && [ -w "$1" ]
+}
+
+# Prefer an explicit path, else removable mounts under /run/media|/media,
+# else LABEL=writable (live USB), else fail clearly.
+pick_usb() {
+  if [ -n "$DEST_ROOT" ]; then
+    if is_writable_dir "$DEST_ROOT"; then
+      printf '%s\n' "$DEST_ROOT"
+      return 0
+    fi
+    echo "error: not a writable directory: $DEST_ROOT" >&2
+    return 1
+  fi
+
+  local cand root_src
+  root_src="$(findmnt -n -o SOURCE / 2>/dev/null || true)"
+  for base in "/run/media/${USER_NAME}" "/media/${USER_NAME}" /run/media /media; do
+    [ -d "$base" ] || continue
+    # Newest mounts first (likely the stick just plugged in).
+    while IFS= read -r cand; do
+      [ -n "$cand" ] || continue
+      is_writable_dir "$cand" || continue
+      # Skip obvious system paths
+      case "$cand" in
+        /media/writable|/mnt/writable|/cdrom|/log-persistence) continue ;;
+      esac
+      src="$(findmnt -n -o SOURCE -T "$cand" 2>/dev/null || true)"
+      # Skip if this is the root filesystem
+      if [ -n "$root_src" ] && [ "$src" = "$root_src" ]; then
+        continue
+      fi
+      printf '%s\n' "$cand"
+      return 0
+    done < <(find "$base" -mindepth 1 -maxdepth 2 -type d 2>/dev/null | sort -r)
+  done
+
+  if command -v findmnt >/dev/null 2>&1; then
+    local w
+    w="$(findmnt -n -o TARGET -S LABEL=writable 2>/dev/null || true)"
+    if [ -n "$w" ] && is_writable_dir "$w"; then
+      printf '%s\n' "$w"
+      return 0
+    fi
+  fi
+
+  for cand in /log-persistence /media/writable /mnt/writable; do
+    if is_writable_dir "$cand"; then
+      printf '%s\n' "$cand"
+      return 0
+    fi
+  done
+
+  echo "error: no writable USB found. Plug in a stick and mount it, then re-run:" >&2
+  echo "  spike-save-logs /run/media/${USER_NAME}/<stick-name>" >&2
+  return 1
+}
+
+USB="$(pick_usb)" || exit 1
+OUT="${USB}/spike-logs-${TS}"
+mkdir -p "$OUT" "$OUT/session-logs" "$OUT/config" "$OUT/network"
+
+notify() {
+  local msg="$1"
+  echo "$msg"
+  if command -v notify-send >/dev/null 2>&1; then
+    notify-send -a Spike "Spike logs" "$msg" 2>/dev/null || true
+  fi
+}
+
+{
+  echo "spike-logs ${TS}"
+  echo "host=${HOST} user=${USER_NAME}"
+  echo "full=${FULL}"
+  echo "usb=${USB}"
+  echo "cmdline: $(cat /proc/cmdline 2>/dev/null || true)"
+  echo "uname: $(uname -a 2>/dev/null || true)"
+  if [ -f /etc/spike/installed ]; then
+    echo "mode=installed"
+  else
+    echo "mode=live-or-unknown"
+  fi
+  echo "focus: session night-light networkmanager install backup"
+} >"$OUT/meta.txt"
+
+# Packages / versions
+{
+  dpkg -l 'spike-*' 'kwin-wayland' 'network-manager' 'packagekit' 2>&1 || true
+  command -v spike-shell spike-session spike-installer spike-rescue spike-config 2>&1 || true
+  spike-shell --version 2>&1 || true
+  spike-config --version 2>&1 || true
+} >"$OUT/packages.txt" 2>&1 || true
+
+# spike-config state (no secrets expected)
+{
+  spike-config --state 2>&1 || true
+} >"$OUT/spike-config-state.txt" 2>&1 || true
+
+# Session / seat
+{
+  echo "=== loginctl ==="
+  loginctl 2>&1 || true
+  echo "=== seat0 ==="
+  loginctl show-seat seat0 2>&1 || true
+  echo "=== env ==="
+  echo "XDG_SESSION_ID=${XDG_SESSION_ID:-}"
+  echo "XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR:-}"
+  echo "WAYLAND_DISPLAY=${WAYLAND_DISPLAY:-}"
+  echo "XDG_CURRENT_DESKTOP=${XDG_CURRENT_DESKTOP:-}"
+} >"$OUT/session.txt" 2>&1 || true
+
+# Copy session logs
+copied=0
+for f in \
+  "${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/spike-session.log" \
+  /var/log/spike/session-latest.log \
+  /var/log/spike-session-latest.log \
+  /var/log/spike/install.log \
+  /var/log/spike/install-from-live.log \
+  /var/log/spike/night-light.log \
+  "${XDG_STATE_HOME:-$HOME/.local/state}/spike/night-light.log" \
+  /var/log/spike/*.log
+do
+  [ -f "$f" ] || continue
+  cp -a "$f" "$OUT/session-logs/" 2>/dev/null || true
+  copied=1
+done
+if [ "$copied" -eq 0 ]; then
+  echo "no session logs under /var/log/spike or XDG_RUNTIME_DIR" >"$OUT/session-logs/README.txt"
+fi
+
+# KWin Night Light + plugins (the knobs we write)
+if [ -f "${HOME}/.config/kwinrc" ]; then
+  cp -a "${HOME}/.config/kwinrc" "$OUT/config/kwinrc" 2>/dev/null || true
+fi
+if [ -f /etc/xdg/kwinrc ]; then
+  cp -a /etc/xdg/kwinrc "$OUT/config/kwinrc.xdg" 2>/dev/null || true
+fi
+{
+  echo "=== NightLight D-Bus (if session bus) ==="
+  if [ -n "${DBUS_SESSION_BUS_ADDRESS:-}" ] || [ -S "${XDG_RUNTIME_DIR:-}/bus" ]; then
+    busctl --user introspect org.kde.KWin /org/kde/KWin/NightLight 2>&1 | head -n 80 || true
+    busctl --user get-property org.kde.KWin /org/kde/KWin/NightLight \
+      org.kde.KWin.NightLight enabled 2>&1 || true
+    busctl --user get-property org.kde.KWin /org/kde/KWin/NightLight \
+      org.kde.KWin.NightLight currentTemperature 2>&1 || true
+    busctl --user get-property org.kde.KWin /org/kde/KWin/NightLight \
+      org.kde.KWin.NightLight mode 2>&1 || true
+  else
+    echo "(no session bus — run from the desktop session)"
+  fi
+} >"$OUT/config/nightlight-dbus.txt" 2>&1 || true
+
+# NetworkManager (no secrets by default)
+{
+  echo "=== nmcli general ==="
+  nmcli general 2>&1 || true
+  echo "=== device ==="
+  nmcli -t device 2>&1 || true
+  echo "=== connections (no secrets) ==="
+  nmcli -t -f NAME,UUID,TYPE,DEVICE,FILENAME,AUTOCONNECT connection show 2>&1 || true
+  echo "=== active ==="
+  nmcli -t connection show --active 2>&1 || true
+  echo "=== system-connections listing ==="
+  ls -la /etc/NetworkManager/system-connections 2>&1 || true
+} >"$OUT/network/nmcli.txt" 2>&1 || true
+
+# Filtered journal — shell / kwin / NM / night light / installer
+journalctl -b --no-pager \
+  -g 'spike-shell|spike-session|spike-config|spike-install|spike-rescue|kwin|NightLight|NightColor|NetworkManager|nmcli|PackageKit|pkgcli|wayland|libinput|seat|drm|LayerShell' \
+  >"$OUT/journal-filtered.txt" 2>&1 || true
+
+journalctl -b --no-pager -u NetworkManager.service -u PackageKit.service \
+  >"$OUT/journal-nm-pk.txt" 2>&1 || true
+
+if [ "$FULL" = 1 ]; then
+  journalctl -b --no-pager >"$OUT/journal-full.txt" 2>&1 || true
+  dmesg >"$OUT/dmesg.txt" 2>&1 || true
+fi
+
+# Human README for Jessie / agent
+cat >"$OUT/README.txt" <<EOF
+Spike diagnostic bundle (${TS})
+
+What to do:
+  1. Safely eject this USB on Spike.
+  2. On the build PC: sudo ./scripts/spike-collect-usb-logs.sh /run/media/\$USER/<this-stick>
+  3. Tell the agent which spike-logs-* folder to read + what you saw on screen.
+
+Contents (focused — not a full system dump):
+  meta.txt                 — host / installed-vs-live
+  packages.txt             — spike-* package versions
+  spike-config-state.txt   — settings state
+  session-logs/            — spike-session + install.log
+  config/kwinrc            — Night Light keys
+  config/nightlight-dbus.txt
+  network/nmcli.txt        — Wi‑Fi / connections (no passwords)
+  journal-filtered.txt     — shell/kwin/NM/installer lines this boot
+EOF
+
+sync || true
+notify "Saved logs to ${OUT}"
+echo "$OUT" >"$OUT/CAPTURE_PATH.txt"
+ls -la "$OUT" || true
+exit 0

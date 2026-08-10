@@ -4,6 +4,34 @@ Append-only. Newest sessions at the **top**.
 
 ---
 
+## 2026-08-10 — ISO ships full desktop/hardware runtime
+
+Policy: squashfs must include everything Spike Shell + detect need — do not lean on `.deb` Recommends. ISO list gains bluez/rfkill/wmctrl/brightnessctl/gvfs-backends/smartmontools/nm-connection-editor/xdg-utils/linux-firmware-misc; shell **0.0.43** promotes those helpers to Depends; `0720-spike-verify-includes` fails the build if udisks2/firmware/greeter/etc. missing. Rebuild with installer **0.0.17** + shell **0.0.43**.
+
+---
+
+## 2026-08-10 — USB hotplug + Storage + graphical boot login
+
+Installed smoke: USB shows in `lsusb` but Discover/tray ignore it (no notify); Settings Storage thin; boot asks for login but only text agetty (graphical lock works after sleep).
+
+Fixes: ISO adds **udisks2**, **gvfs**, **exfatprogs**. Shell **0.0.42** — Removable Devices via UDisks2 ObjectManager + auto-mount + Notify; Settings → Storage Mount/Eject/Open; **spike-greeter** (linuxfb on tty1) when auto-login off. Installer **0.0.17** enables greeter / disables getty@tty1 (or reverse for auto-login). Rebuild → smoke plug USB + cold boot login UI.
+
+---
+
+## 2026-08-10 — installed-system logs → spare USB
+
+Drop heavy live audio dump from default `spike-capture-logs` (still on `--full`/debug boots). Live capture units already removed on install. Shell **0.0.41** `spike-save-logs` + Desktop **Copy Spike Logs to USB** + `/var/log/spike/night-light.log` on Apply. Installer **0.0.16** seeds Desktop icon, copies `install-from-live.log` onto target, drops live `spike-capture-logs` binary. Host: `spike-collect-usb-logs.sh` picks `spike-logs-*`. Rebuild → smoke → plug 64GB stick → copy logs.
+
+---
+
+## 2026-08-10 — installer backup/NM/autologin + night light + Sleep
+
+Installed smoke: backup step never saw OS; NM “no connections to copy” despite Wi‑Fi; night light still dead; logout restarted session (auto-login); need Sleep; want login prompt by default.
+
+Fixes: installer **0.0.14** — Step 7 backs up OS **on** the wipe disk (stop excluding target; exclude live USB only); rebuild Wi‑Fi keyfiles (nmcli `export` is VPN-only); optional auto-login checkbox **default off** (tty1 password login → `spike-session`). Shell **0.0.39** — Night Light writes `Mode=0` (Constant) + preview retries; session menu **Sleep**; Users Apply toggles getty autologin. Rebuild ISO.
+
+---
+
 ## 2026-08-10 — ISO build: packagekit-tools missing
 
 `lb` failed: `E: Unable to locate package packagekit-tools`. On Ubuntu resolute, `pkcon`/`packagekit-tools` are gone; PackageKit ships `pkgcli` in `packagekit`. Removed `packagekit-tools` from `spike-live.list.chroot`; shell **0.0.38** session refresh tries `pkcon` then `pkgcli refresh`. Rebuild ISO.

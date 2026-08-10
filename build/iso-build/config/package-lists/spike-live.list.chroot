@@ -156,9 +156,30 @@ usbutils
 lshw
 dmidecode
 
+# Removable media / Discover places / tray Disks & USB (DESKTOP.md)
+udisks2
+gvfs
+gvfs-backends
+exfatprogs
+
+# Desktop runtime helpers used by Spike Shell applets/Settings.
+# Policy: if the shell/hardware path calls a binary, ship it on the ISO.
+# Do NOT rely on .deb Recommends alone — live-build / apt often skips them.
+bluez
+rfkill
+wmctrl
+brightnessctl
+libkf6kcmutils-bin
+nm-connection-editor
+xdg-utils
+# Optional SMART for Storage page later; cheap and useful for support logs
+smartmontools
+
 # Prefer minimal firmware meta (linux-image-generic Depends: linux-firmware | linux-firmware-minimal).
 # Full linux-firmware meta also pulls datacenter blobs (Mellanox/Prestera/…) — keep those out.
 linux-firmware-minimal
+# Misc blobs (USB controllers, sensors, etc.) — Tier-1 revival laptops vary widely
+linux-firmware-misc
 
 # Ensure full gnupg in chroot (bootstrap-include also pulls this; listed for clarity).
 gnupg

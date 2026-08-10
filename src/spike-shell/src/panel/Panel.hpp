@@ -32,6 +32,7 @@ public:
 public slots:
   void openSettings(const QString &pageId = QString());
   void reloadDesktopSettings();
+  void persistNightLight(bool enabled, int temperature);
 
 private slots:
   void toggleLauncher();

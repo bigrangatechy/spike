@@ -737,26 +737,25 @@ At panel startup:
 
 - **DBus interface:** `org.freedesktop.UDisks2` 
 
-- **Tray icon:** USB drive icon (only shown when device is mounted) 
+- **Tray icon:** USB drive icon (shown when a removable filesystem is present)
 
 **Popup contents:**
 
 ```
-├── List of mounted removable devices
-│   ├── Device name
-│   ├── Mount point
-│   ├── Free space
-│   └── "Eject" button (safe removal)
-└── "Open in Dolphin" button (per device)
+├── List of removable volumes (mounted or not)
+│   ├── Device name / label
+│   ├── Mount point (or “not mounted”)
+│   ├── Open / Mount / Eject
+└── Auto-mount via UDisks2 on plug-in
 ```
 
-- **Conditional:** Only shown when at least one removable device is mounted 
+- **Conditional:** Shown when UDisks2 reports at least one non-system filesystem volume
 
 **Notifications:**
 
 ```
-├── Device connected: "USB drive detected. Click to open."
-└── Device safely removed: "USB drive can be safely unplugged."
+├── Device connected: "USB drive detected" (+ mount path when auto-mount succeeds)
+└── Device safely removed / ejected: tray Notify via org.freedesktop.Notifications
 ```
 
 ### 7. Update Notifier Applet
@@ -1075,7 +1074,7 @@ The settings panel is a hybrid: custom Spike pages for Spike-specific settings a
 ├── Boot (custom) — GRUB behavior, boot failure counter
 ├── Kernel Modules (custom) — blacklist editor → spike-blacklist.conf
 ├── Updates (custom) — update schedule / auto-security prefs
-├── Storage (custom) — lsblk + DetectHardware primary disk (read-only)
+├── Storage (custom) — lsblk inventory + UDisks2 Removable/USB Mount/Eject/Open
 └── Diagnostics (custom) — sectioned DetectHardware + copy report
 ```
 
@@ -1243,7 +1242,8 @@ Boot sequence (after kernel and systemd):
 ```
 ├── Themed with Spike branding (purple/cyan, Spike logo)
 ├── Username + password fields
-├── Auto-login: Optional, set during installer or in Settings → Users
+├── Auto-login: Optional, set during installer or in Settings → Users (default off)
+├── Graphical login: spike-greeter on tty1 when auto-login is off (Alpha; SDDM later)
 ├── Session: spike-session (only option — no dropdown)
 └── Power options: Restart, Shut Down (accessible without login)
 ```

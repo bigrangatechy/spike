@@ -141,6 +141,12 @@ Security fixes follow responsible disclosure. If a vulnerability is fixed before
 ├── shell **0.0.36**: panel open-app icons (KWin task list), Discover index refresh, plasma-systemmonitor
 ├── shell **0.0.37**: idle lock disabled; Spike LockScreen for greeter; Night Light via NightColor+preview
 ├── shell **0.0.38**: Discover refresh via `pkgcli` (Ubuntu resolute has no `packagekit-tools`)
+├── installer **0.0.14**: Step 7 backs up wipe-disk OS; NM Wi‑Fi keyfile handoff; auto-login opt-in (default off)
+├── shell **0.0.39**: Night Light Mode=Constant + preview retries; session Sleep; Users getty auto-login Apply
+├── shell **0.0.40** + installer **0.0.15**: Desktop **Copy Spike Logs to USB** (`spike-save-logs`); slim live audio capture
+├── shell **0.0.41** + installer **0.0.16**: night-light.log; install-from-live.log on target; drop live capture binary
+├── shell **0.0.42** + installer **0.0.17**: UDisks2 USB hotplug/notify; Storage Mount/Eject; spike-greeter on boot
+├── shell **0.0.43**: desktop/hardware helpers as Depends; ISO list + verify hook require them (no Recommends-only gaps)
 ├── **Alpha opened** (2026-08-09): installer E2E + blacklist smoke confirmed
 
 ├── spike-migration **0.0.1** + live Desktop: Install Spike / Rescue My Files / Move My Files
@@ -166,7 +172,7 @@ Security fixes follow responsible disclosure. If a vulnerability is fixed before
 
 **Changed:** SpikeBackup destination policy; docs status (prototyping in progress); Power Apply logind policy; Appearance vs Panel split
 
-**Fixed:** spike-config **0.0.6** — dbus-python 1.4 had no `dbus.Variant` (Settings Apply crash); shell **0.0.26** — Power Apply session tear-down via logind restart; shell **0.0.34** + AppArmor stubs — Firefox/Thunderbird “profile cannot be loaded”; shell **0.0.35** — Discover AppStream/Flatpak, LibreOffice user install dirs, KWin “screen locker is broken” (minimal breeze LockScreen.qml); ISO — drop nonexistent `packagekit-tools` (use `packagekit`/`pkgcli`)
+**Fixed:** spike-config **0.0.6** — dbus-python 1.4 had no `dbus.Variant` (Settings Apply crash); shell **0.0.26** — Power Apply session tear-down via logind restart; shell **0.0.34** + AppArmor stubs — Firefox/Thunderbird “profile cannot be loaded”; shell **0.0.35** — Discover AppStream/Flatpak, LibreOffice user install dirs, KWin “screen locker is broken” (minimal breeze LockScreen.qml); ISO — drop nonexistent `packagekit-tools` (use `packagekit`/`pkgcli`); installer **0.0.14** — Step 7 excluded wipe disk (reinstall backup always empty); NM `connection export` VPN-only so Wi‑Fi never copied
 
 **Removed:** (nothing)
 

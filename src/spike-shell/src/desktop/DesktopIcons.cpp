@@ -117,6 +117,19 @@ bool DesktopIcons::ensureSeeded()
       any = true;
     }
   }
+  // Always-useful tools (live + installed): copy logs to a spare USB.
+  const QString logsSrc =
+      QStringLiteral("/usr/share/spike/desktop/spike-save-logs.desktop");
+  const QString logsDest = dir + QStringLiteral("/Copy Spike Logs to USB.desktop");
+  if (QFile::exists(logsSrc) && !QFile::exists(logsDest)) {
+    if (QFile::copy(logsSrc, logsDest)) {
+      QFile::setPermissions(logsDest, QFileDevice::ReadOwner | QFileDevice::WriteOwner |
+                                          QFileDevice::ExeOwner | QFileDevice::ReadGroup |
+                                          QFileDevice::ExeGroup | QFileDevice::ReadOther |
+                                          QFileDevice::ExeOther);
+      any = true;
+    }
+  }
   return any;
 }
 

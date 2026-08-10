@@ -2,16 +2,22 @@
 
 #include "panel/applets/TrayHelpers.hpp"
 
+#include <QApplication>
 #include <QDBusConnection>
 #include <QDBusInterface>
 #include <QDBusMessage>
-#include <QDBusReply>
 #include <QCheckBox>
+#include <QDateTime>
+#include <QDir>
+#include <QFile>
 #include <QLabel>
+#include <QMetaObject>
 #include <QPushButton>
-#include <QSettings>
+#include <QRegularExpression>
 #include <QSlider>
 #include <QStandardPaths>
+#include <QTextStream>
+#include <QTimer>
 #include <QVBoxLayout>
 #include <QWidget>
 
@@ -25,20 +31,83 @@ QString kwinrcPath()
          QStringLiteral("/kwinrc");
 }
 
+void nightLightLog(const QString &line)
+{
+  // Prefer /var/log/spike (adm-writable on installed); fall back to ~/.local/state.
+  QString path = QStringLiteral("/var/log/spike/night-light.log");
+  QFile f(path);
+  if (!f.open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Text)) {
+    const QString homeLog =
+        QStandardPaths::writableLocation(QStandardPaths::GenericStateLocation) +
+        QStringLiteral("/spike");
+    QDir().mkpath(homeLog);
+    path = homeLog + QStringLiteral("/night-light.log");
+    f.setFileName(path);
+    if (!f.open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Text)) {
+      return;
+    }
+  }
+  QTextStream ts(&f);
+  ts << QDateTime::currentDateTimeUtc().toString(Qt::ISODate) << ' ' << line << '\n';
+}
+
+/** Write/merge NightColor keys; ensure nightlight plugin is on (Mode=0 Constant). */
 void writeNightColorConfig(bool enabled, int temperature)
 {
-  QSettings s(kwinrcPath(), QSettings::IniFormat);
-  s.beginGroup(QStringLiteral("NightColor"));
-  s.setValue(QStringLiteral("Active"), enabled);
-  // Constant = always use NightTemperature while Active (not schedule).
-  s.setValue(QStringLiteral("Mode"), QStringLiteral("Constant"));
-  s.setValue(QStringLiteral("NightTemperature"), temperature);
-  s.setValue(QStringLiteral("DayTemperature"), 6500);
-  s.endGroup();
-  s.beginGroup(QStringLiteral("Plugins"));
-  s.setValue(QStringLiteral("nightlightEnabled"), true);
-  s.endGroup();
-  s.sync();
+  const QString path = kwinrcPath();
+  QString text;
+  {
+    QFile in(path);
+    if (in.open(QIODevice::ReadOnly | QIODevice::Text)) {
+      text = QString::fromUtf8(in.readAll());
+    }
+  }
+
+  auto upsertGroup = [](QString *doc, const QString &group, const QStringList &lines) {
+    const QRegularExpression re(
+        QStringLiteral(R"((?ms)^\[%1\][^\n]*\n(?:(?!^\[).*\n)*)").arg(QRegularExpression::escape(group)));
+    QString block = QStringLiteral("[%1]\n").arg(group);
+    for (const QString &l : lines) {
+      block += l + QLatin1Char('\n');
+    }
+    if (re.match(*doc).hasMatch()) {
+      *doc = doc->replace(re, block);
+    } else {
+      if (!doc->isEmpty() && !doc->endsWith(QLatin1Char('\n'))) {
+        *doc += QLatin1Char('\n');
+      }
+      *doc += block;
+    }
+  };
+
+  upsertGroup(&text, QStringLiteral("NightColor"),
+              {QStringLiteral("Active=%1").arg(enabled ? QStringLiteral("true")
+                                                       : QStringLiteral("false")),
+               // KWin stores NightLightMode enum as int: Constant=0, DarkLight=1
+               QStringLiteral("Mode=0"), QStringLiteral("NightTemperature=%1").arg(temperature),
+               QStringLiteral("DayTemperature=6500")});
+
+  // Ensure plugin flag without wiping other [Plugins] keys.
+  if (text.contains(QLatin1String("[Plugins]"))) {
+    if (text.contains(QLatin1String("nightlightEnabled="))) {
+      text.replace(QRegularExpression(QStringLiteral(R"(nightlightEnabled=\S*)")),
+                   QStringLiteral("nightlightEnabled=true"));
+    } else {
+      text.replace(QStringLiteral("[Plugins]"),
+                   QStringLiteral("[Plugins]\nnightlightEnabled=true"));
+    }
+  } else {
+    if (!text.isEmpty() && !text.endsWith(QLatin1Char('\n'))) {
+      text += QLatin1Char('\n');
+    }
+    text += QStringLiteral("[Plugins]\nnightlightEnabled=true\n");
+  }
+
+  QFile out(path);
+  if (out.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text)) {
+    QTextStream ts(&out);
+    ts << text;
+  }
 }
 
 bool reconfigureKwin()
@@ -52,12 +121,32 @@ bool reconfigureKwin()
   return true;
 }
 
-QDBusInterface nightLightIface()
+void callPreview(bool enabled, int temperature)
 {
-  return QDBusInterface(QStringLiteral("org.kde.KWin"),
-                        QStringLiteral("/org/kde/KWin/NightLight"),
-                        QStringLiteral("org.kde.KWin.NightLight"),
-                        QDBusConnection::sessionBus());
+  if (enabled) {
+    QDBusMessage preview = QDBusMessage::createMethodCall(
+        QStringLiteral("org.kde.KWin"), QStringLiteral("/org/kde/KWin/NightLight"),
+        QStringLiteral("org.kde.KWin.NightLight"), QStringLiteral("preview"));
+    preview << static_cast<uint>(temperature);
+    const QDBusMessage reply = QDBusConnection::sessionBus().call(preview);
+    if (reply.type() == QDBusMessage::ErrorMessage) {
+      nightLightLog(QStringLiteral("preview(%1) error: %2")
+                        .arg(temperature)
+                        .arg(reply.errorMessage()));
+    } else {
+      nightLightLog(QStringLiteral("preview(%1) ok").arg(temperature));
+    }
+  } else {
+    QDBusMessage stop = QDBusMessage::createMethodCall(
+        QStringLiteral("org.kde.KWin"), QStringLiteral("/org/kde/KWin/NightLight"),
+        QStringLiteral("org.kde.KWin.NightLight"), QStringLiteral("stopPreview"));
+    const QDBusMessage reply = QDBusConnection::sessionBus().call(stop);
+    if (reply.type() == QDBusMessage::ErrorMessage) {
+      nightLightLog(QStringLiteral("stopPreview error: %1").arg(reply.errorMessage()));
+    } else {
+      nightLightLog(QStringLiteral("stopPreview ok"));
+    }
+  }
 }
 
 } // namespace
@@ -114,29 +203,29 @@ void NightLightApplet::applyFromConfig(bool enabled, int temperature)
 bool NightLightApplet::tryKwinSet(bool enabled, int temperature)
 {
   // KWin 6 NightLight D-Bus is mostly read-only; enablement lives in kwinrc
-  // [NightColor]. preview() applies temperature immediately while Active.
+  // [NightColor] with Mode=Constant (0). preview() applies temperature immediately.
+  nightLightLog(QStringLiteral("apply enabled=%1 temp=%2 kwinrc=%3")
+                    .arg(enabled ? QStringLiteral("true") : QStringLiteral("false"))
+                    .arg(temperature)
+                    .arg(kwinrcPath()));
   writeNightColorConfig(enabled, temperature);
-  reconfigureKwin();
+  const bool reconfigured = reconfigureKwin();
+  nightLightLog(QStringLiteral("reconfigure=%1").arg(reconfigured ? QStringLiteral("ok")
+                                                                  : QStringLiteral("fail")));
+  callPreview(enabled, temperature);
+  // Plugin may need a beat after reconfigure before preview sticks.
+  QTimer::singleShot(250, qApp, [enabled, temperature]() { callPreview(enabled, temperature); });
+  QTimer::singleShot(750, qApp, [enabled, temperature]() {
+    reconfigureKwin();
+    callPreview(enabled, temperature);
+  });
 
-  QDBusInterface night = nightLightIface();
-  if (!night.isValid()) {
-    // Plugin may need a moment after reconfigure; still wrote config.
-    return false;
-  }
-
-  if (enabled) {
-    QDBusMessage preview = QDBusMessage::createMethodCall(
-        QStringLiteral("org.kde.KWin"), QStringLiteral("/org/kde/KWin/NightLight"),
-        QStringLiteral("org.kde.KWin.NightLight"), QStringLiteral("preview"));
-    preview << static_cast<uint>(temperature);
-    QDBusConnection::sessionBus().call(preview);
-  } else {
-    QDBusMessage stop = QDBusMessage::createMethodCall(
-        QStringLiteral("org.kde.KWin"), QStringLiteral("/org/kde/KWin/NightLight"),
-        QStringLiteral("org.kde.KWin.NightLight"), QStringLiteral("stopPreview"));
-    QDBusConnection::sessionBus().call(stop);
-  }
-  return true;
+  QDBusInterface night(QStringLiteral("org.kde.KWin"), QStringLiteral("/org/kde/KWin/NightLight"),
+                       QStringLiteral("org.kde.KWin.NightLight"), QDBusConnection::sessionBus());
+  const bool valid = night.isValid();
+  nightLightLog(QStringLiteral("NightLight iface valid=%1")
+                    .arg(valid ? QStringLiteral("true") : QStringLiteral("false")));
+  return valid;
 }
 
 void NightLightApplet::refresh()
@@ -172,6 +261,16 @@ void NightLightApplet::onToggle(bool on)
   m_enabled = on;
   tryKwinSet(m_enabled, m_temperature);
   refresh();
+  // Persist via Panel → spike-config so Settings stays in sync.
+  QWidget *w = this;
+  while (w) {
+    if (w->objectName() == QLatin1String("SpikePanel")) {
+      QMetaObject::invokeMethod(w, "persistNightLight", Qt::QueuedConnection, Q_ARG(bool, on),
+                                Q_ARG(int, m_temperature));
+      break;
+    }
+    w = w->parentWidget();
+  }
 }
 
 void NightLightApplet::onTemp(int kelvin)
@@ -182,6 +281,15 @@ void NightLightApplet::onTemp(int kelvin)
   }
   if (m_enabled) {
     tryKwinSet(true, kelvin);
+    QWidget *w = this;
+    while (w) {
+      if (w->objectName() == QLatin1String("SpikePanel")) {
+        QMetaObject::invokeMethod(w, "persistNightLight", Qt::QueuedConnection, Q_ARG(bool, true),
+                                  Q_ARG(int, kelvin));
+        break;
+      }
+      w = w->parentWidget();
+    }
   }
 }
 

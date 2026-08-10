@@ -80,6 +80,11 @@ int conversation(int num_msg, const struct pam_message **msg, struct pam_respons
 
 bool pamAuthenticateUser(const QString &password, QString *errorOut)
 {
+  return pamAuthenticateLogin(QString::fromUtf8(qgetenv("USER")), password, errorOut);
+}
+
+bool pamAuthenticateLogin(const QString &username, const QString &password, QString *errorOut)
+{
   void *lib = dlopen("libpam.so.0", RTLD_LAZY | RTLD_LOCAL);
   if (!lib) {
     if (errorOut) {
@@ -108,26 +113,26 @@ bool pamAuthenticateUser(const QString &password, QString *errorOut)
     return false;
   }
 
+  const QByteArray user = username.toUtf8();
+  if (user.isEmpty()) {
+    dlclose(lib);
+    if (errorOut) {
+      *errorOut = QStringLiteral("Username required");
+    }
+    return false;
+  }
+
   ConvData data;
   data.password = password.toUtf8();
   pam_conv conv{};
   conv.conv = conversation;
   conv.appdata_ptr = &data;
 
-  const QByteArray user = qgetenv("USER");
-  if (user.isEmpty()) {
-    dlclose(lib);
-    if (errorOut) {
-      *errorOut = QStringLiteral("USER not set");
-    }
-    return false;
-  }
-
   pam_handle_t *pamh = nullptr;
+  // Greeter / lock: prefer spike-lock, then login.
   const char *service = "spike-lock";
   int rc = pam_start(service, user.constData(), &conv, &pamh);
   if (rc != PAM_SUCCESS) {
-    // Fall back to login if spike-lock is not installed yet.
     rc = pam_start("login", user.constData(), &conv, &pamh);
   }
   if (rc != PAM_SUCCESS || !pamh) {

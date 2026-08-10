@@ -185,6 +185,14 @@ void InstallWizard::buildUi()
     m_password2 = new QLineEdit(page);
     m_password2->setEchoMode(QLineEdit::Password);
     lay->addWidget(m_password2);
+    m_autoLogin = new QCheckBox(
+        QStringLiteral("Log in automatically (skip the login prompt on boot)"), page);
+    m_autoLogin->setChecked(false);
+    lay->addWidget(m_autoLogin);
+    lay->addWidget(new QLabel(
+        QStringLiteral("Default is a login prompt before the desktop (same as other OSes). "
+                       "You can change this later in Settings → Users."),
+        page));
     lay->addStretch(1);
     m_stack->addWidget(page);
   }
@@ -223,14 +231,14 @@ void InstallWizard::buildUi()
     auto *lay = new QVBoxLayout(page);
     lay->addWidget(new QLabel(QStringLiteral("<h2>Data backup (optional)</h2>"), page));
     lay->addWidget(new QLabel(
-        QStringLiteral("Optionally copy personal files from another OS on this machine to a "
-                       "USB (SpikeBackup/) before Spike erases the install disk. Uses the same "
-                       "engine as Rescue My Files."),
+        QStringLiteral("Optionally copy personal files from an OS on this machine to a "
+                       "USB (SpikeBackup/) before Spike erases the install disk — including "
+                       "the system on that disk. Uses the same engine as Rescue My Files."),
         page));
     m_doBackup = new QCheckBox(QStringLiteral("Back up files from this computer before install"),
                                page);
     lay->addWidget(m_doBackup);
-    lay->addWidget(new QLabel(QStringLiteral("System to back up (outside the wipe disk):"), page));
+    lay->addWidget(new QLabel(QStringLiteral("System to back up:"), page));
     m_backupSystemList = new QListWidget(page);
     lay->addWidget(m_backupSystemList);
     lay->addWidget(new QLabel(QStringLiteral("Backup destination (USB / writable):"), page));
@@ -369,7 +377,7 @@ void InstallWizard::refreshBackupUi()
   m_listSystemsBusy = true;
 
   m_listSystemsProc = new QProcess(this);
-  m_listSystemsProc->setProcessChannelMode(QProcess::MergedChannels);
+  m_listSystemsProc->setProcessChannelMode(QProcess::SeparateChannels);
   connect(m_listSystemsProc, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), this,
           &InstallWizard::onListSystemsFinished);
   m_listSystemsProc->start(QStringLiteral("spike-rescue"), {QStringLiteral("--list-systems")});
@@ -395,7 +403,8 @@ void InstallWizard::onListSystemsFinished(int /*exitCode*/, QProcess::ExitStatus
     return;
   }
 
-  const QString out = QString::fromUtf8(proc->readAll());
+  const QString out = QString::fromUtf8(proc->readAllStandardOutput());
+  const QString err = QString::fromUtf8(proc->readAllStandardError()).trimmed();
   proc->deleteLater();
 
   m_backupSystemList->clear();
@@ -415,8 +424,13 @@ void InstallWizard::onListSystemsFinished(int /*exitCode*/, QProcess::ExitStatus
     m_backupSystemList->addItem(item);
   }
   if (m_backupSystemList->count() == 0) {
-    m_backupSystemList->addItem(
-        QStringLiteral("(No systems found — plug in another disk or uncheck backup)"));
+    QString msg = QStringLiteral("(No systems found — check disks or uncheck backup)");
+    if (!err.isEmpty()) {
+      // Last non-empty stderr line is usually the scan summary.
+      const QStringList elines = err.split(QLatin1Char('\n'), Qt::SkipEmptyParts);
+      msg += QStringLiteral("\n") + elines.last();
+    }
+    m_backupSystemList->addItem(msg);
   } else {
     m_backupSystemList->setCurrentRow(0);
   }
@@ -687,6 +701,7 @@ void InstallWizard::syncStateFromPage(int index)
   case 3:
     m_state.username = m_username->text().trimmed();
     m_state.password = m_password->text();
+    m_state.autoLogin = m_autoLogin && m_autoLogin->isChecked();
     break;
   case 4:
     m_state.hostname = m_hostname->text().trimmed();
@@ -765,6 +780,12 @@ bool InstallWizard::validateCurrent()
                                               "uncheck backup to continue."));
       return false;
     }
+    if (!m_backupSystemList || !m_backupSystemList->currentItem() ||
+        m_backupSystemList->currentItem()->data(Qt::UserRole).toString().isEmpty()) {
+      QMessageBox::warning(this, QStringLiteral("Backup"),
+                           QStringLiteral("Select a system to back up (or uncheck backup)."));
+      return false;
+    }
     if (!m_backupDestList || !m_backupDestList->currentItem() ||
         m_backupDestList->currentItem()->data(Qt::UserRole).toString().isEmpty()) {
       QMessageBox::warning(this, QStringLiteral("Backup"),
@@ -824,6 +845,8 @@ QString InstallWizard::stateDump() const
   lines << QStringLiteral("username=%1").arg(m_state.username);
   lines << QStringLiteral("hostname=%1").arg(m_state.hostname);
   lines << QStringLiteral("variant=%1").arg(m_state.variant);
+  lines << QStringLiteral("autoLogin=%1").arg(m_state.autoLogin ? QStringLiteral("yes")
+                                                                  : QStringLiteral("no"));
   lines << QStringLiteral("doBackup=%1").arg(m_state.doBackup ? QStringLiteral("yes")
                                                               : QStringLiteral("no"));
   lines << QStringLiteral("backupDest=%1").arg(m_state.backupDestMount);

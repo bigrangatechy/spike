@@ -15,19 +15,19 @@
 | `dev-guide/` | 📝 Core filled (01–09, 12, 19); remaining stubs point at product docs |
 | agent-ops core | ✅ Written |
 | ISO / build tooling | ✅ live-build; hybrid remaster + debug capture |
-| Installer stack | ✅ **0.0.13** home seed + Wi‑Fi handoff; shell **0.0.38** |
+| Installer stack | ✅ **0.0.17** + shell **0.0.43** (ISO runtime Depends + greeter + USB) |
 | `scripts/build-iso.sh` | ✅ Packages config + shell + rescue + installer + **migration** + lb build |
 | Stage 1 live ISO | ✅ Hardware boot + login |
 | Stage 2 (`spike-config`) | ✅ **0.0.12** power profile live apply (governor + Wi‑Fi powersave) |
-| Stage 3 (Spike Shell) | 📝 **0.0.38** PackageKit `pkgcli`; prior lock/night-light; Rescue **0.0.12** |
-| Stage 4 (installer) | ✅ **0.0.13** — XDG/app home seed + NM connection copy |
+| Stage 3 (Spike Shell) | 📝 **0.0.43** full runtime Depends + UDisks/greeter; Rescue **0.0.12** |
+| Stage 4 (installer) | ✅ **0.0.17** — greeter when auto-login off; wipe-disk backup; Wi‑Fi keyfiles |
 | Preinstalled apps | 📝 Seeded: Mozilla FF/TB `.deb` + VLC + LibreOffice; Discover Flatpak/AppStream |
 
 ## In Progress
 
 | Item | Notes |
 | :-: | :-: |
-| Rebuild smoke | shell **0.0.38** + drop nonexistent `packagekit-tools`; prior **0.0.37** lock/night-light |
+| Rebuild smoke | installer **0.0.17** + shell **0.0.43**: verify hook + USB + cold-boot greeter |
 | Stage 3 — first-run polish | Wizard shipped **0.0.31**; tour/a11y/Flatpak/update hooks still placeholders |
 
 ## Default apps (Alpha — planned)
@@ -66,6 +66,8 @@ Implementation: `spike-live.list.chroot` + `config/spike-archives/` (staged by `
 
 | Date | Item |
 | :-: | :-: |
+| 2026-08-10 | shell **0.0.41** + installer **0.0.16**: USB save-logs; night-light.log; install-from-live.log on target |
+| 2026-08-10 | installer **0.0.14** + shell **0.0.39**: Step 7 backup on wipe disk; NM keyfiles; auto-login opt-in; night light; Sleep |
 | 2026-08-10 | ISO: drop `packagekit-tools` (not on resolute); shell **0.0.38** uses `pkgcli refresh` |
 | 2026-08-10 | shell **0.0.37**: disable idle kscreenlocker; Spike greeter QML on shell path; night light kwinrc+preview |
 | 2026-08-10 | shell **0.0.36**: panel task icons (KWin), Discover Flatpak/PackageKit refresh, plasma-systemmonitor |
@@ -85,7 +87,7 @@ Implementation: `spike-live.list.chroot` + `config/spike-archives/` (staged by `
 
 ## Next Suggested Work
 
-1. Rebuild ISO → smoke: Discover online (`pkgcli`), lock/night-light, task icons, System Monitor.  
+1. Rebuild ISO → smoke fixes + **Copy Spike Logs to USB** → collect `spike-logs-*` on host.  
 2. Confirm first-run wizard + brightness / block-sleep.  
 3. Fill first-run placeholder hooks as apps land.  
 4. spike-migration inventory/conflict UI (not Alpha-blocking).  

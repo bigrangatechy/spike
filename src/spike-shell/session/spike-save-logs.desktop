@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Copy Spike Logs to USB
+Comment=Save session / Night Light / Wi‑Fi diagnostics onto a plugged-in USB stick
+Exec=spike-save-logs
+Icon=document-save
+Terminal=true
+Categories=System;X-Spike-Tools;
+StartupNotify=true

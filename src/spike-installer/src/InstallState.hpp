@@ -17,6 +17,8 @@ struct InstallState {
   QString password; // kept in memory only; never logged
   QString hostname = QStringLiteral("spike");
   QString variant = QStringLiteral("standard"); // standard | plus
+  /** Installed system only — live ISO always auto-logs in as spike. Default off (AGENTS.md). */
+  bool autoLogin = false;
   bool doBackup = false;
   QString backupDestMount; // USB mount for Step 7
   QString backupSystemPartition; // e.g. /dev/sda2 from --list-systems

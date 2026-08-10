@@ -39,9 +39,10 @@ fi
 
 echo "Collecting from $SRC → $DEST_ROOT"
 copied=0
-# Top-level captures + casper install-logs (which may nest spike-capture under log/)
+# Top-level captures + casper install-logs + installed-system spike-logs bundles
 for d in \
   "$SRC"/spike-capture-* \
+  "$SRC"/spike-logs-* \
   "$SRC"/install-logs-* \
   "$SRC"/install-logs-*/log/spike-capture-*
 do
@@ -57,7 +58,7 @@ do
 done
 
 if [[ "$copied" -eq 0 ]]; then
-  echo "warning: no spike-capture-* or install-logs-* found under $SRC" >&2
+  echo "warning: no spike-capture-*/spike-logs-*/install-logs-* found under $SRC" >&2
   ls -la "$SRC" >&2 || true
   exit 2
 fi

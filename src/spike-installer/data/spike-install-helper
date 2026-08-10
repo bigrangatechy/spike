@@ -197,6 +197,17 @@ seed_installed_home() {
     mkdir -p "$home/$d"
   done
 
+  mkdir -p "$home/Desktop"
+  if [ -f /usr/share/spike/desktop/spike-save-logs.desktop ]; then
+    cp -f /usr/share/spike/desktop/spike-save-logs.desktop \
+      "$home/Desktop/Copy Spike Logs to USB.desktop" 2>/dev/null || true
+    chmod 755 "$home/Desktop/Copy Spike Logs to USB.desktop" 2>/dev/null || true
+  elif [ -f "$MNT/usr/share/spike/desktop/spike-save-logs.desktop" ]; then
+    cp -f "$MNT/usr/share/spike/desktop/spike-save-logs.desktop" \
+      "$home/Desktop/Copy Spike Logs to USB.desktop" 2>/dev/null || true
+    chmod 755 "$home/Desktop/Copy Spike Logs to USB.desktop" 2>/dev/null || true
+  fi
+
   # user-dirs.dirs so apps see the folders before first graphical login
   mkdir -p "$home/.config"
   cat >"$home/.config/user-dirs.dirs" <<'EOF'
@@ -223,63 +234,119 @@ EOF
 }
 
 # Copy live Wi‑Fi/Ethernet NetworkManager profiles into the installed root so
-# credentials from installer Step 3 survive reboot (INSTALLER.md).
+# credentials from installer Step 3 (or the shell network applet) survive reboot.
+# NOTE: `nmcli connection export` only supports VPN — build keyfiles ourselves.
 copy_network_connections() {
   dest="$MNT/etc/NetworkManager/system-connections"
   mkdir -p "$dest"
-  copied=0
 
-  # 1) Keyfiles already on the live system
-  if [ -d /etc/NetworkManager/system-connections ]; then
-    for f in /etc/NetworkManager/system-connections/*; do
+  # 1) Keyfiles already on the live system (any known location)
+  for dir in /etc/NetworkManager/system-connections \
+             /run/NetworkManager/system-connections \
+             /usr/lib/NetworkManager/system-connections; do
+    [ -d "$dir" ] || continue
+    for f in "$dir"/*; do
       [ -f "$f" ] || continue
       base="$(basename "$f")"
       case "$base" in
         .*|README*|default) continue ;;
       esac
-      cp -a "$f" "$dest/" && copied=$((copied + 1)) || true
+      cp -a "$f" "$dest/" || true
     done
-  fi
+  done
 
-  # 2) Export active / known wifi+ethernet via nmcli (covers user-scoped connects)
+  write_wifi_keyfile() {
+    uuid="$1"
+    name="$2"
+    ssid="$3"
+    psk="$4"
+    key_mgmt="$5"
+    safe="$(printf '%s' "$name" | tr -c 'A-Za-z0-9._-' '_')"
+    [ -n "$safe" ] || safe="$uuid"
+    out="$dest/${safe}.nmconnection"
+    {
+      printf '%s\n' '[connection]'
+      printf 'id=%s\n' "$name"
+      printf 'uuid=%s\n' "$uuid"
+      printf '%s\n' 'type=wifi'
+      printf '%s\n' 'autoconnect=true'
+      printf '%s\n' ''
+      printf '%s\n' '[wifi]'
+      printf '%s\n' 'mode=infrastructure'
+      printf 'ssid=%s\n' "$ssid"
+      printf '%s\n' ''
+      if [ -n "$psk" ]; then
+        printf '%s\n' '[wifi-security]'
+        printf 'key-mgmt=%s\n' "${key_mgmt:-wpa-psk}"
+        printf 'psk=%s\n' "$psk"
+        printf '%s\n' ''
+      fi
+      printf '%s\n' '[ipv4]'
+      printf '%s\n' 'method=auto'
+      printf '%s\n' ''
+      printf '%s\n' '[ipv6]'
+      printf '%s\n' 'method=auto'
+    } >"$out"
+  }
+
+  write_ethernet_keyfile() {
+    uuid="$1"
+    name="$2"
+    safe="$(printf '%s' "$name" | tr -c 'A-Za-z0-9._-' '_')"
+    [ -n "$safe" ] || safe="$uuid"
+    out="$dest/${safe}.nmconnection"
+    {
+      printf '%s\n' '[connection]'
+      printf 'id=%s\n' "$name"
+      printf 'uuid=%s\n' "$uuid"
+      printf '%s\n' 'type=ethernet'
+      printf '%s\n' 'autoconnect=true'
+      printf '%s\n' ''
+      printf '%s\n' '[ipv4]'
+      printf '%s\n' 'method=auto'
+      printf '%s\n' ''
+      printf '%s\n' '[ipv6]'
+      printf '%s\n' 'method=auto'
+    } >"$out"
+  }
+
+  # 2) Rebuild from nmcli (covers in-memory / user-scoped connects; export is VPN-only)
   if command -v nmcli >/dev/null 2>&1; then
+    # Prefer active connections first, then all wifi/ethernet.
     nmcli -t -f UUID,TYPE,NAME connection show 2>/dev/null | while IFS=: read -r uuid type name; do
       [ -n "$uuid" ] || continue
       case "$type" in
-        802-11-wireless|wifi|802-3-ethernet|ethernet) ;;
+        802-11-wireless|wifi)
+          # Prefer on-disk filename when NM already wrote a keyfile
+          fname="$(nmcli -g connection.filename connection show uuid "$uuid" 2>/dev/null || true)"
+          if [ -n "$fname" ] && [ -f "$fname" ]; then
+            base="$(basename "$fname")"
+            cp -a "$fname" "$dest/$base" 2>/dev/null || true
+            continue
+          fi
+          ssid="$(nmcli -g 802-11-wireless.ssid connection show uuid "$uuid" 2>/dev/null || true)"
+          [ -n "$ssid" ] || ssid="$name"
+          psk="$(nmcli -s -g 802-11-wireless-security.psk connection show uuid "$uuid" 2>/dev/null || true)"
+          key_mgmt="$(nmcli -g 802-11-wireless-security.key-mgmt connection show uuid "$uuid" 2>/dev/null || true)"
+          write_wifi_keyfile "$uuid" "${name:-$ssid}" "$ssid" "$psk" "$key_mgmt"
+          ;;
+        802-3-ethernet|ethernet)
+          fname="$(nmcli -g connection.filename connection show uuid "$uuid" 2>/dev/null || true)"
+          if [ -n "$fname" ] && [ -f "$fname" ]; then
+            base="$(basename "$fname")"
+            cp -a "$fname" "$dest/$base" 2>/dev/null || true
+            continue
+          fi
+          write_ethernet_keyfile "$uuid" "${name:-Wired}"
+          ;;
         *) continue ;;
       esac
-      safe="$(printf '%s' "$name" | tr -c 'A-Za-z0-9._-' '_')"
-      [ -n "$safe" ] || safe="$uuid"
-      out="$dest/${safe}.nmconnection"
-      if [ -f "$out" ]; then
-        continue
-      fi
-      tmp="$(mktemp)"
-      if nmcli connection export "$uuid" >"$tmp" 2>/dev/null && [ -s "$tmp" ]; then
-        # Ensure autoconnect for post-install first boot
-        if ! grep -q '^autoconnect=' "$tmp" 2>/dev/null; then
-          if grep -q '^\[connection\]' "$tmp"; then
-            sed -i '/^\[connection\]/a autoconnect=true' "$tmp" 2>/dev/null || true
-          fi
-        else
-          sed -i 's/^autoconnect=.*/autoconnect=true/' "$tmp" 2>/dev/null || true
-        fi
-        # Clear per-user permissions so the new user can use it
-        sed -i '/^permissions=/d' "$tmp" 2>/dev/null || true
-        mv -f "$tmp" "$out"
-        copied=$((copied + 1))
-      else
-        rm -f "$tmp"
-      fi
     done
   fi
 
-  # Fix ownership/mode for NM
   find "$dest" -type f -exec chmod 600 {} \; 2>/dev/null || true
   find "$dest" -type f -exec chown root:root {} \; 2>/dev/null || true
 
-  # Re-count (subshell may have lost copied for nmcli loop)
   n="$(find "$dest" -type f 2>/dev/null | wc -l | tr -d ' ')"
   n="${n:-0}"
   if [ "$n" -gt 0 ]; then
@@ -380,7 +447,7 @@ EOF
     shred -u "$pwfile" 2>/dev/null || rm -f "$pwfile"
   fi
 
-  # Mark installed system + tty1 autologin as the new user (Alpha desktop path).
+  # Mark installed system. Auto-login is optional (default: login prompt on tty1).
   mkdir -p "$MNT/etc/spike" "$MNT/etc/systemd/system/getty@tty1.service.d" \
     "$MNT/var/log/spike" "$MNT/var/lib/spike/installer-notifications"
   touch "$MNT/etc/spike/installed"
@@ -393,12 +460,30 @@ EOF
   # Allow the desktop user to write session logs (same path live capture reads).
   chroot "$MNT" usermod -aG adm "$user" 2>/dev/null || true
 
-  cat >"$MNT/etc/systemd/system/getty@tty1.service.d/autologin.conf" <<EOF
+  auto_login="${SPIKE_INSTALL_AUTO_LOGIN:-0}"
+  if [ "$auto_login" = "1" ] || [ "$auto_login" = "yes" ] || [ "$auto_login" = "true" ]; then
+    cat >"$MNT/etc/systemd/system/getty@tty1.service.d/autologin.conf" <<EOF
 [Service]
 ExecStart=
 ExecStart=-/sbin/agetty --autologin $user --noclear %I \$TERM
 Type=idle
 EOF
+    chroot "$MNT" systemctl disable spike-greeter.service 2>/dev/null || true
+    chroot "$MNT" systemctl enable getty@tty1.service 2>/dev/null || true
+    log "Enabled tty1 auto-login for $user (text getty → spike-session)"
+  else
+    # Graphical Spike greeter on tty1 (replaces text agetty login).
+    rm -f "$MNT/etc/systemd/system/getty@tty1.service.d/autologin.conf"
+    if [ -f "$MNT/usr/lib/systemd/system/spike-greeter.service" ] \
+       || [ -f "$MNT/lib/systemd/system/spike-greeter.service" ]; then
+      chroot "$MNT" systemctl disable getty@tty1.service 2>/dev/null || true
+      chroot "$MNT" systemctl enable spike-greeter.service 2>/dev/null \
+        || log "WARN: could not enable spike-greeter.service"
+      log "Enabled spike-greeter on tty1 (graphical login)"
+    else
+      log "WARN: spike-greeter.service missing — falling back to text getty login"
+    fi
+  fi
 
   # seatd is required for kwin --drm (live uses system seatd). Enable on install.
   if chroot "$MNT" sh -c 'command -v seatd >/dev/null && [ -f /lib/systemd/system/seatd.service -o -f /usr/lib/systemd/system/seatd.service ]'; then
@@ -408,9 +493,9 @@ EOF
     log "WARN: seatd not present in target — session may fall back to logind"
   fi
 
-  # Autostart Spike Shell on installed boots (live still uses boot=casper).
+  # Start Spike Shell after a successful tty1 login (password or auto-login).
   cat >"$MNT/etc/profile.d/99-spike-autostart-session.sh" <<'EOF'
-# Spike: start graphical session after tty1 autologin (live or installed).
+# Spike: start graphical session after tty1 login (live or installed).
 case "$-" in
   *i*) ;;
   *) return 0 ;;
@@ -474,7 +559,11 @@ EOF
   if [ -x "$MNT/usr/bin/spike-config" ]; then
     chroot "$MNT" spike-config --init-state 2>/dev/null || true
     chroot "$MNT" spike-config --state-set desktop variant "$variant" 2>/dev/null || true
-    chroot "$MNT" spike-config --state-set installer auto_login true 2>/dev/null || true
+    if [ "$auto_login" = "1" ] || [ "$auto_login" = "yes" ] || [ "$auto_login" = "true" ]; then
+      chroot "$MNT" spike-config --state-set installer auto_login true 2>/dev/null || true
+    else
+      chroot "$MNT" spike-config --state-set installer auto_login false 2>/dev/null || true
+    fi
     # Hardware detect on the *target machine* (sysfs already bind-mounted) fills
     # security.module_blacklist (KERNEL.md) before generate-all writes modprobe.d.
     log "Running spike-config --detect (hardware + module blacklist)"
@@ -777,6 +866,7 @@ parse_install_args() {
       --password-file) SPIKE_INSTALL_PASSWORD_FILE="${2:?}"; shift 2 ;;
       --confirm) SPIKE_INSTALL_CONFIRM="${2:?}"; shift 2 ;;
       --restore-session) SPIKE_INSTALL_RESTORE_SESSION="${2:?}"; shift 2 ;;
+      --auto-login) SPIKE_INSTALL_AUTO_LOGIN=1; shift ;;
       --) shift; break ;;
       -*) die "unknown install-all option: $1" ;;
       *) die "unexpected argument: $1" ;;
@@ -785,6 +875,7 @@ parse_install_args() {
   export SPIKE_INSTALL_DISK SPIKE_INSTALL_USER SPIKE_INSTALL_HOSTNAME
   export SPIKE_INSTALL_LANG SPIKE_INSTALL_TIMEZONE SPIKE_INSTALL_KEYBOARD SPIKE_INSTALL_VARIANT
   export SPIKE_INSTALL_PASSWORD_FILE SPIKE_INSTALL_CONFIRM SPIKE_INSTALL_RESTORE_SESSION
+  export SPIKE_INSTALL_AUTO_LOGIN
 }
 
 cmd_install_all() {
@@ -809,6 +900,16 @@ cmd_install_all() {
   else
     log "RESTORE_STATUS=skipped"
   fi
+  # Persist the live install transcript onto the installed disk for post-install USB copy.
+  if [ -f "$LOG" ] && [ -d "$MNT/var/log/spike" ]; then
+    cp -a "$LOG" "$MNT/var/log/spike/install-from-live.log" 2>/dev/null \
+      || log "WARN: could not copy install.log onto target"
+    chown root:adm "$MNT/var/log/spike/install-from-live.log" 2>/dev/null || true
+    chmod 664 "$MNT/var/log/spike/install-from-live.log" 2>/dev/null || true
+    log "Copied install transcript → /var/log/spike/install-from-live.log on target"
+  fi
+  # Live-only capture binary is useless installed (units already stripped).
+  rm -f "$MNT/usr/sbin/spike-capture-logs" 2>/dev/null || true
   cmd_umount
   log "=== Spike install finished OK ==="
   echo "OK"

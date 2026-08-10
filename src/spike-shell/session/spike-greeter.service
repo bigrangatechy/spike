@@ -1,0 +1,27 @@
+[Unit]
+Description=Spike graphical login greeter (tty1)
+Documentation=file:///usr/share/doc/spike-shell/README
+After=systemd-user-sessions.service seatd.service plymouth-quit.service
+Conflicts=getty@tty1.service
+ConditionPathExists=/etc/spike/installed
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/spike-greeter
+Restart=always
+RestartSec=2
+StandardInput=tty
+StandardOutput=tty
+StandardError=journal
+TTYPath=/dev/tty1
+TTYReset=yes
+TTYVHangup=yes
+TTYVTDisallocate=yes
+# linuxfb greeter; session starts via login -f after PAM.
+Environment=QT_QPA_PLATFORM=linuxfb
+Environment=XDG_RUNTIME_DIR=/run/spike-greeter
+ExecStartPre=/bin/mkdir -p /run/spike-greeter
+ExecStartPre=/bin/chmod 700 /run/spike-greeter
+
+[Install]
+WantedBy=multi-user.target

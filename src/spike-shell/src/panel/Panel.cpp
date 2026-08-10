@@ -270,6 +270,18 @@ void Panel::reloadDesktopSettings()
   }
 }
 
+void Panel::persistNightLight(bool enabled, int temperature)
+{
+  if (!m_config) {
+    return;
+  }
+  QString err;
+  m_config->setSetting(QStringLiteral("desktop"), QStringLiteral("night_light_enabled"), enabled,
+                       &err);
+  m_config->setSetting(QStringLiteral("desktop"), QStringLiteral("night_light_temperature"),
+                       temperature, &err);
+}
+
 void Panel::applyTrayVisibility(const QJsonObject &desktop)
 {
   QJsonObject tray;

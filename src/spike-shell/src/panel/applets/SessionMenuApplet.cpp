@@ -82,7 +82,7 @@ void SessionMenuApplet::showMenu()
   menu.addSeparator();
   QAction *lock = menu.addAction(QStringLiteral("Lock Screen"));
   QAction *logout = menu.addAction(QStringLiteral("Log out"));
-  QAction *suspend = menu.addAction(QStringLiteral("Suspend"));
+  QAction *suspend = menu.addAction(QStringLiteral("Sleep"));
   QAction *reboot = menu.addAction(QStringLiteral("Restart"));
   QAction *poweroff = menu.addAction(QStringLiteral("Shut down"));
 
@@ -109,8 +109,8 @@ void SessionMenuApplet::showMenu()
     }
   } else if (chosen == suspend) {
     if (SleepInhibit::instance().isActive()) {
-      if (!confirm(this, QStringLiteral("Suspend"),
-                   QStringLiteral("Sleep/locking block is on — suspend anyway?"))) {
+      if (!confirm(this, QStringLiteral("Sleep"),
+                   QStringLiteral("Sleep/locking block is on — sleep anyway?"))) {
         return;
       }
     }
