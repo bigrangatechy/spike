@@ -4,6 +4,12 @@ Append-only. Newest sessions at the **top**.
 
 ---
 
+## 2026-08-11 — Spike APT update plumbing (host deferred)
+
+Publish path ready before package-hosting hardware: `generate-spike-apt-key.sh` + `publish-spike-apt-repo.sh` → `build/apt-repo/`. ISO ships `spike.sources` (**Enabled: no**) + keyring + `unattended-upgrades`. Installer **0.0.20** seeds APT source on target; shell **0.0.47** Settings → Updates Apply wires Ubuntu security auto-install. Flip `Enabled: yes` + upload repo when `packages.bigrangatech.com` is live (`docs/UPDATES.md`).
+
+---
+
 ## 2026-08-11 — greeter vs quiet/splash (Plymouth)
 
 Likely what looked like “boot GUI login” earlier was sleep→SpikeLockScreen. Quiet ISO boots hold fb/DRM in Plymouth — greeter must wait. Shell **0.0.46**: `spike-greeter-prepare` (`plymouth quit --wait`, chvt 1, wait for fb/dri); unit After=`plymouth-quit-wait`; TTYVTDisallocate=no. Keep installer **0.0.19** greeter+getty fallback. Smoke on **quiet** (not only debug) boot.

@@ -78,6 +78,7 @@ Status legend:
 | ✅ | `KERNEL.md` | Kernel configuration, module management, boot parameters |
 | ✅ | `MEMORY.md` | ZRAM, swap, earlyoom, memory budget, RAM classification |
 | ✅ | `BOOT-PROCESS.md` | Boot sequence — GRUB, initramfs, spike-session, Plymouth handoff |
+| ✅ | `UPDATES.md` | Post-install updates — Ubuntu security, Spike APT, Discover/Flatpak |
 | ✅ | `CONFIGURATION.md` | spike-config system — state store, state.json, no config files |
 | ✅ | `VARIANT-DIFFERENCES.md` | Spike Standard vs Plus — detection, differences, switching |
 
@@ -186,6 +187,7 @@ Find documents by topic. A document may appear under multiple topics.
 
 ```
 ├── Boot sequence (full):              BOOT-PROCESS.md
+├── Post-install updates:            UPDATES.md
 ├── GRUB bootloader (theme):           BRANDING.md
 ├── GRUB bootloader (technical):       BOOT-PROCESS.md
 ├── GRUB theme development:            dev-guide/10-branding-and-theming.md 🔲

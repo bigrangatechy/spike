@@ -82,9 +82,18 @@ SPIKE_RESCUE_VERSION=0.0.9 ./scripts/package-spike-rescue.sh
 1. Rebuild ISO (`04-building-spike.md`) **or** for quick iteration on an existing stick, install the `.deb` inside a running live session only if you understand overlay limitations (prefer ISO rebuild for rescue helper/sudoers changes).
 2. Update `docs/agent-ops/STATE.md` with the new version when you ship a smoke-worthy bump.
 3. For Rescue/Shell UI changes, note the smoke checklist in `01-getting-started.md`.
+4. **Spike APT repo** (when package host is online) — see `docs/UPDATES.md`:
+
+```
+./scripts/generate-spike-apt-key.sh   # once
+./scripts/publish-spike-apt-repo.sh   # → build/apt-repo/
+# upload build/apt-repo/ to https://packages.bigrangatech.com/spike
+# set Enabled: yes in spike.sources (or SPIKE_APT_ENABLE=1)
+```
 
 ## Related
 
 - Host deps: `03-build-environment.md`
 - Full ISO: `04-building-spike.md`
+- Updates model: `../UPDATES.md`
 - Rescue internals: `08-rescue-tool-internals.md`

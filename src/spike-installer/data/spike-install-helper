@@ -356,6 +356,49 @@ copy_network_connections() {
   fi
 }
 
+# Ensure Spike APT source + keyring on the target (idempotent). Default Enabled: no
+# until https://packages.bigrangatech.com/spike is online (UPDATES.md).
+seed_spike_apt_source() {
+  mkdir -p "$MNT/usr/share/keyrings" "$MNT/etc/apt/sources.list.d" \
+    "$MNT/etc/apt/preferences.d"
+
+  if [ -f /usr/share/keyrings/spike-archive-keyring.gpg ]; then
+    cp -f /usr/share/keyrings/spike-archive-keyring.gpg \
+      "$MNT/usr/share/keyrings/spike-archive-keyring.gpg"
+  elif [ -f /etc/apt/trusted.gpg.d/spike.key ]; then
+    cp -f /etc/apt/trusted.gpg.d/spike.key \
+      "$MNT/usr/share/keyrings/spike-archive-keyring.gpg" 2>/dev/null || true
+  fi
+
+  if [ -f /etc/apt/sources.list.d/spike.sources ]; then
+    cp -f /etc/apt/sources.list.d/spike.sources "$MNT/etc/apt/sources.list.d/spike.sources"
+  elif [ ! -f "$MNT/etc/apt/sources.list.d/spike.sources" ]; then
+    cat >"$MNT/etc/apt/sources.list.d/spike.sources" <<'EOF'
+Types: deb
+URIs: https://packages.bigrangatech.com/spike
+Suites: spike
+Components: main
+Signed-By: /usr/share/keyrings/spike-archive-keyring.gpg
+Enabled: no
+EOF
+  fi
+
+  if [ -f /etc/apt/preferences.d/spike.pref ]; then
+    cp -f /etc/apt/preferences.d/spike.pref "$MNT/etc/apt/preferences.d/spike.pref"
+  fi
+
+  # Operators can force-enable at install time once the host answers.
+  if [ "${SPIKE_APT_ENABLE:-0}" = "1" ] || [ "${SPIKE_APT_ENABLE:-}" = "yes" ]; then
+    if [ -f "$MNT/etc/apt/sources.list.d/spike.sources" ]; then
+      sed -i 's/^Enabled:[[:space:]]*no/Enabled: yes/' \
+        "$MNT/etc/apt/sources.list.d/spike.sources" 2>/dev/null || true
+      log "Spike APT source Enabled: yes (SPIKE_APT_ENABLE)"
+    fi
+  else
+    log "Spike APT source present (Enabled: no until package host is online)"
+  fi
+}
+
 cmd_configure() {
   user="${SPIKE_INSTALL_USER:?}"
   host="${SPIKE_INSTALL_HOSTNAME:?}"
@@ -408,6 +451,9 @@ EOF
   # Copy live NetworkManager Wi‑Fi/Ethernet profiles into the installed system
   # so credentials from installer Step 3 work after reboot (INSTALLER.md).
   copy_network_connections
+
+  # Spike APT source + keyring (Enabled: no until packages.bigrangatech.com is live).
+  seed_spike_apt_source
 
   mount --bind /dev "$MNT/dev" 2>/dev/null || true
   mount --bind /proc "$MNT/proc" 2>/dev/null || true

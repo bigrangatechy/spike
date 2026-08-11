@@ -1,0 +1,9 @@
+# Spike component packages (shell, config, rescue, installer, migration).
+# Hosted at https://packages.bigrangatech.com/spike when the package host is online.
+# Until then keep Enabled: no so apt update does not fail on a missing mirror.
+Types: deb
+URIs: https://packages.bigrangatech.com/spike
+Suites: spike
+Components: main
+Signed-By: /usr/share/keyrings/spike-archive-keyring.gpg
+Enabled: no

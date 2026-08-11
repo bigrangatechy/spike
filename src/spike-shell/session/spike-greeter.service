@@ -4,7 +4,7 @@ Documentation=file:///usr/share/doc/spike-shell/README
 # Quiet/splash boots: wait until Plymouth fully releases the console/fb.
 After=systemd-user-sessions.service seatd.service
 After=plymouth-quit.service plymouth-quit-wait.service
-Wants=plymouth-quit.service
+Wants=plymouth-quit.service plymouth-quit-wait.service
 Conflicts=getty@tty1.service
 # If linuxfb greeter fails, bring text login back (avoid black screen after GRUB).
 OnFailure=getty@tty1.service
@@ -14,6 +14,9 @@ ConditionPathExists=/etc/spike/installed
 
 [Service]
 Type=simple
+# Order matters: runtime dir → release Plymouth/fb → greeter UI.
+ExecStartPre=/bin/mkdir -p /run/spike-greeter
+ExecStartPre=/bin/chmod 700 /run/spike-greeter
 ExecStartPre=/usr/lib/spike/spike-greeter-prepare
 ExecStart=/usr/bin/spike-greeter
 Restart=on-failure
@@ -30,8 +33,6 @@ TTYVTDisallocate=no
 Environment=QT_QPA_PLATFORM=linuxfb
 Environment=QT_QPA_FB=/dev/fb0
 Environment=XDG_RUNTIME_DIR=/run/spike-greeter
-ExecStartPre=/bin/mkdir -p /run/spike-greeter
-ExecStartPre=/bin/chmod 700 /run/spike-greeter
 
 [Install]
 WantedBy=multi-user.target

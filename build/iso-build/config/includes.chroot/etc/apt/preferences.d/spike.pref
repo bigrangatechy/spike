@@ -1,0 +1,4 @@
+# Prefer Spike component packages from the Spike APT archive when enabled.
+Package: spike-*
+Pin: origin packages.bigrangatech.com
+Pin-Priority: 1001

@@ -254,12 +254,38 @@ if [ ! -x /usr/bin/spike-greeter ]; then
 else
   echo "I: spike-greeter present"
 fi
+if [ ! -x /usr/lib/spike/spike-greeter-prepare ]; then
+  echo "E: spike-greeter-prepare missing" >&2
+  fail=1
+else
+  echo "I: spike-greeter-prepare present"
+fi
 if [ ! -f /lib/systemd/system/spike-greeter.service ] \
    && [ ! -f /usr/lib/systemd/system/spike-greeter.service ]; then
   echo "E: spike-greeter.service missing" >&2
   fail=1
 else
   echo "I: spike-greeter.service present"
+fi
+
+# Spike APT plumbing (Enabled: no until package host is online — UPDATES.md)
+if [ ! -f /usr/share/keyrings/spike-archive-keyring.gpg ]; then
+  echo "E: spike-archive-keyring.gpg missing" >&2
+  fail=1
+else
+  echo "I: spike-archive-keyring present"
+fi
+if [ ! -f /etc/apt/sources.list.d/spike.sources ]; then
+  echo "E: /etc/apt/sources.list.d/spike.sources missing" >&2
+  fail=1
+else
+  echo "I: spike.sources present"
+fi
+if ! dpkg-query -W -f='${Status}' unattended-upgrades 2>/dev/null | grep -q "install ok installed"; then
+  echo "E: unattended-upgrades package missing" >&2
+  fail=1
+else
+  echo "I: unattended-upgrades present"
 fi
 
 if [ "$fail" -ne 0 ]; then

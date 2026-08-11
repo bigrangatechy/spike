@@ -8,12 +8,101 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QLabel>
+#include <QProcess>
 #include <QPushButton>
 #include <QSpinBox>
 #include <QVBoxLayout>
 #include <QWidget>
 
 namespace spike {
+
+namespace {
+
+bool sudoWriteFile(const QString &path, const QByteArray &body, QString *error)
+{
+  QProcess tee;
+  tee.start(QStringLiteral("sudo"),
+            {QStringLiteral("-n"), QStringLiteral("tee"), path});
+  if (!tee.waitForStarted(3000)) {
+    if (error) {
+      *error = QStringLiteral("sudo/tee not available");
+    }
+    return false;
+  }
+  tee.write(body);
+  tee.closeWriteChannel();
+  if (!tee.waitForFinished(8000) || tee.exitCode() != 0) {
+    if (error) {
+      *error = QStringLiteral("could not write %1").arg(path);
+    }
+    return false;
+  }
+  return true;
+}
+
+bool sudoSystemctl(const QStringList &args)
+{
+  QProcess proc;
+  proc.start(QStringLiteral("sudo"),
+             QStringList{QStringLiteral("-n"), QStringLiteral("systemctl")} + args);
+  return proc.waitForFinished(12000) && proc.exitCode() == 0;
+}
+
+/** Apply Ubuntu security auto-install via unattended-upgrades (BOOT-PROCESS.md). */
+bool applyUnattendedSecurity(bool enable, QString *error)
+{
+  const QByteArray periodic = enable ? QByteArrayLiteral(
+      "// Written by Spike Settings → Updates\n"
+      "APT::Periodic::Update-Package-Lists \"1\";\n"
+      "APT::Periodic::Download-Upgradeable-Packages \"1\";\n"
+      "APT::Periodic::Unattended-Upgrade \"1\";\n"
+      "APT::Periodic::AutocleanInterval \"7\";\n")
+                                     : QByteArrayLiteral(
+                                           "// Written by Spike Settings → Updates\n"
+                                           "APT::Periodic::Update-Package-Lists \"1\";\n"
+                                           "APT::Periodic::Download-Upgradeable-Packages \"0\";\n"
+                                           "APT::Periodic::Unattended-Upgrade \"0\";\n"
+                                           "APT::Periodic::AutocleanInterval \"7\";\n");
+
+  const QByteArray origins = QByteArrayLiteral(
+      "// Written by Spike Settings → Updates — Ubuntu security only.\n"
+      "// Spike component packages stay notify/Discover (not silent).\n"
+      "Unattended-Upgrade::Allowed-Origins {\n"
+      "        \"${distro_id}:${distro_codename}-security\";\n"
+      "        \"${distro_id}ESMApps:${distro_codename}-apps-security\";\n"
+      "        \"${distro_id}ESM:${distro_codename}-infra-security\";\n"
+      "};\n"
+      "Unattended-Upgrade::Package-Blacklist {\n"
+      "        \"spike-shell\";\n"
+      "        \"spike-config\";\n"
+      "        \"spike-rescue\";\n"
+      "        \"spike-installer\";\n"
+      "        \"spike-migration\";\n"
+      "};\n"
+      "Unattended-Upgrade::Remove-Unused-Dependencies \"true\";\n"
+      "Unattended-Upgrade::Automatic-Reboot \"false\";\n");
+
+  if (!sudoWriteFile(QStringLiteral("/etc/apt/apt.conf.d/20auto-upgrades"), periodic, error)) {
+    return false;
+  }
+  if (enable) {
+    if (!sudoWriteFile(QStringLiteral("/etc/apt/apt.conf.d/51spike-unattended-upgrades"), origins,
+                       error)) {
+      return false;
+    }
+    sudoSystemctl({QStringLiteral("enable"), QStringLiteral("--now"),
+                   QStringLiteral("unattended-upgrades.service")});
+  } else {
+    QProcess rm;
+    rm.start(QStringLiteral("sudo"),
+             {QStringLiteral("-n"), QStringLiteral("rm"), QStringLiteral("-f"),
+              QStringLiteral("/etc/apt/apt.conf.d/51spike-unattended-upgrades")});
+    rm.waitForFinished(5000);
+  }
+  return true;
+}
+
+} // namespace
 
 QWidget *makeUpdatesPage(QWidget *parent, ConfigClient *config, QLabel *statusBar)
 {
@@ -22,8 +111,9 @@ QWidget *makeUpdatesPage(QWidget *parent, ConfigClient *config, QLabel *statusBa
   lay->addWidget(new QLabel(QStringLiteral("<h2>Updates</h2>"), w));
   auto *hint = new QLabel(
       QStringLiteral(
-          "Stores update policy in org.spike.Config updates. "
-          "Unattended-upgrade / Flatpak hooks land later — prefs are saved for the installed system."),
+          "Ubuntu security updates can install automatically. Spike packages "
+          "(shell, rescue, …) and other apps notify via Discover / the tray — "
+          "see UPDATES.md. Spike APT stays Enabled: no until the package host is online."),
       w);
   hint->setWordWrap(true);
   lay->addWidget(hint);
@@ -116,8 +206,19 @@ QWidget *makeUpdatesPage(QWidget *parent, ConfigClient *config, QLabel *statusBa
                          !set(QStringLiteral("never_force_reboot"), neverReboot->isChecked())) {
                        return;
                      }
-                     status->setText(QStringLiteral(
-                         "Saved update policy (no unattended-upgrades generator yet)."));
+                     QString applyErr;
+                     if (!applyUnattendedSecurity(securityAuto->isChecked(), &applyErr)) {
+                       status->setText(QStringLiteral(
+                           "Saved preference, but could not configure unattended-upgrades: %1 "
+                           "(need sudo -n)")
+                                           .arg(applyErr));
+                       return;
+                     }
+                     status->setText(
+                         securityAuto->isChecked()
+                             ? QStringLiteral(
+                                   "Security auto-install enabled (Ubuntu -security only).")
+                             : QStringLiteral("Security auto-install disabled."));
                      if (statusBar) {
                        statusBar->setText(QStringLiteral("Updates applied"));
                      }

@@ -15,19 +15,20 @@
 | `dev-guide/` | 📝 Core filled (01–09, 12, 19); remaining stubs point at product docs |
 | agent-ops core | ✅ Written |
 | ISO / build tooling | ✅ live-build; hybrid remaster + debug capture |
-| Installer stack | ✅ **0.0.19** + shell **0.0.46** + rescue **0.0.13** (greeter + getty fallback; backup timeouts) |
+| Installer stack | ✅ **0.0.20** + shell **0.0.47** + rescue **0.0.13** (Spike APT plumbing; greeter; backup) |
 | `scripts/build-iso.sh` | ✅ Packages config + shell + rescue + installer + **migration** + lb build |
 | Stage 1 live ISO | ✅ Hardware boot + login |
 | Stage 2 (`spike-config`) | ✅ **0.0.12** power profile live apply (governor + Wi‑Fi powersave) |
-| Stage 3 (Spike Shell) | 📝 **0.0.46** greeter + getty OnFailure; UDisks; Rescue **0.0.13** |
-| Stage 4 (installer) | ✅ **0.0.19** — greeter + getty fallback; backup --partition |
+| Stage 3 (Spike Shell) | 📝 **0.0.47** Updates Apply + greeter + getty OnFailure; UDisks; Rescue **0.0.13** |
+| Stage 4 (installer) | ✅ **0.0.20** — Spike APT seed + greeter + getty fallback; backup --partition |
 | Preinstalled apps | 📝 Seeded: Mozilla FF/TB `.deb` + VLC + LibreOffice; Discover Flatpak/AppStream |
 
 ## In Progress
 
 | Item | Notes |
 | :-: | :-: |
-| Rebuild smoke | installer **0.0.19** + rescue **0.0.13** + shell **0.0.46**: greeter UI + backup scan |
+| Rebuild smoke | installer **0.0.20** + rescue **0.0.13** + shell **0.0.47**: greeter UI + backup scan |
+| Spike APT host | Waiting on hosting hardware — plumbing shipped (`UPDATES.md`, Enabled: no) |
 | Stage 3 — first-run polish | Wizard shipped **0.0.31**; tour/a11y/Flatpak/update hooks still placeholders |
 
 ## Default apps (Alpha — planned)

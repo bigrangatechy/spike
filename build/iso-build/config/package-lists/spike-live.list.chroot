@@ -162,6 +162,9 @@ gvfs
 gvfs-backends
 exfatprogs
 
+# Security updates (BOOT-PROCESS.md / UPDATES.md) — Settings → Updates can enable
+unattended-upgrades
+
 # Desktop runtime helpers used by Spike Shell applets/Settings.
 # Policy: if the shell/hardware path calls a binary, ship it on the ISO.
 # Do NOT rely on .deb Recommends alone — live-build / apt often skips them.

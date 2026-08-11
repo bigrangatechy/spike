@@ -230,6 +230,49 @@ stage_mozilla_archives() {
   echo "Staged Mozilla APT archives → config/archives/"
 }
 
+# Spike APT keyring + sources for the squashfs (Enabled: no until host is online).
+# Do NOT copy spike.list into config/archives/ while the HTTPS host is down —
+# live-build would apt-update against a dead mirror and fail.
+stage_spike_archives() {
+  local src="${RECIPE}/config/spike-archives"
+  local keyring_dir="${RECIPE}/config/includes.chroot/usr/share/keyrings"
+  local sources_dir="${RECIPE}/config/includes.chroot/etc/apt/sources.list.d"
+  local prefs_dir="${RECIPE}/config/includes.chroot/etc/apt/preferences.d"
+  if [[ ! -f "${src}/spike.key" ]]; then
+    echo "error: missing ${src}/spike.key (run ./scripts/generate-spike-apt-key.sh)" >&2
+    exit 4
+  fi
+  if [[ ! -f "${sources_dir}/spike.sources" ]]; then
+    echo "error: missing ${sources_dir}/spike.sources" >&2
+    exit 4
+  fi
+  mkdir -p "$keyring_dir" "$prefs_dir"
+  if command -v gpg >/dev/null 2>&1; then
+    gpg --batch --yes --dearmor -o "${keyring_dir}/spike-archive-keyring.gpg" "${src}/spike.key"
+  else
+    echo "error: gpg required to dearmor spike.key" >&2
+    exit 4
+  fi
+  if [[ -f "${src}/spike.pref" ]]; then
+    cp -f "${src}/spike.pref" "${prefs_dir}/spike.pref"
+  fi
+  # Optional: enable Spike archive during ISO build when host is known-good.
+  if [[ "${SPIKE_APT_ENABLE:-0}" = "1" ]]; then
+    local dest="${RECIPE}/config/archives"
+    mkdir -p "$dest"
+    if [[ -f "${src}/spike.list" ]] && grep -qE '^[[:space:]]*deb ' "${src}/spike.list"; then
+      cp -f "${src}/spike.list" "${dest}/spike.list"
+      cp -f "${src}/spike.pref" "${dest}/spike.pref" 2>/dev/null || true
+      gpg --batch --yes --dearmor -o "${dest}/spike.key" "${src}/spike.key"
+      echo "Staged Spike APT into config/archives/ (SPIKE_APT_ENABLE=1)"
+    else
+      echo "WARN: SPIKE_APT_ENABLE=1 but spike.list has no active deb line" >&2
+    fi
+  else
+    echo "Spike APT sources on image (Enabled: no) — set SPIKE_APT_ENABLE=1 when host is live"
+  fi
+}
+
 inject_local_debs() {
   # Build Spike .debs and stage via includes.chroot + hook (dpkg -i).
   # Do NOT use config/packages.chroot/: live-build signs that local repo with
@@ -240,6 +283,7 @@ inject_local_debs() {
   mkdir -p "$pkg_dir" "$inc_dir"
 
   stage_mozilla_archives
+  stage_spike_archives
 
   echo "Packaging spike-config ..."
   "${ROOT}/scripts/package-spike-config.sh" --out "$pkg_dir"

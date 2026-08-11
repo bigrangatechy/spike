@@ -1,0 +1,6 @@
+# Spike APT — tracked template (NOT staged into live-build config/archives/
+# until packages.bigrangatech.com answers — otherwise lb apt update fails).
+# Installed systems use includes.chroot …/spike.sources (Enabled: no by default).
+#
+# When hosting is live, set Enabled: yes in spike.sources. Optional live-build stage:
+# deb [signed-by=/usr/share/keyrings/spike-archive-keyring.gpg] https://packages.bigrangatech.com/spike spike main

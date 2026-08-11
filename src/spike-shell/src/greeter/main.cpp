@@ -66,7 +66,7 @@ int main(int argc, char *argv[])
   QApplication app(argc, argv);
   QApplication::setApplicationName(QStringLiteral("spike-greeter"));
   QApplication::setOrganizationName(QStringLiteral("Spike"));
-  QApplication::setApplicationVersion(QStringLiteral("0.0.46"));
+  QApplication::setApplicationVersion(QStringLiteral("0.0.47"));
 
   auto *win = new QWidget;
   win->setObjectName(QStringLiteral("SpikeGreeter"));
