@@ -1,6 +1,6 @@
 # Spike Agent Ops — Current State
 
-**Last updated:** 2026-08-10  
+**Last updated:** 2026-08-11  
 **Phase label:** **Alpha** (installer E2E met — live → install → reboot to installed desktop)  
 **Note:** Pre-alpha gate from `DECISIONS.md` is closed. Alpha focus: Tier‑1 desktop completeness (preinstalled apps, first-run polish, hardware matrix). Beta is still later. See `ROADMAP.md` Phase 2.
 
@@ -15,19 +15,19 @@
 | `dev-guide/` | 📝 Core filled (01–09, 12, 19); remaining stubs point at product docs |
 | agent-ops core | ✅ Written |
 | ISO / build tooling | ✅ live-build; hybrid remaster + debug capture |
-| Installer stack | ✅ **0.0.17** + shell **0.0.43** (ISO runtime Depends + greeter + USB) |
+| Installer stack | ✅ **0.0.19** + shell **0.0.46** + rescue **0.0.13** (greeter + getty fallback; backup timeouts) |
 | `scripts/build-iso.sh` | ✅ Packages config + shell + rescue + installer + **migration** + lb build |
 | Stage 1 live ISO | ✅ Hardware boot + login |
 | Stage 2 (`spike-config`) | ✅ **0.0.12** power profile live apply (governor + Wi‑Fi powersave) |
-| Stage 3 (Spike Shell) | 📝 **0.0.43** full runtime Depends + UDisks/greeter; Rescue **0.0.12** |
-| Stage 4 (installer) | ✅ **0.0.17** — greeter when auto-login off; wipe-disk backup; Wi‑Fi keyfiles |
+| Stage 3 (Spike Shell) | 📝 **0.0.46** greeter + getty OnFailure; UDisks; Rescue **0.0.13** |
+| Stage 4 (installer) | ✅ **0.0.19** — greeter + getty fallback; backup --partition |
 | Preinstalled apps | 📝 Seeded: Mozilla FF/TB `.deb` + VLC + LibreOffice; Discover Flatpak/AppStream |
 
 ## In Progress
 
 | Item | Notes |
 | :-: | :-: |
-| Rebuild smoke | installer **0.0.17** + shell **0.0.43**: verify hook + USB + cold-boot greeter |
+| Rebuild smoke | installer **0.0.19** + rescue **0.0.13** + shell **0.0.46**: greeter UI + backup scan |
 | Stage 3 — first-run polish | Wizard shipped **0.0.31**; tour/a11y/Flatpak/update hooks still placeholders |
 
 ## Default apps (Alpha — planned)

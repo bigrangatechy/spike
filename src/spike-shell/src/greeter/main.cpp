@@ -54,14 +54,19 @@ QString defaultUsername()
 
 int main(int argc, char *argv[])
 {
-  // Prefer linuxfb on a bare VT; fall back to eglfs / wayland if set by env.
+  // Bare VT after Plymouth: linuxfb. Allow override (eglfs/kms) via env for debug.
   if (qEnvironmentVariableIsEmpty("QT_QPA_PLATFORM")) {
     qputenv("QT_QPA_PLATFORM", "linuxfb");
+  }
+  if (qEnvironmentVariableIsEmpty("QT_QPA_FB") &&
+      qgetenv("QT_QPA_PLATFORM").startsWith("linuxfb")) {
+    qputenv("QT_QPA_FB", "/dev/fb0");
   }
 
   QApplication app(argc, argv);
   QApplication::setApplicationName(QStringLiteral("spike-greeter"));
   QApplication::setOrganizationName(QStringLiteral("Spike"));
+  QApplication::setApplicationVersion(QStringLiteral("0.0.46"));
 
   auto *win = new QWidget;
   win->setObjectName(QStringLiteral("SpikeGreeter"));

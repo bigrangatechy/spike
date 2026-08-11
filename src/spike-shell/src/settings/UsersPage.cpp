@@ -85,11 +85,13 @@ bool applyAutoLoginDropIn(const QString &user, bool enable, QString *error)
       }
       return false;
     }
-    // Graphical Spike greeter on tty1 (replaces text agetty).
-    sudoSystemctl({QStringLiteral("disable"), QStringLiteral("getty@tty1.service")});
+    // Enable greeter + keep getty as OnFailure fallback (never disable getty —
+    // that left a black VT when linuxfb failed).
+    sudoSystemctl({QStringLiteral("enable"), QStringLiteral("getty@tty1.service")});
     if (!sudoSystemctl({QStringLiteral("enable"), QStringLiteral("spike-greeter.service")})) {
       if (error) {
-        *error = QStringLiteral("could not enable spike-greeter (need sudo -n)");
+        *error = QStringLiteral(
+            "could not enable spike-greeter (need sudo -n); getty left enabled");
       }
       return false;
     }
@@ -218,7 +220,8 @@ QWidget *makeUsersPage(QWidget *parent, ConfigClient *config, QLabel *statusBar)
                                ? QStringLiteral(
                                      "Auto-login enabled for next boot (tty1 getty).")
                                : QStringLiteral(
-                                     "Auto-login off — next boot shows Spike graphical login."));
+                                     "Auto-login off — Spike greeter on boot "
+                                     "(getty fallback if greeter fails)."));
                      } else {
                        status->setText(QStringLiteral(
                            "auto_login saved for installed system (live session already "

@@ -162,11 +162,41 @@ void InstallEngine::startBackupThenInstall()
     return;
   }
 
+  const QString liveDisk = detectLiveInstallDisk();
+
+  // Prefer the system the user already picked on the backup page — avoid a second
+  // blocking --list-systems (that froze the install UI for up to 3 minutes).
+  if (!m_state.backupSystemPartition.isEmpty()) {
+    emit logLine(QStringLiteral("Step 7: backing up %1 → %2")
+                     .arg(m_state.backupSystemPartition, m_state.backupDestMount));
+    m_phase = Phase::Backup;
+    if (m_proc) {
+      m_proc->deleteLater();
+    }
+    m_proc = new QProcess(this);
+    m_proc->setProcessChannelMode(QProcess::MergedChannels);
+    connect(m_proc, &QProcess::readyRead, this, &InstallEngine::onReadyRead);
+    connect(m_proc, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), this,
+            &InstallEngine::onProcessFinished);
+
+    QStringList args = {QStringLiteral("--batch-recover"), QStringLiteral("--dest"),
+                        m_state.backupDestMount, QStringLiteral("--partition"),
+                        m_state.backupSystemPartition};
+    if (!liveDisk.isEmpty()) {
+      args << QStringLiteral("--exclude-disk") << liveDisk;
+    }
+    m_proc->start(QStringLiteral("spike-rescue"), args);
+    if (!m_proc->waitForStarted(5000)) {
+      emitFinished(false, QStringLiteral("spike-rescue failed to start (is spike-rescue installed?)"));
+    }
+    return;
+  }
+
   emit logLine(QStringLiteral("Step 7: scanning systems (spike-rescue --list-systems)…"));
   QProcess listProc;
   listProc.setProcessChannelMode(QProcess::MergedChannels);
   listProc.start(QStringLiteral("spike-rescue"), {QStringLiteral("--list-systems")});
-  if (!listProc.waitForFinished(180000)) {
+  if (!listProc.waitForFinished(90000)) {
     listProc.kill();
     emitFinished(false, QStringLiteral("Step 7: --list-systems timed out — install aborted."));
     return;
@@ -179,7 +209,6 @@ void InstallEngine::startBackupThenInstall()
   // INSTALLER.md: backup personal files from the OS that will be erased — usually
   // ON the wipe target. Do not exclude the install disk (that made reinstall
   // backups always SKIPPED). Only skip the live USB medium if we can detect it.
-  const QString liveDisk = detectLiveInstallDisk();
   QList<ListedSystem> systems = parseListSystems(listOut);
   QList<ListedSystem> eligible;
   for (const ListedSystem &s : systems) {
@@ -209,14 +238,6 @@ void InstallEngine::startBackupThenInstall()
   }
 
   int pick = 0; // index into eligible → maps to raw --list-systems index
-  if (!m_state.backupSystemPartition.isEmpty()) {
-    for (int i = 0; i < eligible.size(); ++i) {
-      if (eligible.at(i).partition == m_state.backupSystemPartition) {
-        pick = i;
-        break;
-      }
-    }
-  }
   const ListedSystem &chosen = eligible.at(pick);
   emit logLine(QStringLiteral("Step 7: backing up [%1] %2 (%3) → %4")
                    .arg(chosen.rawIndex)
@@ -232,10 +253,8 @@ void InstallEngine::startBackupThenInstall()
   connect(m_proc, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), this,
           &InstallEngine::onProcessFinished);
 
-  // --system indexes rescue's eligible list after --exclude-disk (live USB only).
   QStringList args = {QStringLiteral("--batch-recover"), QStringLiteral("--dest"),
-                      m_state.backupDestMount, QStringLiteral("--system"),
-                      QString::number(liveDisk.isEmpty() ? chosen.rawIndex : pick)};
+                      m_state.backupDestMount, QStringLiteral("--partition"), chosen.partition};
   if (!liveDisk.isEmpty()) {
     args << QStringLiteral("--exclude-disk") << liveDisk;
   }

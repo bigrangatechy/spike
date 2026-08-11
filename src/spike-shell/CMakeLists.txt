@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(spike-shell VERSION 0.0.43 LANGUAGES CXX)
+project(spike-shell VERSION 0.0.46 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -177,6 +177,7 @@ target_include_directories(spike-greeter PRIVATE src)
 target_link_libraries(spike-greeter PRIVATE Qt6::Widgets ${CMAKE_DL_LIBS})
 install(TARGETS spike-greeter RUNTIME DESTINATION bin)
 install(FILES session/spike-greeter.service DESTINATION lib/systemd/system)
+install(PROGRAMS session/spike-greeter-prepare DESTINATION lib/spike)
 
 install(FILES session/spike.desktop DESTINATION share/wayland-sessions)
 install(PROGRAMS session/spike-session DESTINATION bin)

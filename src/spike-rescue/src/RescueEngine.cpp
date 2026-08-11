@@ -130,8 +130,16 @@ QString RescueEngine::runHelperCapture(const QStringList &args, QString *error) 
       }
       return false;
     }
-    if (!proc.waitForFinished(300000)) {
+    // Mounts must fail fast (dirty NTFS / dead disks); find/copy may take longer.
+    const int timeoutMs =
+        (!args.isEmpty() && (args.first() == QLatin1String("mount") ||
+                             args.first() == QLatin1String("mount-rw") ||
+                             args.first() == QLatin1String("umount")))
+            ? 20000
+            : 300000;
+    if (!proc.waitForFinished(timeoutMs)) {
       proc.kill();
+      proc.waitForFinished(3000);
       if (error) {
         *error = QStringLiteral("command timed out");
       }
@@ -243,6 +251,10 @@ bool RescueEngine::mountRo(const QString &device, const QString &mountPoint, con
   if (type.isEmpty()) {
     type = blkidType(device);
   }
+  // Avoid journal replay / long recovery on RO scan mounts.
+  if (type.startsWith(QLatin1String("ext")) && !opts.contains(QLatin1String("noload"))) {
+    opts += QStringLiteral(",noload");
+  }
   if (!type.isEmpty() && type != QLatin1String("crypto_LUKS")) {
     args << QStringLiteral("-t") << type;
   }
@@ -252,10 +264,11 @@ bool RescueEngine::mountRo(const QString &device, const QString &mountPoint, con
     m_ourMounts.append(mountPoint);
     return true;
   }
-  // NTFS fallback via ntfs-3g
+  // NTFS fallback via ntfs-3g (short timeout in helper)
   if (type.contains(QLatin1String("ntfs"), Qt::CaseInsensitive)) {
     QStringList ntfs{QStringLiteral("mount"), QStringLiteral("-t"), QStringLiteral("ntfs-3g"),
-                     QStringLiteral("-o"), QStringLiteral("ro"), device, mountPoint};
+                     QStringLiteral("-o"), QStringLiteral("ro,remove_hiberfile"), device,
+                     mountPoint};
     if (runHelper(ntfs, error)) {
       m_ourMounts.append(mountPoint);
       return true;

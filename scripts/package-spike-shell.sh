@@ -112,9 +112,11 @@ install -m 755 "${SRC}/session/spike-seed-home" "${DEST}/usr/bin/spike-seed-home
 install -m 755 "${SRC}/session/spike-fix-mozilla-home" "${DEST}/usr/bin/spike-fix-mozilla-home"
 install -m 755 "${SRC}/session/spike-save-logs" "${DEST}/usr/bin/spike-save-logs"
 install -m 644 "${SRC}/session/spike.desktop" "${DEST}/usr/share/wayland-sessions/spike.desktop"
-mkdir -p "${DEST}/lib/systemd/system"
+mkdir -p "${DEST}/lib/systemd/system" "${DEST}/usr/lib/spike"
 install -m 644 "${SRC}/session/spike-greeter.service" \
   "${DEST}/lib/systemd/system/spike-greeter.service"
+install -m 755 "${SRC}/session/spike-greeter-prepare" \
+  "${DEST}/usr/lib/spike/spike-greeter-prepare"
 mkdir -p "${DEST}/usr/share/spike/desktop" "${DEST}/usr/share/applications"
 install -m 644 "${SRC}/session/spike-save-logs.desktop" \
   "${DEST}/usr/share/spike/desktop/spike-save-logs.desktop"
@@ -172,7 +174,7 @@ find "${DEST}" -type d -exec chmod 755 {} +
 chmod 755 "${DEST}/usr/bin/spike-shell" "${DEST}/usr/bin/spike-greeter" \
   "${DEST}/usr/bin/spike-session" \
   "${DEST}/usr/bin/spike-seed-home" "${DEST}/usr/bin/spike-fix-mozilla-home" \
-  "${DEST}/usr/bin/spike-save-logs"
+  "${DEST}/usr/bin/spike-save-logs" "${DEST}/usr/lib/spike/spike-greeter-prepare"
 
 mkdir -p "$OUT_DIR"
 dpkg-deb --root-owner-group --build "$DEST" "${OUT_DIR}/${DEB_NAME}"

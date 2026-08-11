@@ -16,6 +16,7 @@
 #include <QPushButton>
 #include <QStackedWidget>
 #include <QTextEdit>
+#include <QTimer>
 #include <QVBoxLayout>
 
 namespace spike {
@@ -388,7 +389,15 @@ void InstallWizard::refreshBackupUi()
         QStringLiteral("(spike-rescue failed to start — is it installed?)"));
     m_listSystemsProc->deleteLater();
     m_listSystemsProc = nullptr;
+    return;
   }
+  // Cap scan so a stuck mount cannot block Next forever.
+  QTimer::singleShot(90000, this, [this]() {
+    if (!m_listSystemsProc || !m_listSystemsBusy) {
+      return;
+    }
+    m_listSystemsProc->kill();
+  });
 }
 
 void InstallWizard::onListSystemsFinished(int /*exitCode*/, QProcess::ExitStatus /*status*/)

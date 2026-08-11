@@ -1,24 +1,34 @@
 [Unit]
 Description=Spike graphical login greeter (tty1)
 Documentation=file:///usr/share/doc/spike-shell/README
-After=systemd-user-sessions.service seatd.service plymouth-quit.service
+# Quiet/splash boots: wait until Plymouth fully releases the console/fb.
+After=systemd-user-sessions.service seatd.service
+After=plymouth-quit.service plymouth-quit-wait.service
+Wants=plymouth-quit.service
 Conflicts=getty@tty1.service
+# If linuxfb greeter fails, bring text login back (avoid black screen after GRUB).
+OnFailure=getty@tty1.service
+StartLimitBurst=3
+StartLimitIntervalSec=30
 ConditionPathExists=/etc/spike/installed
 
 [Service]
 Type=simple
+ExecStartPre=/usr/lib/spike/spike-greeter-prepare
 ExecStart=/usr/bin/spike-greeter
-Restart=always
+Restart=on-failure
 RestartSec=2
 StandardInput=tty
-StandardOutput=tty
+StandardOutput=journal
 StandardError=journal
 TTYPath=/dev/tty1
 TTYReset=yes
 TTYVHangup=yes
-TTYVTDisallocate=yes
-# linuxfb greeter; session starts via login -f after PAM.
+# Do not deallocate VT on stop — fights Plymouth teardown / getty fallback.
+TTYVTDisallocate=no
+# linuxfb after splash; session starts via login -f after PAM.
 Environment=QT_QPA_PLATFORM=linuxfb
+Environment=QT_QPA_FB=/dev/fb0
 Environment=XDG_RUNTIME_DIR=/run/spike-greeter
 ExecStartPre=/bin/mkdir -p /run/spike-greeter
 ExecStartPre=/bin/chmod 700 /run/spike-greeter

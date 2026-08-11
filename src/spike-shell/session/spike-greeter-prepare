@@ -1,0 +1,27 @@
+#!/bin/sh
+# Prepare tty1 / framebuffer for spike-greeter after quiet+splash boots.
+# Plymouth often still owns DRM/fb until quit-wait; starting linuxfb too early
+# yields a black screen (works on debug boots without splash).
+set -eu
+
+# Ask Plymouth to release the console; ignore if not running.
+if command -v plymouth >/dev/null 2>&1; then
+  plymouth quit --wait 2>/dev/null || plymouth quit 2>/dev/null || true
+fi
+
+# Ensure we are on tty1 before Qt opens the VT.
+if command -v chvt >/dev/null 2>&1; then
+  chvt 1 2>/dev/null || true
+fi
+
+# Wait briefly for a usable framebuffer / DRM node after splash teardown.
+i=0
+while [ "$i" -lt 50 ]; do
+  if [ -e /dev/fb0 ] || [ -e /dev/dri/card0 ]; then
+    break
+  fi
+  i=$((i + 1))
+  sleep 0.1
+done
+
+exit 0

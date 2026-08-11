@@ -1243,7 +1243,7 @@ Boot sequence (after kernel and systemd):
 ├── Themed with Spike branding (purple/cyan, Spike logo)
 ├── Username + password fields
 ├── Auto-login: Optional, set during installer or in Settings → Users (default off)
-├── Graphical login: spike-greeter on tty1 when auto-login is off (Alpha; SDDM later)
+├── Graphical login: spike-greeter on tty1 when auto-login is off; getty kept as OnFailure fallback
 ├── Session: spike-session (only option — no dropdown)
 └── Power options: Restart, Shut Down (accessible without login)
 ```

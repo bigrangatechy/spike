@@ -136,10 +136,18 @@ case "$cmd" in
         ;;
     esac
     mkdir -p "$mnt"
-    if [ -n "$fstype" ]; then
-      exec /bin/mount -t "$fstype" -o "$opts" "$device" "$mnt"
+    # Cap mount time — dirty/hibernated NTFS and dying disks otherwise hang the installer.
+    if command -v timeout >/dev/null 2>&1; then
+      run_mount() { timeout 15 "$@"; }
+    else
+      run_mount() { "$@"; }
     fi
-    exec /bin/mount -o "$opts" "$device" "$mnt"
+    if [ -n "$fstype" ]; then
+      run_mount /bin/mount -t "$fstype" -o "$opts" "$device" "$mnt" || die "mount timed out or failed"
+    else
+      run_mount /bin/mount -o "$opts" "$device" "$mnt" || die "mount timed out or failed"
+    fi
+    exit 0
     ;;
   mount-rw)
     parse_mount_args "$@" || die "usage: mount-rw [-t type] [-o opts] DEVICE MOUNTPOINT"
@@ -168,12 +176,17 @@ case "$cmd" in
         ;;
     esac
     mkdir -p "$mnt"
-    if [ -n "$fstype" ]; then
-      /bin/mount -t "$fstype" -o "$opts" "$device" "$mnt"
-    elif [ -n "$type" ]; then
-      /bin/mount -t "$type" -o "$opts" "$device" "$mnt"
+    if command -v timeout >/dev/null 2>&1; then
+      run_mount() { timeout 20 "$@"; }
     else
-      /bin/mount -o "$opts" "$device" "$mnt"
+      run_mount() { "$@"; }
+    fi
+    if [ -n "$fstype" ]; then
+      run_mount /bin/mount -t "$fstype" -o "$opts" "$device" "$mnt" || die "mount-rw failed"
+    elif [ -n "$type" ]; then
+      run_mount /bin/mount -t "$type" -o "$opts" "$device" "$mnt" || die "mount-rw failed"
+    else
+      run_mount /bin/mount -o "$opts" "$device" "$mnt" || die "mount-rw failed"
     fi
     chmod 777 "$mnt" 2>/dev/null || true
     mkdir -p "$mnt/SpikeBackup"
@@ -187,7 +200,11 @@ case "$cmd" in
     mnt="${1:-}"
     [ -n "$mnt" ] || die "usage: umount MOUNTPOINT"
     require_under_run "$mnt"
-    /bin/umount "$mnt" 2>/dev/null || /bin/umount -l "$mnt"
+    if command -v timeout >/dev/null 2>&1; then
+      timeout 10 /bin/umount "$mnt" 2>/dev/null || timeout 5 /bin/umount -l "$mnt" || true
+    else
+      /bin/umount "$mnt" 2>/dev/null || /bin/umount -l "$mnt"
+    fi
     rmdir "$mnt" 2>/dev/null || true
     ;;
   list-dirs)

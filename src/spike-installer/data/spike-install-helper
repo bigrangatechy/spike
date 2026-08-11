@@ -472,16 +472,18 @@ EOF
     chroot "$MNT" systemctl enable getty@tty1.service 2>/dev/null || true
     log "Enabled tty1 auto-login for $user (text getty → spike-session)"
   else
-    # Graphical Spike greeter on tty1 (replaces text agetty login).
+    # Graphical spike-greeter on tty1. Keep getty@tty1 *enabled* as fallback —
+    # greeter Conflicts=getty while running; OnFailure + StartLimit bring getty
+    # back if linuxfb dies (do NOT disable getty — that caused black-after-GRUB).
     rm -f "$MNT/etc/systemd/system/getty@tty1.service.d/autologin.conf"
+    chroot "$MNT" systemctl enable getty@tty1.service 2>/dev/null || true
     if [ -f "$MNT/usr/lib/systemd/system/spike-greeter.service" ] \
        || [ -f "$MNT/lib/systemd/system/spike-greeter.service" ]; then
-      chroot "$MNT" systemctl disable getty@tty1.service 2>/dev/null || true
       chroot "$MNT" systemctl enable spike-greeter.service 2>/dev/null \
         || log "WARN: could not enable spike-greeter.service"
-      log "Enabled spike-greeter on tty1 (graphical login)"
+      log "Enabled spike-greeter + getty@tty1 fallback (OnFailure)"
     else
-      log "WARN: spike-greeter.service missing — falling back to text getty login"
+      log "spike-greeter.service missing — text getty login only"
     fi
   fi
 

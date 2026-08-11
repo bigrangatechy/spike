@@ -94,7 +94,8 @@ int batchListSystems()
   return systems.isEmpty() ? 2 : 0;
 }
 
-int batchRecover(const QString &dest, int systemIndex, const QString &excludeDisk)
+int batchRecover(const QString &dest, int systemIndex, const QString &excludeDisk,
+                 const QString &partitionPath)
 {
   QTextStream err(stderr);
   QTextStream out(stdout);
@@ -104,6 +105,7 @@ int batchRecover(const QString &dest, int systemIndex, const QString &excludeDis
   }
 
   spike::RescueEngine engine;
+  engine.setIncludeInventoryOnScan(false);
   QObject::connect(&engine, &spike::RescueEngine::scanProgress, [&](const QString &m, int p) {
     err << QStringLiteral("[%1%] %2\n").arg(p).arg(m);
     err.flush();
@@ -152,13 +154,27 @@ int batchRecover(const QString &dest, int systemIndex, const QString &excludeDis
     }
     return 2;
   }
-  if (systemIndex < 0 || systemIndex >= eligible.size()) {
+
+  int pickEligible = systemIndex;
+  if (!partitionPath.isEmpty()) {
+    pickEligible = -1;
+    for (int e = 0; e < eligible.size(); ++e) {
+      if (engine.systems().at(eligible.at(e)).partition.path == partitionPath) {
+        pickEligible = e;
+        break;
+      }
+    }
+    if (pickEligible < 0) {
+      err << QStringLiteral("ERROR: --partition %1 not in eligible systems\n").arg(partitionPath);
+      return 1;
+    }
+  } else if (systemIndex < 0 || systemIndex >= eligible.size()) {
     err << QStringLiteral("ERROR: --system %1 out of range (0..%2 eligible)\n")
                .arg(systemIndex)
                .arg(eligible.size() - 1);
     return 1;
   }
-  const int realIndex = eligible.at(systemIndex);
+  const int realIndex = eligible.at(pickEligible);
 
   bool invOk = false;
   {
@@ -263,6 +279,10 @@ int main(int argc, char *argv[])
                              QStringLiteral("path"));
   QCommandLineOption systemOpt(QStringLiteral("system"), QStringLiteral("System index from --list-systems"),
                                QStringLiteral("index"), QStringLiteral("0"));
+  QCommandLineOption partitionOpt(
+      QStringLiteral("partition"),
+      QStringLiteral("Prefer this block device path over --system index"),
+      QStringLiteral("path"));
   QCommandLineOption excludeDiskOpt(
       QStringLiteral("exclude-disk"),
       QStringLiteral("Skip partitions on this disk (installer wipe target)"),
@@ -278,6 +298,7 @@ int main(int argc, char *argv[])
   parser.addOption(batchRestoreOpt);
   parser.addOption(destOpt);
   parser.addOption(systemOpt);
+  parser.addOption(partitionOpt);
   parser.addOption(excludeDiskOpt);
   parser.addOption(sessionOpt);
   parser.addOption(homeOpt);
@@ -292,7 +313,8 @@ int main(int argc, char *argv[])
     if (parser.isSet(batchRecoverOpt)) {
       bool ok = false;
       const int idx = parser.value(systemOpt).toInt(&ok);
-      return batchRecover(parser.value(destOpt), ok ? idx : 0, parser.value(excludeDiskOpt));
+      return batchRecover(parser.value(destOpt), ok ? idx : 0, parser.value(excludeDiskOpt),
+                          parser.value(partitionOpt));
     }
     if (parser.isSet(batchRestoreOpt)) {
       return batchRestore(parser.value(sessionOpt), parser.value(homeOpt));

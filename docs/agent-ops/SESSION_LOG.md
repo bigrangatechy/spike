@@ -4,6 +4,24 @@ Append-only. Newest sessions at the **top**.
 
 ---
 
+## 2026-08-11 — greeter vs quiet/splash (Plymouth)
+
+Likely what looked like “boot GUI login” earlier was sleep→SpikeLockScreen. Quiet ISO boots hold fb/DRM in Plymouth — greeter must wait. Shell **0.0.46**: `spike-greeter-prepare` (`plymouth quit --wait`, chvt 1, wait for fb/dri); unit After=`plymouth-quit-wait`; TTYVTDisallocate=no. Keep installer **0.0.19** greeter+getty fallback. Smoke on **quiet** (not only debug) boot.
+
+---
+
+## 2026-08-11 — restore greeter with getty fallback
+
+Jessie: GUI greeter/lock worked on prior ISO; black-after-GRUB was from **disabling getty** when enabling spike-greeter. Keep greeter enabled; leave getty enabled as OnFailure fallback (unit already Restart=on-failure + OnFailure=getty@tty1). Installer **0.0.19** + shell **0.0.45**. Backup hang fixes from **0.0.18** / rescue **0.0.13** unchanged.
+
+---
+
+## 2026-08-11 — backup mount hang + black screen after GRUB
+
+Smoke: Step 7 backup still hangs on disk mount; post-install = black after GRUB (spike-greeter + getty disabled). Fixes: rescue **0.0.13** — `--batch-recover` skips inventory-on-scan; mount `timeout 15` + ext `noload`; `--partition` for install path. Installer **0.0.18** — skip second blocking list-systems when partition known; 90s scan kill; default **text getty** again (greeter packaged, not enabled). Shell **0.0.44** — greeter unit OnFailure→getty; Users Apply keeps getty. Rebuild → skip or finish backup faster; expect text login then desktop.
+
+---
+
 ## 2026-08-10 — ISO ships full desktop/hardware runtime
 
 Policy: squashfs must include everything Spike Shell + detect need — do not lean on `.deb` Recommends. ISO list gains bluez/rfkill/wmctrl/brightnessctl/gvfs-backends/smartmontools/nm-connection-editor/xdg-utils/linux-firmware-misc; shell **0.0.43** promotes those helpers to Depends; `0720-spike-verify-includes` fails the build if udisks2/firmware/greeter/etc. missing. Rebuild with installer **0.0.17** + shell **0.0.43**.

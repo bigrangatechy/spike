@@ -147,6 +147,7 @@ Security fixes follow responsible disclosure. If a vulnerability is fixed before
 ├── shell **0.0.41** + installer **0.0.16**: night-light.log; install-from-live.log on target; drop live capture binary
 ├── shell **0.0.42** + installer **0.0.17**: UDisks2 USB hotplug/notify; Storage Mount/Eject; spike-greeter on boot
 ├── shell **0.0.43**: desktop/hardware helpers as Depends; ISO list + verify hook require them (no Recommends-only gaps)
+├── rescue **0.0.13** + installer **0.0.19** + shell **0.0.46**: backup timeouts; greeter waits for Plymouth (quiet boot)
 ├── **Alpha opened** (2026-08-09): installer E2E + blacklist smoke confirmed
 
 ├── spike-migration **0.0.1** + live Desktop: Install Spike / Rescue My Files / Move My Files

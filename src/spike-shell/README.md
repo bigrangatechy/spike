@@ -6,7 +6,7 @@ Stage 3 skeleton — **Alpha**. Spec: `docs/DESKTOP.md`.
 
 Spike Shell is the custom desktop shell (Qt6 **Widgets**, not QML) that runs as a Wayland client under **standalone KWin**. It does **not** use Plasma (`plasma-workspace`, Akonadi, Baloo, etc.).
 
-MVP for this skeleton (**0.0.43**):
+MVP for this skeleton (**0.0.44**):
 
 | Piece | Status |
 |-------|--------|
