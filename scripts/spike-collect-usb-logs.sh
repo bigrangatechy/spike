@@ -29,10 +29,19 @@ if [[ -z "$SRC" ]]; then
   fi
 fi
 
+# Prefer udisksctl (often no sudo) so Jessie can collect without a password.
 if [[ -b "$SRC" ]]; then
-  MNT="$(mktemp -d /tmp/spike-writable-XXXXXX)"
-  mount "$SRC" "$MNT"
-  SRC="$MNT"
+  DEV="$SRC"
+  if command -v udisksctl >/dev/null 2>&1; then
+    echo "Mounting $DEV via udisksctl …"
+    udisksctl mount -b "$DEV" >/dev/null 2>&1 || true
+    SRC="$(findmnt -n -o TARGET -S "$DEV" 2>/dev/null || true)"
+  fi
+  if [[ -z "${SRC:-}" || ! -d "$SRC" ]]; then
+    MNT="$(mktemp -d /tmp/spike-writable-XXXXXX)"
+    mount "$DEV" "$MNT"
+    SRC="$MNT"
+  fi
 fi
 
 [[ -d "$SRC" ]] || { echo "error: not a directory: $SRC" >&2; exit 1; }

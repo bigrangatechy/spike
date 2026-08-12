@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
 {
   QApplication app(argc, argv);
   QApplication::setApplicationName(QStringLiteral("spike-shell"));
-  QApplication::setApplicationVersion(QStringLiteral("0.0.51"));
+  QApplication::setApplicationVersion(QStringLiteral("0.0.52"));
   QApplication::setOrganizationName(QStringLiteral("BigRangaTech"));
 
   // Breeze SVG icons need qt6-svg-plugins on the live image.

@@ -4,7 +4,7 @@
 # to the agent via scripts/spike-collect-usb-logs.sh.
 #
 # Usage:
-#   spike-save-logs              # auto-pick a writable USB under /run/media or /media
+#   spike-save-logs              # auto-pick / auto-mount a writable USB
 #   spike-save-logs /path/to/usb
 #   spike-save-logs --full       # also dump full journal + dmesg (large)
 set -euo pipefail
@@ -25,6 +25,7 @@ journal (filtered), packages, and install.log when present.
 
 On the build host after you plug the stick in:
   sudo ./scripts/spike-collect-usb-logs.sh /run/media/$USER/<stick>
+  # or: ./scripts/spike-collect-usb-logs.sh   (auto LABEL=writable)
 EOF
       exit 0
       ;;
@@ -46,6 +47,31 @@ is_writable_dir() {
   [ -d "$1" ] && [ -w "$1" ]
 }
 
+# Mount LABEL=writable if present but unmounted (common when re-plugging the
+# live stick into an installed system — udisks often leaves HintAuto=false).
+try_mount_writable_label() {
+  local dev mnt out
+  if findmnt -n -S LABEL=writable >/dev/null 2>&1; then
+    return 0
+  fi
+  [ -b /dev/disk/by-label/writable ] || return 1
+  dev="$(readlink -f /dev/disk/by-label/writable 2>/dev/null || true)"
+  [ -n "$dev" ] || return 1
+  if command -v udisksctl >/dev/null 2>&1; then
+    out="$(udisksctl mount -b "$dev" 2>&1 || true)"
+    echo "$out" >&2 || true
+    return 0
+  fi
+  mnt="/run/media/${USER_NAME}/writable"
+  mkdir -p "$mnt" 2>/dev/null || mnt="/tmp/spike-writable-$$"
+  mkdir -p "$mnt" 2>/dev/null || return 1
+  if mount "$dev" "$mnt" 2>/dev/null; then
+    echo "mounted $dev → $mnt" >&2
+    return 0
+  fi
+  return 1
+}
+
 # Prefer an explicit path, else removable mounts under /run/media|/media,
 # else LABEL=writable (live USB), else fail clearly.
 pick_usb() {
@@ -58,20 +84,34 @@ pick_usb() {
     return 1
   fi
 
-  local cand root_src
+  try_mount_writable_label || true
+
+  local cand root_src src
   root_src="$(findmnt -n -o SOURCE / 2>/dev/null || true)"
+
+  # Dedicated rescue mount of the live stick (partition root — best dest).
+  for cand in /run/spike-rescue/dest-writable; do
+    if is_writable_dir "$cand"; then
+      printf '%s\n' "$cand"
+      return 0
+    fi
+  done
+
   for base in "/run/media/${USER_NAME}" "/media/${USER_NAME}" /run/media /media; do
     [ -d "$base" ] || continue
     # Newest mounts first (likely the stick just plugged in).
     while IFS= read -r cand; do
       [ -n "$cand" ] || continue
       is_writable_dir "$cand" || continue
-      # Skip obvious system paths
       case "$cand" in
-        /media/writable|/mnt/writable|/cdrom|/log-persistence) continue ;;
+        /cdrom|/log-persistence) continue ;;
       esac
+      # Skip casper's /var/log bind of writable — SpikeBackup/logs belong at
+      # partition root; still allow if nothing else exists (handled later).
+      if [ "$cand" = "/var/log" ] || [ "$cand" = "/var/log/" ]; then
+        continue
+      fi
       src="$(findmnt -n -o SOURCE -T "$cand" 2>/dev/null || true)"
-      # Skip if this is the root filesystem
       if [ -n "$root_src" ] && [ "$src" = "$root_src" ]; then
         continue
       fi
@@ -81,29 +121,45 @@ pick_usb() {
   done
 
   if command -v findmnt >/dev/null 2>&1; then
-    local w
-    w="$(findmnt -n -o TARGET -S LABEL=writable 2>/dev/null || true)"
+    local w lab
+    # Prefer a real partition-root mount of LABEL=writable (not /var/log).
+    while IFS= read -r w; do
+      [ -n "$w" ] || continue
+      case "$w" in
+        /var/log|/var/log/*) continue ;;
+      esac
+      if is_writable_dir "$w"; then
+        printf '%s\n' "$w"
+        return 0
+      fi
+    done < <(findmnt -n -o TARGET -S LABEL=writable 2>/dev/null || true)
+
+    # Last resort: casper /var/log bind (better than losing logs).
+    w="$(findmnt -n -o TARGET -S LABEL=writable 2>/dev/null | head -n1 || true)"
     if [ -n "$w" ] && is_writable_dir "$w"; then
+      echo "note: using casper writable bind at $w (prefer remount at partition root)" >&2
       printf '%s\n' "$w"
       return 0
     fi
   fi
 
-  for cand in /log-persistence /media/writable /mnt/writable; do
+  for cand in /media/writable /mnt/writable /log-persistence; do
     if is_writable_dir "$cand"; then
       printf '%s\n' "$cand"
       return 0
     fi
   done
 
-  echo "error: no writable USB found. Plug in a stick and mount it, then re-run:" >&2
+  echo "error: no writable USB found." >&2
+  echo "  Plug in a USB stick, wait for it to appear under /run/media/${USER_NAME}/," >&2
+  echo "  or mount the live stick writable partition, then re-run:" >&2
   echo "  spike-save-logs /run/media/${USER_NAME}/<stick-name>" >&2
+  if [ -b /dev/disk/by-label/writable ]; then
+    echo "  hint: LABEL=writable exists but is not mounted — try:" >&2
+    echo "    udisksctl mount -b /dev/disk/by-label/writable" >&2
+  fi
   return 1
 }
-
-USB="$(pick_usb)" || exit 1
-OUT="${USB}/spike-logs-${TS}"
-mkdir -p "$OUT" "$OUT/session-logs" "$OUT/config" "$OUT/network"
 
 notify() {
   local msg="$1"
@@ -111,7 +167,44 @@ notify() {
   if command -v notify-send >/dev/null 2>&1; then
     notify-send -a Spike "Spike logs" "$msg" 2>/dev/null || true
   fi
+  if command -v kdialog >/dev/null 2>&1; then
+    kdialog --title "Spike logs" --msgbox "$msg" 2>/dev/null || true
+  elif command -v zenity >/dev/null 2>&1; then
+    zenity --info --title="Spike logs" --text="$msg" 2>/dev/null || true
+  fi
 }
+
+fail_ui() {
+  local msg="$1"
+  echo "$msg" >&2
+  if command -v notify-send >/dev/null 2>&1; then
+    notify-send -a Spike -u critical "Spike logs" "$msg" 2>/dev/null || true
+  fi
+  if command -v kdialog >/dev/null 2>&1; then
+    kdialog --title "Spike logs" --error "$msg" 2>/dev/null || true
+  elif command -v zenity >/dev/null 2>&1; then
+    zenity --error --title="Spike logs" --text="$msg" 2>/dev/null || true
+  fi
+}
+
+USB="$(pick_usb)" || {
+  fail_ui "No writable USB found. Plug in a stick (or mount LABEL=writable) and try again."
+  # Keep terminal open when launched from Desktop (Terminal=true).
+  if [ -t 0 ] && [ -t 1 ]; then
+    echo
+    read -r -p "Press Enter to close…" _ || true
+  fi
+  exit 1
+}
+
+OUT="${USB}/spike-logs-${TS}"
+if ! mkdir -p "$OUT" "$OUT/session-logs" "$OUT/config" "$OUT/network"; then
+  fail_ui "Could not create ${OUT} (permission denied?)."
+  if [ -t 0 ] && [ -t 1 ]; then
+    read -r -p "Press Enter to close…" _ || true
+  fi
+  exit 1
+fi
 
 {
   echo "spike-logs ${TS}"
@@ -163,6 +256,7 @@ for f in \
   /var/log/spike/install.log \
   /var/log/spike/install-from-live.log \
   /var/log/spike/night-light.log \
+  /var/log/spike/backup-scan.log \
   "${XDG_STATE_HOME:-$HOME/.local/state}/spike/night-light.log" \
   /var/log/spike/*.log
 do
@@ -247,4 +341,8 @@ sync || true
 notify "Saved logs to ${OUT}"
 echo "$OUT" >"$OUT/CAPTURE_PATH.txt"
 ls -la "$OUT" || true
+if [ -t 0 ] && [ -t 1 ]; then
+  echo
+  read -r -p "Press Enter to close…" _ || true
+fi
 exit 0

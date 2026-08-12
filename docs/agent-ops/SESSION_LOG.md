@@ -4,6 +4,12 @@ Append-only. Newest sessions at the **top**.
 
 ---
 
+## 2026-08-12 — Copy Spike Logs to USB fails (no mount)
+
+Jessie: Desktop log-copy looked broken. Common cause: re-plugged live stick `LABEL=writable` is not auto-mounted (`HintAuto=false`), so `spike-save-logs` found no dest. Shell **0.0.52**: auto `udisksctl mount` for writable, clearer kdialog/notify errors, keep terminal open; host `spike-collect-usb-logs.sh` prefers udisksctl too. Manual copy still fine as fallback.
+
+---
+
 ## 2026-08-12 — plymouth-set-default-theme missing on install
 
 Jessie: install WARN that command was missing. Expected on Ubuntu — theme selection is `update-alternatives` for `default.plymouth`, not Debian’s `plymouth-set-default-theme`. Installer **0.0.26** + branding **0.0.2** register/set spike-minimal at priority 200 before `update-initramfs`. Backup/restore E2E deferred to next smoke (test files forgotten this run).
