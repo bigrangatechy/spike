@@ -6,7 +6,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SRC="${ROOT}/src/spike-branding"
 OUT_DIR="${ROOT}/build/packages"
-VERSION="${SPIKE_BRANDING_VERSION:-0.0.1}"
+VERSION="${SPIKE_BRANDING_VERSION:-0.0.2}"
 REVISION="${SPIKE_BRANDING_REVISION:-1}"
 PKG_VER="${VERSION}-${REVISION}"
 ARCH=all
@@ -128,11 +128,15 @@ EOF
 cat >"${DEST}/DEBIAN/postinst" <<'EOF'
 #!/bin/sh
 set -e
-# Default to Standard splash; Plus systems may switch via spike-config later.
-if command -v plymouth-set-default-theme >/dev/null 2>&1; then
-  if [ -d /usr/share/plymouth/themes/spike-minimal ]; then
-    plymouth-set-default-theme spike-minimal >/dev/null 2>&1 || true
-  fi
+# Ubuntu: select theme via update-alternatives (no plymouth-set-default-theme).
+THEME=/usr/share/plymouth/themes/spike-minimal/spike-minimal.plymouth
+if [ -f "$THEME" ] && command -v update-alternatives >/dev/null 2>&1; then
+  update-alternatives --install \
+    /usr/share/plymouth/themes/default.plymouth default.plymouth \
+    "$THEME" 200 >/dev/null 2>&1 || true
+  update-alternatives --set default.plymouth "$THEME" >/dev/null 2>&1 || true
+elif [ -f "$THEME" ]; then
+  ln -sfn "$THEME" /usr/share/plymouth/themes/default.plymouth 2>/dev/null || true
 fi
 # Embed theme in initramfs when tools exist (ISO chroot + installed).
 if command -v update-initramfs >/dev/null 2>&1; then

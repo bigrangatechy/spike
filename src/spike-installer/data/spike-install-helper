@@ -725,15 +725,30 @@ EOF
     "$MNT/etc/systemd/system/"*.wants/casper-md5check.service 2>/dev/null || true
 
   # Activate Spike Plymouth theme before regenerating initramfs (quiet+splash).
+  # Ubuntu has no plymouth-set-default-theme — use update-alternatives.
+  set_plymouth_theme() {
+    theme_name="$1"
+    theme_file="/usr/share/plymouth/themes/${theme_name}/${theme_name}.plymouth"
+    if [ ! -f "$MNT${theme_file}" ]; then
+      return 1
+    fi
+    if chroot "$MNT" sh -c "command -v update-alternatives >/dev/null"; then
+      chroot "$MNT" update-alternatives --install \
+        /usr/share/plymouth/themes/default.plymouth default.plymouth \
+        "$theme_file" 200 >>"$LOG" 2>&1 || true
+      chroot "$MNT" update-alternatives --set default.plymouth "$theme_file" \
+        >>"$LOG" 2>&1 || true
+      return 0
+    fi
+    mkdir -p "$MNT/usr/share/plymouth/themes"
+    ln -sfn "$theme_file" "$MNT/usr/share/plymouth/themes/default.plymouth"
+    return 0
+  }
   if [ -d "$MNT/usr/share/plymouth/themes/spike-minimal" ]; then
-    if chroot "$MNT" sh -c 'command -v plymouth-set-default-theme >/dev/null'; then
-      chroot "$MNT" plymouth-set-default-theme spike-minimal >>"$LOG" 2>&1 || true
-      log "Plymouth theme set to spike-minimal"
+    if set_plymouth_theme spike-minimal; then
+      log "Plymouth theme set to spike-minimal (update-alternatives)"
     else
-      mkdir -p "$MNT/etc/alternatives" "$MNT/usr/share/plymouth/themes"
-      ln -sfn /usr/share/plymouth/themes/spike-minimal/spike-minimal.plymouth \
-        "$MNT/usr/share/plymouth/themes/default.plymouth" 2>/dev/null || true
-      log "WARN: plymouth-set-default-theme missing — linked default.plymouth"
+      log "WARN: failed to activate spike-minimal Plymouth theme"
     fi
   else
     log "WARN: spike-minimal Plymouth theme missing on target"

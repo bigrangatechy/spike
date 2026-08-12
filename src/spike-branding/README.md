@@ -18,7 +18,8 @@ Installs:
 | `/usr/share/spike/grub/` + `/boot/grub/themes/spike/` | GRUB theme |
 | `/usr/share/spike/branding/logo/` | Emblem PNG sizes + SVG masters |
 
-`postinst` sets `plymouth-set-default-theme spike-minimal` and runs `update-initramfs -u` when available.
+`postinst` registers `spike-minimal` via `update-alternatives` (Ubuntu has no
+`plymouth-set-default-theme`) and runs `update-initramfs -u` when available.
 
 ## Layout
 

@@ -4,6 +4,12 @@ Append-only. Newest sessions at the **top**.
 
 ---
 
+## 2026-08-12 — plymouth-set-default-theme missing on install
+
+Jessie: install WARN that command was missing. Expected on Ubuntu — theme selection is `update-alternatives` for `default.plymouth`, not Debian’s `plymouth-set-default-theme`. Installer **0.0.26** + branding **0.0.2** register/set spike-minimal at priority 200 before `update-initramfs`. Backup/restore E2E deferred to next smoke (test files forgotten this run).
+
+---
+
 ## 2026-08-12 — live Fn volume/brightness still dead
 
 KWin `registerShortcut` + kglobalacceld never reliably bind XF86 volume/brightness on Spike’s KWin-only session. Shell **0.0.51**: `EvdevMediaKeys` reads `KEY_VOLUME*` / `KEY_BRIGHTNESS*` from `/dev/input` (live user already in `input` group); KWin script kept only for Meta+L / Meta+Space.
