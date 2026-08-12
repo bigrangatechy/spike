@@ -4,7 +4,6 @@
 #include <QApplication>
 #include <QCommandLineOption>
 #include <QCommandLineParser>
-#include <QEventLoop>
 #include <QFile>
 #include <QPalette>
 #include <QTextStream>
@@ -64,15 +63,15 @@ int batchListSystems()
   engine.setIncludeInventoryOnScan(false);
   bool ok = false;
   QObject::connect(&engine, &spike::RescueEngine::scanFinished, [&](bool s) { ok = s; });
-  QEventLoop loop;
-  QObject::connect(&engine, &spike::RescueEngine::scanFinished, &loop, &QEventLoop::quit);
   QTextStream err(stderr);
   QObject::connect(&engine, &spike::RescueEngine::scanProgress, [&](const QString &m, int p) {
     err << QStringLiteral("[%1%] %2\n").arg(p).arg(m);
     err.flush();
   });
+  // scanSystems() is synchronous and emits scanFinished before returning.
+  // Do NOT use QEventLoop here — quit() before exec() never runs, so the installer
+  // 90s kill left empty stdout ("No systems found") even after a successful probe.
   engine.scanSystems();
-  loop.exec();
   if (!ok) {
     err << QStringLiteral("ERROR: scan failed: %1\n").arg(engine.lastError());
     return 1;
@@ -124,13 +123,8 @@ int batchRecover(const QString &dest, int systemIndex, const QString &excludeDis
                    });
 
   bool scanOk = false;
-  {
-    QEventLoop loop;
-    QObject::connect(&engine, &spike::RescueEngine::scanFinished, &loop, &QEventLoop::quit);
-    QObject::connect(&engine, &spike::RescueEngine::scanFinished, [&](bool s) { scanOk = s; });
-    engine.scanSystems();
-    loop.exec();
-  }
+  QObject::connect(&engine, &spike::RescueEngine::scanFinished, [&](bool s) { scanOk = s; });
+  engine.scanSystems();
   if (!scanOk) {
     err << QStringLiteral("ERROR: scan failed: %1\n").arg(engine.lastError());
     return 1;
@@ -184,13 +178,8 @@ int batchRecover(const QString &dest, int systemIndex, const QString &excludeDis
   const int realIndex = eligible.at(pickEligible);
 
   bool invOk = false;
-  {
-    QEventLoop loop;
-    QObject::connect(&engine, &spike::RescueEngine::inventoryFinished, &loop, &QEventLoop::quit);
-    QObject::connect(&engine, &spike::RescueEngine::inventoryFinished, [&](bool s) { invOk = s; });
-    engine.inventorySystem(realIndex);
-    loop.exec();
-  }
+  QObject::connect(&engine, &spike::RescueEngine::inventoryFinished, [&](bool s) { invOk = s; });
+  engine.inventorySystem(realIndex);
   if (!invOk) {
     err << QStringLiteral("ERROR: inventory failed: %1\n").arg(engine.lastError());
     engine.cleanupMounts();
@@ -198,13 +187,8 @@ int batchRecover(const QString &dest, int systemIndex, const QString &excludeDis
   }
 
   bool copyOk = false;
-  {
-    QEventLoop loop;
-    QObject::connect(&engine, &spike::RescueEngine::copyFinished, &loop, &QEventLoop::quit);
-    QObject::connect(&engine, &spike::RescueEngine::copyFinished, [&](bool s) { copyOk = s; });
-    engine.startCopy(realIndex, dest);
-    loop.exec();
-  }
+  QObject::connect(&engine, &spike::RescueEngine::copyFinished, [&](bool s) { copyOk = s; });
+  engine.startCopy(realIndex, dest);
   engine.cleanupMounts();
 
   const auto result = engine.lastCopy();
@@ -239,13 +223,8 @@ int batchRestore(const QString &session, const QString &home)
                    });
 
   bool ok = false;
-  {
-    QEventLoop loop;
-    QObject::connect(&engine, &spike::RescueEngine::copyFinished, &loop, &QEventLoop::quit);
-    QObject::connect(&engine, &spike::RescueEngine::copyFinished, [&](bool s) { ok = s; });
-    engine.startRestoreFromPath(session, home);
-    loop.exec();
-  }
+  QObject::connect(&engine, &spike::RescueEngine::copyFinished, [&](bool s) { ok = s; });
+  engine.startRestoreFromPath(session, home);
 
   const auto result = engine.lastCopy();
   if (!ok) {
@@ -267,7 +246,7 @@ int main(int argc, char *argv[])
 {
   QApplication app(argc, argv);
   QApplication::setApplicationName(QStringLiteral("spike-rescue"));
-  QApplication::setApplicationVersion(QStringLiteral("0.0.11"));
+  QApplication::setApplicationVersion(QStringLiteral("0.0.15"));
   QApplication::setOrganizationName(QStringLiteral("BigRangaTech"));
 
   QCommandLineParser parser;

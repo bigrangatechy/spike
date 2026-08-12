@@ -15,7 +15,6 @@
 #include <QListWidget>
 #include <QMessageBox>
 #include <QProcess>
-#include <QProcessEnvironment>
 #include <QPushButton>
 #include <QStackedWidget>
 #include <QTextEdit>
@@ -392,10 +391,6 @@ void InstallWizard::startBackupSystemScan()
 
   m_listSystemsProc = new QProcess(this);
   m_listSystemsProc->setProcessChannelMode(QProcess::SeparateChannels);
-  // Avoid fighting the installer's Wayland session for a display connection.
-  QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
-  env.insert(QStringLiteral("QT_QPA_PLATFORM"), QStringLiteral("offscreen"));
-  m_listSystemsProc->setProcessEnvironment(env);
   connect(m_listSystemsProc, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), this,
           &InstallWizard::onListSystemsFinished);
   m_listSystemsProc->start(QStringLiteral("spike-rescue"), {QStringLiteral("--list-systems")});

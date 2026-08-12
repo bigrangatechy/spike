@@ -4,6 +4,18 @@ Append-only. Newest sessions at the **top**.
 
 ---
 
+## 2026-08-12 — backup scan: empty list despite successful probe
+
+`backup-scan.log`: stderr reached `[100%] Scan complete` and auth mounted `/dev/nvme0n1p2` + `list-dirs …/home`, but stdout empty. Cause: `--list-systems` waited on `QEventLoop` after sync `scanFinished` (`quit()` before `exec()` → hang → installer 90s kill). Rescue **0.0.15** drops the loop for batch paths; installer **0.0.23** drops offscreen env.
+
+---
+
+## 2026-08-12 — quiet boot: logos never loaded (smoke note)
+
+Jessie (prior quiet ISO): Plymouth/splash logos never appeared. Repo still has valid `plymouth/*/logo.png` (RGBA) + unused newer `spike-emblem-256.png` (RGB); scripts load `logo.png`. Investigate on next quiet smoke: theme selected in initramfs, `splash` on cmdline, asset install path — not fixed in this commit.
+
+---
+
 ## 2026-08-12 — installer UX pass notes (queued)
 
 Jessie: after install, “remove boot USB” confuses restore users; want keep-USB prompts, a calm static Finish/reboot UI when not debugging, and a dedicated **installed** debug mode (alongside live debug GRUB). Noted in `INSTALLER.md` UX pass backlog. Timing reminder: Layer 4 restore already runs during `install-all` (before Finish), not at first login — prompts should protect the USB through install completion.
