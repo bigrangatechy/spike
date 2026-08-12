@@ -95,7 +95,7 @@ Implementation: `spike-live.list.chroot` + `config/spike-archives/` (staged by `
 
 ## Next Suggested Work
 
-1. Rebuild ISO → smoke: quiet Plymouth logo, greeter stays visible, Fn volume/brightness/media, backup+restore E2E (installer **0.0.25**).  
+1. Rebuild/hybridize ISO → smoke: live GRUB Spike theme + quiet Plymouth logo; greeter stays; Fn volume/brightness/media; backup+restore (installer **0.0.25**).  
 2. **Installer UX pass (queued):** keep-USB/restore prompts; static Finish/reboot UI (non-debug); installed-system debug mode — see `INSTALLER.md` § UX pass backlog.  
 3. Confirm first-run wizard + brightness / block-sleep.  
 4. spike-migration inventory/conflict UI (not Alpha-blocking).  

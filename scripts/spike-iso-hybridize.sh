@@ -86,6 +86,27 @@ fi
 
 mkdir -p "${TREE}/boot/grub" "${TREE}/EFI/BOOT"
 
+# Spike GRUB theme (live menu). Assets live on the ISO9660 tree; EFI cfg loads
+# them after search finds the squashfs / sets root.
+THEME_SRC="${ROOT}/src/spike-branding/grub-theme"
+THEME_DST="${TREE}/boot/grub/themes/spike"
+if [[ -d "${THEME_SRC}" && -f "${THEME_SRC}/theme.txt" ]]; then
+  mkdir -p "${THEME_DST}" "${TREE}/boot/grub/fonts"
+  cp -a "${THEME_SRC}/." "${THEME_DST}/"
+  if [[ -f "${THEME_SRC}/spike-emblem-96.png" ]]; then
+    cp -f "${THEME_SRC}/spike-emblem-96.png" "${THEME_DST}/spike-emblem.png"
+  fi
+  if [[ -f /usr/share/grub/unicode.pf2 ]]; then
+    cp -f /usr/share/grub/unicode.pf2 "${TREE}/boot/grub/fonts/unicode.pf2"
+  elif [[ -f /usr/share/grub/unicode.pf2.gz ]]; then
+    # Some hosts only ship the gzipped font.
+    gzip -dc /usr/share/grub/unicode.pf2.gz >"${TREE}/boot/grub/fonts/unicode.pf2"
+  fi
+  echo "Installed live GRUB theme → boot/grub/themes/spike/"
+else
+  echo "W: ${THEME_SRC}/theme.txt missing — live GRUB stays unthemed" >&2
+fi
+
 # --- Casper ↔ ISO9660 UUID sync ----------------------------------------------
 # ISO9660 has no real UUID field; blkid/GRUB use the volume modification date
 # as YYYY-MM-DD-hh-mm-ss-cc. live-build seeds casper with uuidgen(1), so after
@@ -130,8 +151,26 @@ cp -a /usr/lib/grub/i386-pc/. "${TREE}/boot/grub/i386-pc/"
 cat > "${TREE}/boot/grub/grub.cfg" <<EOF
 set default=0
 set timeout=8
-set color_normal=white/black
-set color_highlight=black/light-gray
+
+insmod all_video
+insmod gfxterm
+insmod png
+insmod font
+insmod gfxmenu
+set gfxmode=auto
+set gfxpayload=keep
+if loadfont \$prefix/fonts/unicode.pf2 ; then
+	true
+fi
+terminal_output gfxterm
+if [ -f \$prefix/themes/spike/theme.txt ]; then
+	set theme=\$prefix/themes/spike/theme.txt
+	export theme
+elif [ -f \$prefix/themes/spike/background.png ]; then
+	background_image -m stretch \$prefix/themes/spike/background.png
+fi
+set color_normal=light-gray/black
+set color_highlight=white/black
 
 menuentry "Spike Live" {
 	linux	/casper/${KERNEL} boot=casper hostname=spike-live username=spike quiet splash ---
@@ -155,6 +194,26 @@ cat > "${WORK}/esp-grub.cfg" <<EOF
 set timeout=8
 search --no-floppy --set=root --file /casper/filesystem.squashfs
 set prefix=(\$root)/boot/grub
+
+insmod all_video
+insmod gfxterm
+insmod png
+insmod font
+insmod gfxmenu
+set gfxmode=auto
+set gfxpayload=keep
+if loadfont \$prefix/fonts/unicode.pf2 ; then
+	true
+fi
+terminal_output gfxterm
+if [ -f \$prefix/themes/spike/theme.txt ]; then
+	set theme=\$prefix/themes/spike/theme.txt
+	export theme
+elif [ -f \$prefix/themes/spike/background.png ]; then
+	background_image -m stretch \$prefix/themes/spike/background.png
+fi
+set color_normal=light-gray/black
+set color_highlight=white/black
 
 menuentry "Spike Live" {
 	linux	/casper/${KERNEL} boot=casper hostname=spike-live username=spike quiet splash ---
@@ -217,7 +276,9 @@ CORE="${WORK}/core.img"
 grub-mkimage -O i386-pc -o "${CORE}" -p /boot/grub \
   biosdisk iso9660 normal configfile \
   search search_label search_fs_file search_fs_uuid \
-  fat part_msdos part_gpt echo test true gzio
+  fat part_msdos part_gpt echo test true gzio \
+  all_video gfxterm png jpeg font video video_bochs video_cirrus \
+  gfxmenu video_colors
 cat /usr/lib/grub/i386-pc/cdboot.img "${CORE}" > "${TREE}/boot/grub/i386-pc/eltorito.img"
 cp -f "${TREE}/boot/grub/i386-pc/eltorito.img" "${TREE}/boot/grub/grub_eltorito"
 ELTORITO="boot/grub/i386-pc/eltorito.img"

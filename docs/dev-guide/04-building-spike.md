@@ -160,6 +160,8 @@ Remaster ISO only: `./scripts/spike-iso-hybridize.sh`
 
 That remaster **syncs the casper UUID** to the ISO9660 volume date (`blkid` UUID == `.disk/casper-uuid*` == initrd `conf/uuid.conf`). Without that, casper can drop to `initramfs$` (“Unable to find a medium…”) after hybridize. Override the date with `SOURCE_DATE_EPOCH` for reproducible builds.
 
+It also installs the live **Spike GRUB theme** (`src/spike-branding/grub-theme/` → `boot/grub/themes/spike/`) and rewrites BIOS + EFI `grub.cfg` for gfxterm. A full squashfs rebuild is not required to pick up GRUB theme-only changes — re-run hybridize on `binary.hybrid.iso`.
+
 ### Optional — QEMU
 
 ```

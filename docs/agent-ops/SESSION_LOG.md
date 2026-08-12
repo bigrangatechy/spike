@@ -4,6 +4,12 @@ Append-only. Newest sessions at the **top**.
 
 ---
 
+## 2026-08-12 — live ISO GRUB had no theme
+
+Quiet live boot menu was still plain white/black text: `spike-iso-hybridize.sh` rewrote `grub.cfg` without gfxterm/theme, and never copied `src/spike-branding/grub-theme/`. Hybridize now installs `boot/grub/themes/spike/` + unicode.pf2, enables gfxterm/gfxmenu, and embeds video/png modules in the BIOS core image. Re-run hybridize (full squashfs rebuild not required for GRUB-only).
+
+---
+
 ## 2026-08-12 — greeter flash, partial Fn keys, no logos
 
 Post-install smoke: greeter still blanks ~1s; some Fn keys work; **no** Plymouth/GRUB/desktop logos. Causes: (1) greeter raced `console-setup`/`setfont` on tty1; (2) `kglobalacceld` not a hard Depends; (3) branding never packaged — no themes on ISO. Shell **0.0.50** (After=console-setup, refresh timer, greeter emblem); pin `kglobalacceld`; new **spike-branding 0.0.1** + plymouth on ISO; installer **0.0.25** activates Plymouth/GRUB theme; config **0.0.13** enables GRUB_THEME when theme.txt exists.
