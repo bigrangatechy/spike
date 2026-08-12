@@ -249,6 +249,39 @@ need_bin lsblk
 need_bin lspci
 need_bin lsusb
 
+if [ ! -x /usr/lib/x86_64-linux-gnu/libexec/kglobalacceld ] \
+   && [ ! -x /usr/lib/libexec/kglobalacceld ]; then
+  echo "E: kglobalacceld binary missing (Fn/media shortcuts)" >&2
+  fail=1
+else
+  echo "I: kglobalacceld present"
+fi
+
+if [ ! -d /usr/share/plymouth/themes/spike-minimal ]; then
+  echo "E: spike-minimal Plymouth theme missing (spike-branding)" >&2
+  fail=1
+else
+  echo "I: spike-minimal Plymouth theme present"
+fi
+if [ ! -f /boot/grub/themes/spike/theme.txt ] && [ ! -f /usr/share/spike/grub/theme.txt ]; then
+  echo "E: Spike GRUB theme missing (spike-branding)" >&2
+  fail=1
+else
+  echo "I: Spike GRUB theme present"
+fi
+if [ ! -f /usr/share/spike/branding/logo/spike-emblem-256.png ]; then
+  echo "E: spike emblem logo missing (spike-branding)" >&2
+  fail=1
+else
+  echo "I: spike branding logos present"
+fi
+if ! command -v plymouth >/dev/null 2>&1; then
+  echo "E: plymouth binary missing" >&2
+  fail=1
+else
+  echo "I: plymouth present"
+fi
+
 if [ ! -x /usr/bin/spike-greeter ]; then
   echo "E: spike-greeter missing (spike-shell package)" >&2
   fail=1

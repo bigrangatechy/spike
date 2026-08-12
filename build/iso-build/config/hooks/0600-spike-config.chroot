@@ -20,6 +20,7 @@ install_newest() {
 }
 
 install_newest 'spike-config_*.deb'
+install_newest 'spike-branding_*.deb'
 install_newest 'spike-shell_*.deb'
 install_newest 'spike-rescue_*.deb'
 install_newest 'spike-installer_*.deb'

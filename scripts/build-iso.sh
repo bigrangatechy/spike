@@ -287,6 +287,8 @@ inject_local_debs() {
 
   echo "Packaging spike-config ..."
   "${ROOT}/scripts/package-spike-config.sh" --out "$pkg_dir"
+  echo "Packaging spike-branding ..."
+  "${ROOT}/scripts/package-spike-branding.sh" --out "$pkg_dir"
   echo "Packaging spike-shell ..."
   "${ROOT}/scripts/package-spike-shell.sh" --out "$pkg_dir"
   echo "Packaging spike-rescue ..."
@@ -317,6 +319,10 @@ inject_local_debs() {
 
   if ! stage_newest 'spike-config_*.deb'; then
     echo "error: spike-config .deb missing after package step" >&2
+    exit 4
+  fi
+  if ! stage_newest 'spike-branding_*.deb'; then
+    echo "error: spike-branding .deb missing after package step" >&2
     exit 4
   fi
   if ! stage_newest 'spike-shell_*.deb'; then

@@ -669,6 +669,12 @@ EOF
   else
     echo 'GRUB_TIMEOUT=5' >>"$MNT/etc/default/grub"
   fi
+  # Install GRUB theme from spike-branding when present (squashfs may already
+  # have /boot/grub/themes/spike; also copy from /usr/share/spike/grub).
+  if [ -d /usr/share/spike/grub ]; then
+    mkdir -p "$MNT/boot/grub/themes/spike"
+    cp -a /usr/share/spike/grub/. "$MNT/boot/grub/themes/spike/" 2>/dev/null || true
+  fi
   # spike-config ships theme paths that are not on the live squashfs → grub-probe
   # fails ("failed to get canonical path of …/font.pf2") and update-grub aborts.
   if [ ! -f "$MNT/boot/grub/themes/spike/theme.txt" ]; then
@@ -676,6 +682,13 @@ EOF
       "$MNT/etc/default/grub" 2>/dev/null || true
     sed -i 's/^GRUB_TERMINAL_OUTPUT=gfxterm/#GRUB_TERMINAL_OUTPUT=gfxterm/' \
       "$MNT/etc/default/grub" 2>/dev/null || true
+  else
+    # Theme present — ensure GRUB_THEME is active (may have been commented earlier).
+    if ! grep -q '^GRUB_THEME=' "$MNT/etc/default/grub" 2>/dev/null; then
+      echo 'GRUB_THEME=/boot/grub/themes/spike/theme.txt' >>"$MNT/etc/default/grub"
+      echo 'GRUB_TERMINAL_OUTPUT=gfxterm' >>"$MNT/etc/default/grub"
+      echo 'GRUB_GFXMODE=auto' >>"$MNT/etc/default/grub"
+    fi
   fi
   # Never leave casper live args in installed GRUB cmdline.
   if grep -Eq 'boot=casper|casper' "$MNT/etc/default/grub" 2>/dev/null; then
@@ -710,6 +723,21 @@ EOF
   # Drop live-only wants again (generate-all / dpkg may have recreated nothing here).
   rm -f "$MNT/etc/systemd/system/"*.wants/casper.service \
     "$MNT/etc/systemd/system/"*.wants/casper-md5check.service 2>/dev/null || true
+
+  # Activate Spike Plymouth theme before regenerating initramfs (quiet+splash).
+  if [ -d "$MNT/usr/share/plymouth/themes/spike-minimal" ]; then
+    if chroot "$MNT" sh -c 'command -v plymouth-set-default-theme >/dev/null'; then
+      chroot "$MNT" plymouth-set-default-theme spike-minimal >>"$LOG" 2>&1 || true
+      log "Plymouth theme set to spike-minimal"
+    else
+      mkdir -p "$MNT/etc/alternatives" "$MNT/usr/share/plymouth/themes"
+      ln -sfn /usr/share/plymouth/themes/spike-minimal/spike-minimal.plymouth \
+        "$MNT/usr/share/plymouth/themes/default.plymouth" 2>/dev/null || true
+      log "WARN: plymouth-set-default-theme missing — linked default.plymouth"
+    fi
+  else
+    log "WARN: spike-minimal Plymouth theme missing on target"
+  fi
 
   if ! chroot "$MNT" sh -c 'command -v update-initramfs >/dev/null'; then
     log "WARN: update-initramfs missing — GRUB will pass boot=local as fallback"

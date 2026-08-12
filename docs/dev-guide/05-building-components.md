@@ -16,6 +16,17 @@ Binaries there are gitignored; commit **source** and bump versions in each proje
 
 ## Packages
 
+### spike-branding
+
+```
+./scripts/package-spike-branding.sh
+```
+
+- Source: `src/spike-branding/`
+- Version: `SPIKE_BRANDING_VERSION` (default `0.0.1`)
+- Depends: `plymouth`
+- Installs: Plymouth themes, GRUB theme, `/usr/share/spike/branding/logo/`
+
 ### spike-shell
 
 ```

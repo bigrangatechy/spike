@@ -11,19 +11,23 @@ def generate(state: dict[str, Any], changelog_id: str) -> list[str]:
     boot = state["boot"]
     ctx = gen_mod.base_context(state, changelog_id)
     params = boot.get("boot_parameters", [])
-    # Theme assets are not always shipped (live squashfs / early installs). Emitting
-    # GRUB_FONT/THEME to missing paths makes update-grub fail via grub-probe.
+    # Theme assets ship via spike-branding. Prefer theme when theme.txt exists;
+    # custom font is optional (GRUB falls back to Unifont named in theme.txt).
     theme_txt = paths.under_root("/boot/grub/themes/spike/theme.txt")
     font_pf2 = paths.under_root("/boot/grub/themes/spike/pf2/font.pf2")
-    if theme_txt.is_file() and font_pf2.is_file():
-        theme_block = (
-            "GRUB_THEME=/boot/grub/themes/spike/theme.txt\n"
-            "GRUB_GFXMODE=auto\n"
-            "GRUB_GFXPAYLOAD_LINUX=keep\n"
-            "GRUB_BACKGROUND=/boot/grub/themes/spike/background.png\n"
-            "GRUB_TERMINAL_OUTPUT=gfxterm\n"
-            "GRUB_FONT=/boot/grub/themes/spike/pf2/font.pf2\n"
-        )
+    bg = paths.under_root("/boot/grub/themes/spike/background.png")
+    if theme_txt.is_file():
+        lines = [
+            "GRUB_THEME=/boot/grub/themes/spike/theme.txt\n",
+            "GRUB_GFXMODE=auto\n",
+            "GRUB_GFXPAYLOAD_LINUX=keep\n",
+            "GRUB_TERMINAL_OUTPUT=gfxterm\n",
+        ]
+        if bg.is_file():
+            lines.append("GRUB_BACKGROUND=/boot/grub/themes/spike/background.png\n")
+        if font_pf2.is_file():
+            lines.append("GRUB_FONT=/boot/grub/themes/spike/pf2/font.pf2\n")
+        theme_block = "".join(lines)
     else:
         theme_block = ""
     ctx.update(

@@ -4,6 +4,12 @@ Append-only. Newest sessions at the **top**.
 
 ---
 
+## 2026-08-12 — greeter flash, partial Fn keys, no logos
+
+Post-install smoke: greeter still blanks ~1s; some Fn keys work; **no** Plymouth/GRUB/desktop logos. Causes: (1) greeter raced `console-setup`/`setfont` on tty1; (2) `kglobalacceld` not a hard Depends; (3) branding never packaged — no themes on ISO. Shell **0.0.50** (After=console-setup, refresh timer, greeter emblem); pin `kglobalacceld`; new **spike-branding 0.0.1** + plymouth on ISO; installer **0.0.25** activates Plymouth/GRUB theme; config **0.0.13** enables GRUB_THEME when theme.txt exists.
+
+---
+
 ## 2026-08-12 — restore skipped: backup wrote to /var/log
 
 USB `install-logs-2026-08-12.0`: backup OK (9 files) but `destMount=/var/log` (casper writable bind); `SpikeBackup/` only survived under `install-logs-*/log/`. `install-all` had **no** `--restore-session` → `RESTORE_STATUS=skipped`. Installer **0.0.24**: mount `/run/spike-rescue/dest-writable`, never offer `/var/log`; drain `SESSION_PATH` + newest-session fallback for Layer 4.

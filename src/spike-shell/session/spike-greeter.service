@@ -5,9 +5,11 @@ Documentation=file:///usr/share/doc/spike-shell/README
 After=systemd-user-sessions.service seatd.service
 After=plymouth-quit.service plymouth-quit-wait.service
 Wants=plymouth-quit.service plymouth-quit-wait.service
+# Installed systems: console-setup/setupcon may setfont tty1 and wipe linuxfb
+# if it races after greeter paint (~1s flash). Finish console setup first.
+After=console-setup.service setvtrgb.service
 Conflicts=getty@tty1.service
-# Stop getty fully *before* greeter paints — otherwise getty's TTYReset can
-# wipe the framebuffer right after the login UI flashes on screen.
+# Stop getty fully *before* greeter paints.
 After=getty@tty1.service
 # If linuxfb greeter fails, bring text login back (avoid black screen after GRUB).
 OnFailure=getty@tty1.service
@@ -28,7 +30,8 @@ StandardInput=tty
 StandardOutput=journal
 StandardError=journal
 TTYPath=/dev/tty1
-TTYReset=yes
+# TTYReset does not clear the fb by itself, but avoid extra VT churn on start.
+TTYReset=no
 TTYVHangup=yes
 # Do not deallocate VT on stop — fights Plymouth teardown / getty fallback.
 TTYVTDisallocate=no

@@ -30,7 +30,7 @@ spike/
 | `spike-common/` | ✅ Used by rescue | Shared SpikeBackup layout / find / path map |
 | `spike-installer/` | 📝 **0.0.1** wizard UI | Custom Qt installer (wipe engine not enabled yet) |
 | `spike-migration/` | 🔲 Scaffold | Move My Files (detailed migration wizard) |
-| `spike-branding/` | 📝 Partial | Themes / assets (includes.chroot also holds live branding) |
+| `spike-branding/` | ✅ **0.0.1** packaged | Plymouth + GRUB + logos (`package-spike-branding.sh`) |
 
 ### spike-rescue (Layer 3)
 

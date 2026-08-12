@@ -173,6 +173,9 @@ rfkill
 wmctrl
 brightnessctl
 playerctl
+kglobalacceld
+# Boot splash (spike-branding Depends: plymouth; list explicitly so live-build keeps it)
+plymouth
 libkf6kcmutils-bin
 nm-connection-editor
 xdg-utils

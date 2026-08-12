@@ -18,6 +18,9 @@ fi
 if [ -w /sys/class/graphics/fbcon/cursor_blink ]; then
   echo 0 >/sys/class/graphics/fbcon/cursor_blink 2>/dev/null || true
 fi
+if [ -w /sys/class/graphics/fb0/blank ]; then
+  echo 0 >/sys/class/graphics/fb0/blank 2>/dev/null || true
+fi
 if command -v setterm >/dev/null 2>&1 && [ -c /dev/tty1 ]; then
   setterm --blank 0 --powersave off --cursor off </dev/tty1 >/dev/tty1 2>/dev/null || true
 fi
@@ -35,5 +38,9 @@ while [ "$i" -lt 50 ]; do
   i=$((i + 1))
   sleep 0.1
 done
+
+# Short settle so console-setup/setfont and Plymouth DRM handoff finish before
+# Qt paints (installed boots often wipe linuxfb ~1s after first frame).
+sleep 0.25
 
 exit 0

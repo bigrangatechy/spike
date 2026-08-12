@@ -5,6 +5,7 @@
 #include <QFormLayout>
 #include <QLabel>
 #include <QLineEdit>
+#include <QPixmap>
 #include <QProcess>
 #include <QPushButton>
 #include <QTimer>
@@ -27,13 +28,19 @@
  */
 namespace {
 
-// Keep the VT in KD_GRAPHICS so fbcon/getty teardown cannot redraw over linuxfb.
+// Keep the VT in KD_GRAPHICS so fbcon/console-setup cannot redraw over linuxfb.
 int g_ttyFd = -1;
 
 void claimGraphicsVt()
 {
   if (g_ttyFd < 0) {
-    g_ttyFd = open("/dev/tty1", O_RDWR | O_NOCTTY | O_CLOEXEC);
+    // Prefer the already-open controlling tty from systemd StandardInput=tty.
+    if (isatty(STDIN_FILENO)) {
+      g_ttyFd = dup(STDIN_FILENO);
+    }
+    if (g_ttyFd < 0) {
+      g_ttyFd = open("/dev/tty1", O_RDWR | O_NOCTTY | O_CLOEXEC);
+    }
     if (g_ttyFd < 0) {
       g_ttyFd = open("/dev/tty", O_RDWR | O_NOCTTY | O_CLOEXEC);
     }
@@ -41,7 +48,9 @@ void claimGraphicsVt()
   if (g_ttyFd < 0) {
     return;
   }
-  ioctl(g_ttyFd, KDSETMODE, KD_GRAPHICS);
+  if (ioctl(g_ttyFd, KDSETMODE, KD_GRAPHICS) != 0) {
+    // best-effort — still try cursor/blanking control below
+  }
   // No blanking, no blink, hide cursor (same sequence Qt linuxfb uses).
   static const char kTermCtl[] = "\033[9;0]\033[?33l\033[?25l\033[?1c";
   if (write(g_ttyFd, kTermCtl, sizeof(kTermCtl) - 1) < 0) {
@@ -97,7 +106,7 @@ int main(int argc, char *argv[])
   QApplication app(argc, argv);
   QApplication::setApplicationName(QStringLiteral("spike-greeter"));
   QApplication::setOrganizationName(QStringLiteral("Spike"));
-  QApplication::setApplicationVersion(QStringLiteral("0.0.48"));
+  QApplication::setApplicationVersion(QStringLiteral("0.0.50"));
 
   auto *win = new QWidget;
   win->setObjectName(QStringLiteral("SpikeGreeter"));
@@ -114,8 +123,23 @@ int main(int argc, char *argv[])
   auto *lay = new QVBoxLayout(win);
   lay->setContentsMargins(48, 48, 48, 48);
   lay->addStretch(1);
-  auto *brand = new QLabel(QStringLiteral("<h1>Spike</h1>"), win);
+  auto *brand = new QLabel(win);
   brand->setAlignment(Qt::AlignCenter);
+  bool haveEmblem = false;
+  QPixmap emblem;
+  for (const QString &path :
+       {QStringLiteral("/usr/share/spike/branding/logo/spike-emblem-256.png"),
+        QStringLiteral("/usr/share/plymouth/themes/spike-minimal/logo.png"),
+        QStringLiteral("/usr/share/spike/branding/logo/spike-emblem-128.png")}) {
+    if (emblem.load(path) && !emblem.isNull()) {
+      brand->setPixmap(emblem.scaled(128, 128, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+      haveEmblem = true;
+      break;
+    }
+  }
+  if (!haveEmblem) {
+    brand->setText(QStringLiteral("<h1>Spike</h1>"));
+  }
   lay->addWidget(brand);
   auto *sub = new QLabel(QStringLiteral("Sign in to continue"), win);
   sub->setAlignment(Qt::AlignCenter);
@@ -170,17 +194,21 @@ int main(int argc, char *argv[])
   win->showFullScreen();
   pass->setFocus();
 
-  // Re-assert graphics mode + repaint shortly after show. Covers the race where
-  // getty@tty1 finishes TTYReset just after the first frame (UI flashes then
-  // vanishes while the greeter still accepts keyboard input).
-  auto reassert = [win]() {
+  // Re-assert KD_GRAPHICS + repaint for several seconds. Installed boots often
+  // get a late console-setup/setfont or fbcon redraw ~1s after first paint
+  // (UI flashes then blanks while PAM still accepts input).
+  auto *keepAlive = new QTimer(win);
+  keepAlive->setInterval(200);
+  QObject::connect(keepAlive, &QTimer::timeout, win, [win, keepAlive]() {
     claimGraphicsVt();
     win->update();
     win->repaint();
-  };
-  QTimer::singleShot(100, win, reassert);
-  QTimer::singleShot(500, win, reassert);
-  QTimer::singleShot(1500, win, reassert);
+    static int ticks = 0;
+    if (++ticks >= 25) { // ~5s
+      keepAlive->stop();
+    }
+  });
+  keepAlive->start();
 
   return app.exec();
 }

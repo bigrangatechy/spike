@@ -25,6 +25,7 @@ bind("spikeBrightnessDown", "Spike Brightness Down", "XF86MonBrightnessDown", "b
 
 bind("spikeMediaPlay", "Spike Play/Pause", "XF86AudioPlay", "mediaPlayPause");
 bind("spikeMediaPause", "Spike Pause", "XF86AudioPause", "mediaPlayPause");
+bind("spikeMediaKey", "Spike Media Key", "XF86AudioMedia", "mediaPlayPause");
 bind("spikeMediaNext", "Spike Next Track", "XF86AudioNext", "mediaNext");
 bind("spikeMediaPrev", "Spike Previous Track", "XF86AudioPrev", "mediaPrevious");
 

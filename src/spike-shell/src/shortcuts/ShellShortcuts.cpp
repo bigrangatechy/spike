@@ -41,6 +41,11 @@ void playerctl(const QString &cmd)
   QProcess::startDetached(QStringLiteral("playerctl"), {cmd});
 }
 
+bool playerctlAvailable()
+{
+  return !QStandardPaths::findExecutable(QStringLiteral("playerctl")).isEmpty();
+}
+
 QString kwinScriptMainPath()
 {
   const QString packaged =
@@ -120,37 +125,55 @@ void ShellShortcuts::volumeMute()
 void ShellShortcuts::brightnessUp()
 {
   if (!m_brightness || !m_brightness->hasBacklight()) {
+    notifyOsd(QStringLiteral("Brightness"), QStringLiteral("No backlight control"));
     return;
   }
   const int next = qMin(100, m_brightness->percentage() + 5);
   if (m_brightness->setPercentage(next)) {
     notifyOsd(QStringLiteral("Brightness"), QStringLiteral("%1%").arg(m_brightness->percentage()));
+  } else {
+    notifyOsd(QStringLiteral("Brightness"), QStringLiteral("Adjust failed"));
   }
 }
 
 void ShellShortcuts::brightnessDown()
 {
   if (!m_brightness || !m_brightness->hasBacklight()) {
+    notifyOsd(QStringLiteral("Brightness"), QStringLiteral("No backlight control"));
     return;
   }
   const int next = qMax(1, m_brightness->percentage() - 5);
   if (m_brightness->setPercentage(next)) {
     notifyOsd(QStringLiteral("Brightness"), QStringLiteral("%1%").arg(m_brightness->percentage()));
+  } else {
+    notifyOsd(QStringLiteral("Brightness"), QStringLiteral("Adjust failed"));
   }
 }
 
 void ShellShortcuts::mediaPlayPause()
 {
+  if (!playerctlAvailable()) {
+    notifyOsd(QStringLiteral("Media"), QStringLiteral("playerctl not installed"));
+    return;
+  }
   playerctl(QStringLiteral("play-pause"));
 }
 
 void ShellShortcuts::mediaNext()
 {
+  if (!playerctlAvailable()) {
+    notifyOsd(QStringLiteral("Media"), QStringLiteral("playerctl not installed"));
+    return;
+  }
   playerctl(QStringLiteral("next"));
 }
 
 void ShellShortcuts::mediaPrevious()
 {
+  if (!playerctlAvailable()) {
+    notifyOsd(QStringLiteral("Media"), QStringLiteral("playerctl not installed"));
+    return;
+  }
   playerctl(QStringLiteral("previous"));
 }
 
@@ -212,10 +235,19 @@ void ShellShortcuts::start()
     bus.registerObject(QStringLiteral("/Shortcuts"), this);
   }
 
-  // KWin scripting comes up with the compositor; retry like the task-list applet.
-  QTimer::singleShot(800, this, [this]() { ensureKwinScript(); });
-  QTimer::singleShot(2500, this, [this]() { ensureKwinScript(); });
-  QTimer::singleShot(5000, this, [this]() { ensureKwinScript(); });
+  // Wait for org.kde.kglobalaccel, then load the KWin script (retries).
+  auto tryLoad = [this]() {
+    startKGlobalAccelDaemon();
+    QDBusInterface check(QStringLiteral("org.kde.kglobalaccel"), QStringLiteral("/kglobalaccel"),
+                         QStringLiteral("org.kde.KGlobalAccel"), QDBusConnection::sessionBus());
+    if (check.isValid()) {
+      ensureKwinScript();
+    }
+  };
+  QTimer::singleShot(800, this, tryLoad);
+  QTimer::singleShot(2500, this, tryLoad);
+  QTimer::singleShot(5000, this, tryLoad);
+  QTimer::singleShot(10000, this, tryLoad);
 }
 
 } // namespace spike
