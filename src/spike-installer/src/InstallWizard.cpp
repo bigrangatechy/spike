@@ -328,7 +328,12 @@ void InstallWizard::fillBackupDestAndSessions()
     m_backupDestList->clear();
     const QStringList roots = BackupScanner::volumeRoots();
     for (const QString &r : roots) {
-      auto *item = new QListWidgetItem(r);
+      QString label = r;
+      if (r == QLatin1String("/run/spike-rescue/dest-writable") ||
+          r.endsWith(QLatin1String("/writable"))) {
+        label = QStringLiteral("This Spike USB (writable) — %1").arg(r);
+      }
+      auto *item = new QListWidgetItem(label);
       item->setData(Qt::UserRole, r);
       m_backupDestList->addItem(item);
     }
@@ -336,17 +341,20 @@ void InstallWizard::fillBackupDestAndSessions()
       m_backupDestList->addItem(
           QStringLiteral("(No mounted USB / writable found — plug in media and Refresh)"));
     } else {
+      // Prefer dedicated dest-writable mount; never auto-pick casper /var/log.
+      int prefer = -1;
       for (int i = 0; i < m_backupDestList->count(); ++i) {
         const QString p = m_backupDestList->item(i)->data(Qt::UserRole).toString();
-        if (p.contains(QLatin1String("writable"), Qt::CaseInsensitive) ||
-            p == QLatin1String("/var/log")) {
-          m_backupDestList->setCurrentRow(i);
+        if (p == QLatin1String("/run/spike-rescue/dest-writable")) {
+          prefer = i;
           break;
         }
+        if (prefer < 0 && p.contains(QLatin1String("writable"), Qt::CaseInsensitive) &&
+            p != QLatin1String("/var/log") && !p.startsWith(QLatin1String("/var/log/"))) {
+          prefer = i;
+        }
       }
-      if (m_backupDestList->currentRow() < 0) {
-        m_backupDestList->setCurrentRow(0);
-      }
+      m_backupDestList->setCurrentRow(prefer >= 0 ? prefer : 0);
     }
   }
 

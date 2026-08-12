@@ -2,7 +2,7 @@
 
 Custom Qt Widgets installer per `docs/INSTALLER.md`. **Not Calamares.**
 
-## Status (0.0.21)
+## Status (0.0.24)
 
 | Area | State |
 | --- | --- |
@@ -18,8 +18,8 @@ Custom Qt Widgets installer per `docs/INSTALLER.md`. **Not Calamares.**
 | Module blacklist | ✅ `--detect` → KERNEL.md policy → `spike-blacklist.conf` before initramfs |
 | Installed session groups | ✅ `video,input,render` + enable `seatd` (fixes black screen) |
 | Wi‑Fi page | ✅ nmcli scan / connect / skip; keyfile handoff (not VPN-only export) |
-| Step 7 backup | ✅ scan only when backup checked; backs up wipe-disk OS |
-| Layer 4 restore | ✅ `RESTORE_STATUS=ok\|failed\|skipped` on Finish |
+| Step 7 backup | ✅ writable partition root dest (not `/var/log`); scan when checked |
+| Layer 4 restore | ✅ `SESSION_PATH` drain + newest-session fallback; `RESTORE_STATUS=` |
 | Installed session path | ✅ spike-greeter (default) or getty auto-login + `/etc/spike/installed` → `spike-session` |
 
 Alpha gate: live → **real** install → reboot to installed desktop (+ first-run wizard with shell **0.0.31**).
@@ -28,7 +28,7 @@ Alpha gate: live → **real** install → reboot to installed desktop (+ first-r
 
 ```
 ./scripts/package-spike-installer.sh
-# → build/packages/spike-installer_0.0.21-1_amd64.deb
+# → build/packages/spike-installer_0.0.24-1_amd64.deb
 ```
 
 Live Desktop: **Install Spike**. Helper: `/usr/lib/spike/spike-install-helper` (sudoers).
@@ -36,8 +36,8 @@ Requires `spike-rescue` **≥0.0.13** on the live image for Step 7 / preferred L
 
 ## Smoke (spare disk)
 
-1. Rebuild ISO with installer **0.0.21** + shell **0.0.47** + rescue **0.0.13** + config **0.0.12**.
-2. Step 7: no disk scan until “Back up files…” is checked; message while scanning.
+1. Rebuild ISO with installer **0.0.24** + shell **0.0.49** + rescue **0.0.15** + config **0.0.12**.
+2. Step 7: dest = This Spike USB (writable) at `/run/spike-rescue/dest-writable`; check **restore after install** too for Layer 4.
 3. Type **ERASE** → Install Spike now.
 4. Confirm `install.log`: first-boot marker, blacklist, keyboard, `update-initramfs`, groups/`seatd`, greeter enable.
 5. Remove USB, reboot → **Spike login** (if auto-login off) → desktop → **first-run wizard** once.

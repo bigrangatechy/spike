@@ -1,5 +1,10 @@
 #include "InstallEngine.hpp"
 
+#include "detect/Detect.hpp"
+
+#include "SpikeBackupLayout.hpp"
+
+#include <QDir>
 #include <QFile>
 #include <QProcess>
 #include <QStringList>
@@ -8,6 +13,24 @@
 namespace spike {
 
 namespace {
+
+bool isCasperLogWritableBind(const QString &mp)
+{
+  return mp == QLatin1String("/var/log") || mp.startsWith(QLatin1String("/var/log/"));
+}
+
+/** Newest SpikeBackup/<stamp>/<os>/ under destMount (for Layer 4 when SESSION_PATH missed). */
+QString newestBackupSession(const QString &destMount)
+{
+  if (destMount.isEmpty()) {
+    return {};
+  }
+  const QVector<BackupSession> sessions = discoverAllBackupSessions({destMount});
+  if (sessions.isEmpty()) {
+    return {};
+  }
+  return sessions.first().sessionPath; // discover sorts newest stamp first
+}
 
 bool partitionOnDisk(const QString &part, const QString &disk)
 {
@@ -157,8 +180,26 @@ void InstallEngine::start(const InstallState &state)
 
 void InstallEngine::startBackupThenInstall()
 {
+  if (m_state.backupDestMount.isEmpty() || isCasperLogWritableBind(m_state.backupDestMount)) {
+    const QString fixed = BackupScanner::ensureLiveUsbWritableRoot();
+    if (!fixed.isEmpty()) {
+      emit logLine(QStringLiteral(
+          "Step 7: remapping backup dest %1 → %2 (writable partition root)")
+                       .arg(m_state.backupDestMount.isEmpty() ? QStringLiteral("(empty)")
+                                                             : m_state.backupDestMount,
+                            fixed));
+      m_state.backupDestMount = fixed;
+    }
+  }
   if (m_state.backupDestMount.isEmpty()) {
     emitFinished(false, QStringLiteral("Backup destination not set (Step 7)."));
+    return;
+  }
+  if (isCasperLogWritableBind(m_state.backupDestMount)) {
+    emitFinished(false,
+                 QStringLiteral(
+                     "Backup destination /var/log is casper’s log bind — not the USB "
+                     "partition root. Remount failed; insert Spike USB writable media."));
     return;
   }
 
@@ -327,6 +368,28 @@ void InstallEngine::cancel()
   }
 }
 
+void InstallEngine::ingestBackupOutputLine(const QString &line)
+{
+  emit logLine(line);
+  if (line.startsWith(QLatin1String("SESSION_PATH="))) {
+    const QString path = line.mid(QStringLiteral("SESSION_PATH=").size()).trimmed();
+    if (!path.isEmpty()) {
+      if (m_state.restoreAfterInstall &&
+          (m_state.restoreSessionPath.isEmpty() || m_state.doBackup)) {
+        m_state.restoreSessionPath = path;
+        emit logLine(
+            QStringLiteral("Using new backup session for Layer 4 restore: %1").arg(path));
+      } else if (m_state.restoreSessionPath.isEmpty()) {
+        m_state.restoreSessionPath = path;
+      }
+    }
+  }
+  if (line.startsWith(QLatin1String("SKIPPED="))) {
+    m_backupSkipped = true;
+    m_state.backupStatus = QStringLiteral("skipped");
+  }
+}
+
 void InstallEngine::onReadyRead()
 {
   if (!m_proc) {
@@ -336,26 +399,11 @@ void InstallEngine::onReadyRead()
   const QString text = QString::fromUtf8(data);
   const QStringList lines = text.split(QLatin1Char('\n'), Qt::SkipEmptyParts);
   for (const QString &line : lines) {
-    emit logLine(line);
     if (m_phase == Phase::Backup) {
-      if (line.startsWith(QLatin1String("SESSION_PATH="))) {
-        const QString path = line.mid(QStringLiteral("SESSION_PATH=").size()).trimmed();
-        if (!path.isEmpty()) {
-          if (m_state.restoreAfterInstall &&
-              (m_state.restoreSessionPath.isEmpty() || m_state.doBackup)) {
-            m_state.restoreSessionPath = path;
-            emit logLine(
-                QStringLiteral("Using new backup session for Layer 4 restore: %1").arg(path));
-          } else if (m_state.restoreSessionPath.isEmpty()) {
-            m_state.restoreSessionPath = path;
-          }
-        }
-      }
-      if (line.startsWith(QLatin1String("SKIPPED="))) {
-        m_backupSkipped = true;
-        m_state.backupStatus = QStringLiteral("skipped");
-      }
+      ingestBackupOutputLine(line);
+      continue;
     }
+    emit logLine(line);
     if (m_phase == Phase::Install && line.contains(QLatin1String("RESTORE_STATUS="))) {
       const int eq = line.indexOf(QLatin1String("RESTORE_STATUS="));
       m_state.restoreStatus = line.mid(eq + QStringLiteral("RESTORE_STATUS=").size()).trimmed();
@@ -366,6 +414,27 @@ void InstallEngine::onReadyRead()
 void InstallEngine::onProcessFinished(int exitCode, int status)
 {
   Q_UNUSED(status);
+  // Drain trailing stdout — SESSION_PATH often arrives with the final chunk and can
+  // race past readyRead before finished.
+  if (m_proc) {
+    const QByteArray left = m_proc->readAll();
+    if (!left.isEmpty()) {
+      for (const QString &line :
+           QString::fromUtf8(left).split(QLatin1Char('\n'), Qt::SkipEmptyParts)) {
+        if (m_phase == Phase::Backup) {
+          ingestBackupOutputLine(line);
+        } else {
+          emit logLine(line);
+          if (line.contains(QLatin1String("RESTORE_STATUS="))) {
+            const int eq = line.indexOf(QLatin1String("RESTORE_STATUS="));
+            m_state.restoreStatus =
+                line.mid(eq + QStringLiteral("RESTORE_STATUS=").size()).trimmed();
+          }
+        }
+      }
+    }
+  }
+
   if (m_phase == Phase::Backup) {
     if (exitCode != 0) {
       m_state.backupStatus = QStringLiteral("failed");
@@ -384,6 +453,22 @@ void InstallEngine::onProcessFinished(int exitCode, int status)
       }
     } else {
       m_state.backupStatus = QStringLiteral("ok");
+      // If restore-after-install is on but SESSION_PATH never arrived, recover from dest.
+      if (m_state.restoreAfterInstall && m_state.restoreSessionPath.isEmpty()) {
+        const QString found = newestBackupSession(m_state.backupDestMount);
+        if (!found.isEmpty()) {
+          m_state.restoreSessionPath = found;
+          emit logLine(QStringLiteral(
+                           "Using newest SpikeBackup session for Layer 4 restore: %1")
+                           .arg(found));
+        } else {
+          emit logLine(QStringLiteral(
+              "WARN: restore-after-install set but no SESSION_PATH / SpikeBackup session "
+              "under dest — restore will be skipped."));
+          m_state.restoreAfterInstall = false;
+          m_state.restoreStatus = QStringLiteral("skipped");
+        }
+      }
       emit logLine(QStringLiteral("Step 7 backup OK — starting wipe/install …"));
     }
     startInstallAll();

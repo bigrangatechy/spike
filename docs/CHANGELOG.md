@@ -147,6 +147,7 @@ Security fixes follow responsible disclosure. If a vulnerability is fixed before
 ├── shell **0.0.41** + installer **0.0.16**: night-light.log; install-from-live.log on target; drop live capture binary
 ├── shell **0.0.42** + installer **0.0.17**: UDisks2 USB hotplug/notify; Storage Mount/Eject; spike-greeter on boot
 ├── shell **0.0.43**: desktop/hardware helpers as Depends; ISO list + verify hook require them (no Recommends-only gaps)
+├── installer **0.0.24**: SpikeBackup to writable partition root (not /var/log); Layer 4 SESSION_PATH drain
 ├── rescue **0.0.15** + installer **0.0.23**: fix --list-systems hang (quit before exec → empty OS list)
 ├── rescue **0.0.14** + installer **0.0.22**: backup scan skip live USB disk; safer list-systems parse/log
 ├── shell **0.0.49**: Fn volume/brightness/media + Meta+L/Space (KWin spike-shortcuts → D-Bus)

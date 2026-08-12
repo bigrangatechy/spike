@@ -33,6 +33,7 @@ private slots:
 private:
   void startInstallAll();
   void startBackupThenInstall();
+  void ingestBackupOutputLine(const QString &line);
   void emitFinished(bool ok, const QString &message);
   void cleanupPasswordFile();
 

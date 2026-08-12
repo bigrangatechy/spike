@@ -4,6 +4,12 @@ Append-only. Newest sessions at the **top**.
 
 ---
 
+## 2026-08-12 — restore skipped: backup wrote to /var/log
+
+USB `install-logs-2026-08-12.0`: backup OK (9 files) but `destMount=/var/log` (casper writable bind); `SpikeBackup/` only survived under `install-logs-*/log/`. `install-all` had **no** `--restore-session` → `RESTORE_STATUS=skipped`. Installer **0.0.24**: mount `/run/spike-rescue/dest-writable`, never offer `/var/log`; drain `SESSION_PATH` + newest-session fallback for Layer 4.
+
+---
+
 ## 2026-08-12 — backup scan: empty list despite successful probe
 
 `backup-scan.log`: stderr reached `[100%] Scan complete` and auth mounted `/dev/nvme0n1p2` + `list-dirs …/home`, but stdout empty. Cause: `--list-systems` waited on `QEventLoop` after sync `scanFinished` (`quit()` before `exec()` → hang → installer 90s kill). Rescue **0.0.15** drops the loop for batch paths; installer **0.0.23** drops offscreen env.

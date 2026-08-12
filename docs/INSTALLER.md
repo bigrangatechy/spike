@@ -1388,7 +1388,10 @@ If the user selects "Fresh install and restore my data":
 (while the live session still has the backup USB mounted), **before** Finish / reboot —
 not at first login. The Finish screen must not imply the user should unplug the backup
 USB *during* install; after `RESTORE_STATUS=ok|failed|skipped` it is safe to remove media
-and reboot.
+and reboot. Step 7 must write `SpikeBackup/` to the writable **partition root**
+(`/run/spike-rescue/dest-writable`), never casper’s `/var/log` bind. Restore only runs
+when “After install, restore…” is checked (or a prior session is selected) and
+`--restore-session` is passed into `install-all`.
 
 ### UX pass backlog (post-Alpha polish)
 
