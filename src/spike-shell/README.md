@@ -24,7 +24,7 @@ MVP for this skeleton (**0.0.49**):
 | Bluetooth / Airplane / Keyboard Layout | ✅ conditional |
 | Session menu | ✅ Spike lock screen + suspend confirm if inhibit on |
 | Lock screen / greeter | ✅ SpikeLockScreen; greeter stays visible; **Meta+L** global |
-| Keyboard shortcuts | ✅ Fn volume/brightness/media; Meta+Space launcher (KWin + kglobalacceld) |
+| Keyboard shortcuts | ✅ Fn volume/brightness/media via evdev; Meta+L/Space via KWin |
 | Window list / task icons | ✅ KWin script → panel icons (minimize/restore) |
 | System Monitor | ✅ `plasma-systemmonitor` on ISO |
 | Settings → PANEL | ✅ Panel / Tray Applets / Night Light (live Apply) |

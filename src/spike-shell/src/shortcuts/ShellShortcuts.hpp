@@ -8,10 +8,11 @@ namespace spike {
 
 class VolumeClient;
 class BrightnessClient;
+class EvdevMediaKeys;
 
 /**
- * Session-wide media / Fn keys: KWin script registers shortcuts (via
- * kglobalacceld) and calls this D-Bus object. Spec: HARDWARE.md, MULTIMEDIA.md,
+ * Session-wide media / Fn keys: evdev KEY_* listener (volume/brightness/media) plus
+ * KWin script for Meta+L / Meta+Space. Spec: HARDWARE.md, MULTIMEDIA.md,
  * POWER-MANAGEMENT.md, SECURITY.md (Super+L).
  */
 class ShellShortcuts : public QObject
@@ -26,7 +27,7 @@ public:
   void setLockHandler(VoidHandler handler);
   void setLauncherHandler(VoidHandler handler);
 
-  /** Register D-Bus, start kglobalacceld, load KWin spike-shortcuts script. */
+  /** Register D-Bus, start evdev listener + kglobalacceld/KWin script. */
   void start();
 
 public slots:
@@ -47,6 +48,7 @@ private:
 
   VolumeClient *m_volume = nullptr;
   BrightnessClient *m_brightness = nullptr;
+  EvdevMediaKeys *m_evdev = nullptr;
   VoidHandler m_lock;
   VoidHandler m_launcher;
   bool m_started = false;

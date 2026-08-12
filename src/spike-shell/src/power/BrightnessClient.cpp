@@ -22,7 +22,20 @@ bool BrightnessClient::discover()
     return false;
   }
   const QStringList entries = dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
+  // Prefer real panel backlights over ACPI/vendor proxies.
+  const QStringList prefer = {QStringLiteral("intel_backlight"), QStringLiteral("amdgpu_bl0"),
+                              QStringLiteral("amdgpu_bl1"), QStringLiteral("nvidia_0"),
+                              QStringLiteral("apple_panel_bl")};
+  QStringList ordered = prefer;
   for (const QString &e : entries) {
+    if (!ordered.contains(e)) {
+      ordered << e;
+    }
+  }
+  for (const QString &e : ordered) {
+    if (!entries.contains(e)) {
+      continue;
+    }
     const QString base = dir.absoluteFilePath(e);
     const QString bright = base + QStringLiteral("/brightness");
     const QString maxb = base + QStringLiteral("/max_brightness");

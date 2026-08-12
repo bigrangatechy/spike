@@ -44,12 +44,14 @@ src/spike-shell/src/
 └── shortcuts/         → ShellShortcuts + ShortcutsAdaptor (Fn/media keys)
 ```
 
-### Global shortcuts (0.0.49+)
+### Global shortcuts (0.0.51+)
 
-`spike-session` starts `plasma-kglobalaccel`. Shell loads KWin script `spike-shortcuts`,
-which `registerShortcut`s XF86 volume/brightness/media + Meta+L / Meta+Space and calls
-`org.spike.Shell.Shortcuts` on the session bus. Actions use `VolumeClient` /
-`BrightnessClient` / `playerctl` / `LockController` / launcher toggle.
+`spike-session` starts `plasma-kglobalaccel` for Meta shortcuts. Shell **0.0.51+** also
+listens on `/dev/input` (`EvdevMediaKeys`) for `KEY_VOLUME*` / `KEY_BRIGHTNESS*` / media
+keys — XF86 binds via KWin `registerShortcut` are unreliable outside full Plasma.
+Requires the session user in group `input` (live: `spike-live-groups`; install: helper).
+KWin script `spike-shortcuts` keeps Meta+L / Meta+Space → `org.spike.Shell.Shortcuts`.
+Actions use `VolumeClient` / `BrightnessClient` / `playerctl` / `LockController` / launcher.
 
 ### First-run wizard (0.0.31+)
 

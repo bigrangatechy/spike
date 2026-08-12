@@ -15,11 +15,11 @@
 | `dev-guide/` | 📝 Core filled (01–09, 12, 19); remaining stubs point at product docs |
 | agent-ops core | ✅ Written |
 | ISO / build tooling | ✅ live-build; hybrid remaster + debug capture |
-| Installer stack | ✅ **0.0.25** + shell **0.0.50** + rescue **0.0.15** + branding **0.0.1** + config **0.0.13** |
+| Installer stack | ✅ **0.0.25** + shell **0.0.51** + rescue **0.0.15** + branding **0.0.1** + config **0.0.13** |
 | `scripts/build-iso.sh` | ✅ Packages config + **branding** + shell + rescue + installer + migration + lb build |
 | Stage 1 live ISO | ✅ Hardware boot + login |
 | Stage 2 (`spike-config`) | ✅ **0.0.13** GRUB theme when theme.txt present (font optional) |
-| Stage 3 (Spike Shell) | 📝 **0.0.50** greeter stay-visible + emblem; Fn keys + kglobalacceld Depends |
+| Stage 3 (Spike Shell) | 📝 **0.0.51** Fn volume/brightness via evdev; greeter stay-visible; kglobalacceld for Meta keys |
 | Stage 4 (installer) | ✅ **0.0.25** — Plymouth/GRUB theme activate; writable backup dest |
 | Preinstalled apps | 📝 Seeded: Mozilla FF/TB `.deb` + VLC + LibreOffice; Discover Flatpak/AppStream |
 
@@ -27,7 +27,7 @@
 
 | Item | Notes |
 | :-: | :-: |
-| Rebuild smoke | shell **0.0.50** greeter stays; quiet splash logo; Fn keys; installer **0.0.25** restore |
+| Rebuild smoke | shell **0.0.51** Fn volume/brightness; live GRUB theme; greeter; installer **0.0.25** restore |
 | Spike APT host | Waiting on hosting hardware — plumbing shipped (`UPDATES.md`, Enabled: no) |
 | Stage 3 — first-run polish | Wizard shipped **0.0.31**; tour/a11y/Flatpak/update hooks still placeholders |
 
@@ -67,6 +67,7 @@ Implementation: `spike-live.list.chroot` + `config/spike-archives/` (staged by `
 
 | Date | Item |
 | :-: | :-: |
+| 2026-08-12 | shell **0.0.51**: Fn volume/brightness via `/dev/input` evdev (not KWin XF86 binds) |
 | 2026-08-12 | shell **0.0.50** + branding **0.0.1** + installer **0.0.25** + config **0.0.13**: greeter/Fn/logos |
 | 2026-08-12 | installer **0.0.24**: SpikeBackup to writable partition root (not `/var/log`); Layer 4 SESSION_PATH drain |
 | 2026-08-12 | rescue **0.0.15** + installer **0.0.23**: fix list-systems QEventLoop hang (empty OS list) |
@@ -95,7 +96,7 @@ Implementation: `spike-live.list.chroot` + `config/spike-archives/` (staged by `
 
 ## Next Suggested Work
 
-1. Rebuild/hybridize ISO → smoke: live GRUB Spike theme + quiet Plymouth logo; greeter stays; Fn volume/brightness/media; backup+restore (installer **0.0.25**).  
+1. Rebuild ISO → smoke shell **0.0.51** Fn volume ±/mute + brightness ± (OSD); live GRUB theme; greeter; backup+restore.  
 2. **Installer UX pass (queued):** keep-USB/restore prompts; static Finish/reboot UI (non-debug); installed-system debug mode — see `INSTALLER.md` § UX pass backlog.  
 3. Confirm first-run wizard + brightness / block-sleep.  
 4. spike-migration inventory/conflict UI (not Alpha-blocking).  

@@ -2,6 +2,7 @@
 
 #include "audio/VolumeClient.hpp"
 #include "power/BrightnessClient.hpp"
+#include "shortcuts/EvdevMediaKeys.hpp"
 #include "shortcuts/ShortcutsAdaptor.hpp"
 
 #include <QDBusConnection>
@@ -62,7 +63,19 @@ ShellShortcuts::ShellShortcuts(QObject *parent)
   : QObject(parent)
   , m_volume(new VolumeClient(this))
   , m_brightness(new BrightnessClient(this))
+  , m_evdev(new EvdevMediaKeys(this))
 {
+  // Evdev is the reliable path for XF86 volume/brightness on Spike's KWin-only
+  // session (kglobalaccel often never binds those keys). Meta+L / Meta+Space stay
+  // on the KWin script.
+  connect(m_evdev, &EvdevMediaKeys::volumeUp, this, &ShellShortcuts::volumeUp);
+  connect(m_evdev, &EvdevMediaKeys::volumeDown, this, &ShellShortcuts::volumeDown);
+  connect(m_evdev, &EvdevMediaKeys::volumeMute, this, &ShellShortcuts::volumeMute);
+  connect(m_evdev, &EvdevMediaKeys::brightnessUp, this, &ShellShortcuts::brightnessUp);
+  connect(m_evdev, &EvdevMediaKeys::brightnessDown, this, &ShellShortcuts::brightnessDown);
+  connect(m_evdev, &EvdevMediaKeys::mediaPlayPause, this, &ShellShortcuts::mediaPlayPause);
+  connect(m_evdev, &EvdevMediaKeys::mediaNext, this, &ShellShortcuts::mediaNext);
+  connect(m_evdev, &EvdevMediaKeys::mediaPrevious, this, &ShellShortcuts::mediaPrevious);
 }
 
 void ShellShortcuts::setLockHandler(VoidHandler handler)
@@ -235,14 +248,26 @@ void ShellShortcuts::start()
     bus.registerObject(QStringLiteral("/Shortcuts"), this);
   }
 
-  // Wait for org.kde.kglobalaccel, then load the KWin script (retries).
+  // Primary: read KEY_VOLUME* / KEY_BRIGHTNESS* from /dev/input (needs `input` group).
+  if (m_evdev) {
+    m_evdev->start();
+    // Hotplug USB keyboards: re-scan a few times after session start.
+    QTimer::singleShot(2000, this, [this]() {
+      if (m_evdev) {
+        m_evdev->start();
+      }
+    });
+    QTimer::singleShot(8000, this, [this]() {
+      if (m_evdev) {
+        m_evdev->start();
+      }
+    });
+  }
+
+  // Secondary: KWin registerShortcut for Meta+L / Meta+Space (and XF86 if it binds).
   auto tryLoad = [this]() {
     startKGlobalAccelDaemon();
-    QDBusInterface check(QStringLiteral("org.kde.kglobalaccel"), QStringLiteral("/kglobalaccel"),
-                         QStringLiteral("org.kde.KGlobalAccel"), QDBusConnection::sessionBus());
-    if (check.isValid()) {
-      ensureKwinScript();
-    }
+    ensureKwinScript();
   };
   QTimer::singleShot(800, this, tryLoad);
   QTimer::singleShot(2500, this, tryLoad);

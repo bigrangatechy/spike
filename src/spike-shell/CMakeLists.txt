@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(spike-shell VERSION 0.0.50 LANGUAGES CXX)
+project(spike-shell VERSION 0.0.51 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -71,6 +71,8 @@ add_executable(spike-shell
   src/panel/applets/TaskListAdaptor.hpp
   src/shortcuts/ShellShortcuts.cpp
   src/shortcuts/ShellShortcuts.hpp
+  src/shortcuts/EvdevMediaKeys.cpp
+  src/shortcuts/EvdevMediaKeys.hpp
   src/shortcuts/ShortcutsAdaptor.cpp
   src/shortcuts/ShortcutsAdaptor.hpp
   src/notify/NotificationDaemon.cpp

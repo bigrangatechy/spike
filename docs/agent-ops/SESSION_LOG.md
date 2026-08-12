@@ -4,6 +4,12 @@ Append-only. Newest sessions at the **top**.
 
 ---
 
+## 2026-08-12 — live Fn volume/brightness still dead
+
+KWin `registerShortcut` + kglobalacceld never reliably bind XF86 volume/brightness on Spike’s KWin-only session. Shell **0.0.51**: `EvdevMediaKeys` reads `KEY_VOLUME*` / `KEY_BRIGHTNESS*` from `/dev/input` (live user already in `input` group); KWin script kept only for Meta+L / Meta+Space.
+
+---
+
 ## 2026-08-12 — live ISO GRUB had no theme
 
 Quiet live boot menu was still plain white/black text: `spike-iso-hybridize.sh` rewrote `grub.cfg` without gfxterm/theme, and never copied `src/spike-branding/grub-theme/`. Hybridize now installs `boot/grub/themes/spike/` + unicode.pf2, enables gfxterm/gfxmenu, and embeds video/png modules in the BIOS core image. Re-run hybridize (full squashfs rebuild not required for GRUB-only).
