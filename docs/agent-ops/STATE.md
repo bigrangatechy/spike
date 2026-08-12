@@ -15,11 +15,11 @@
 | `dev-guide/` | 📝 Core filled (01–09, 12, 19); remaining stubs point at product docs |
 | agent-ops core | ✅ Written |
 | ISO / build tooling | ✅ live-build; hybrid remaster + debug capture |
-| Installer stack | ✅ **0.0.26** + shell **0.0.52** + rescue **0.0.15** + branding **0.0.2** + config **0.0.13** |
+| Installer stack | ✅ **0.0.26** + shell **0.0.53** + rescue **0.0.15** + branding **0.0.2** + config **0.0.13** |
 | `scripts/build-iso.sh` | ✅ Packages config + **branding** + shell + rescue + installer + migration + lb build |
 | Stage 1 live ISO | ✅ Hardware boot + login |
 | Stage 2 (`spike-config`) | ✅ **0.0.13** GRUB theme when theme.txt present (font optional) |
-| Stage 3 (Spike Shell) | 📝 **0.0.52** Fn via evdev; spike-save-logs auto-mounts writable; greeter stay-visible |
+| Stage 3 (Spike Shell) | 📝 **0.0.53** spare-USB log copy auto-mount; Fn via evdev; greeter |
 | Stage 4 (installer) | ✅ **0.0.25** — Plymouth/GRUB theme activate; writable backup dest |
 | Preinstalled apps | 📝 Seeded: Mozilla FF/TB `.deb` + VLC + LibreOffice; Discover Flatpak/AppStream |
 
@@ -67,6 +67,7 @@ Implementation: `spike-live.list.chroot` + `config/spike-archives/` (staged by `
 
 | Date | Item |
 | :-: | :-: |
+| 2026-08-12 | shell **0.0.53**: spare USB log copy — mount removable partitions; no Terminal= desktop |
 | 2026-08-12 | shell **0.0.52**: spike-save-logs auto-mounts LABEL=writable + clearer USB errors |
 | 2026-08-12 | installer **0.0.26** + branding **0.0.2**: Plymouth via update-alternatives (no plymouth-set-default-theme) |
 | 2026-08-12 | shell **0.0.51**: Fn volume/brightness via `/dev/input` evdev (not KWin XF86 binds) |

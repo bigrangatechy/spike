@@ -72,8 +72,52 @@ try_mount_writable_label() {
   return 1
 }
 
-# Prefer an explicit path, else removable mounts under /run/media|/media,
-# else LABEL=writable (live USB), else fail clearly.
+# Mount any unmounted USB partitions (spare log sticks — not only LABEL=writable).
+try_mount_removable_usbs() {
+  local name type fstype mp rm tran parent parent_tran parent_rm
+  command -v lsblk >/dev/null 2>&1 || return 0
+  while read -r name type fstype mp rm tran; do
+    [ "$type" = "part" ] || continue
+    [ -n "$fstype" ] || continue
+    [ -z "$mp" ] || continue
+    case "$fstype" in
+      iso9660|udf|squashfs|crypto_LUKS) continue ;;
+    esac
+    parent="$(lsblk -no PKNAME "$name" 2>/dev/null | head -n1 || true)"
+    parent_tran=""
+    parent_rm="0"
+    if [ -n "$parent" ]; then
+      parent_tran="$(lsblk -no TRAN "/dev/${parent}" 2>/dev/null | head -n1 || true)"
+      parent_rm="$(lsblk -no RM "/dev/${parent}" 2>/dev/null | head -n1 || true)"
+    fi
+    if [ "$tran" != "usb" ] && [ "$parent_tran" != "usb" ] && [ "$rm" != "1" ] && [ "$parent_rm" != "1" ]; then
+      continue
+    fi
+    if command -v udisksctl >/dev/null 2>&1; then
+      echo "mounting USB partition $name ($fstype)…" >&2
+      udisksctl mount -b "$name" 2>&1 || true
+    fi
+  done < <(lsblk -nrpo NAME,TYPE,FSTYPE,MOUNTPOINT,RM,TRAN 2>/dev/null || true)
+}
+
+is_on_usb() {
+  local path="$1" src parent tran rm
+  src="$(findmnt -n -o SOURCE -T "$path" 2>/dev/null || true)"
+  [ -n "$src" ] || return 1
+  src="${src%%\[*}" # strip btrfs subvol
+  parent="$(lsblk -no PKNAME "$src" 2>/dev/null | head -n1 || true)"
+  if [ -n "$parent" ]; then
+    tran="$(lsblk -no TRAN "/dev/${parent}" 2>/dev/null | head -n1 || true)"
+    rm="$(lsblk -no RM "/dev/${parent}" 2>/dev/null | head -n1 || true)"
+  else
+    tran="$(lsblk -no TRAN "$src" 2>/dev/null | head -n1 || true)"
+    rm="$(lsblk -no RM "$src" 2>/dev/null | head -n1 || true)"
+  fi
+  [ "$tran" = "usb" ] || [ "$rm" = "1" ]
+}
+
+# Prefer an explicit path, else a mounted spare USB under /run/media|/media,
+# else LABEL=writable, else fail clearly.
 pick_usb() {
   if [ -n "$DEST_ROOT" ]; then
     if is_writable_dir "$DEST_ROOT"; then
@@ -84,30 +128,21 @@ pick_usb() {
     return 1
   fi
 
+  try_mount_removable_usbs || true
   try_mount_writable_label || true
 
   local cand root_src src
   root_src="$(findmnt -n -o SOURCE / 2>/dev/null || true)"
 
-  # Dedicated rescue mount of the live stick (partition root — best dest).
-  for cand in /run/spike-rescue/dest-writable; do
-    if is_writable_dir "$cand"; then
-      printf '%s\n' "$cand"
-      return 0
-    fi
-  done
-
+  # 1) Prefer spare USB mounts under the user's media dir (newest first).
   for base in "/run/media/${USER_NAME}" "/media/${USER_NAME}" /run/media /media; do
     [ -d "$base" ] || continue
-    # Newest mounts first (likely the stick just plugged in).
     while IFS= read -r cand; do
       [ -n "$cand" ] || continue
       is_writable_dir "$cand" || continue
       case "$cand" in
         /cdrom|/log-persistence) continue ;;
       esac
-      # Skip casper's /var/log bind of writable — SpikeBackup/logs belong at
-      # partition root; still allow if nothing else exists (handled later).
       if [ "$cand" = "/var/log" ] || [ "$cand" = "/var/log/" ]; then
         continue
       fi
@@ -115,14 +150,42 @@ pick_usb() {
       if [ -n "$root_src" ] && [ "$src" = "$root_src" ]; then
         continue
       fi
+      # Prefer true USB volumes; still accept other removable mounts.
+      if is_on_usb "$cand"; then
+        printf '%s\n' "$cand"
+        return 0
+      fi
+    done < <(find "$base" -mindepth 1 -maxdepth 3 -type d 2>/dev/null | sort -r)
+  done
+
+  # 2) Any writable media mount (non-USB fallback: SD cards, etc.).
+  for base in "/run/media/${USER_NAME}" "/media/${USER_NAME}" /run/media /media; do
+    [ -d "$base" ] || continue
+    while IFS= read -r cand; do
+      [ -n "$cand" ] || continue
+      is_writable_dir "$cand" || continue
+      case "$cand" in
+        /cdrom|/log-persistence|/var/log|/var/log/*) continue ;;
+      esac
+      src="$(findmnt -n -o SOURCE -T "$cand" 2>/dev/null || true)"
+      if [ -n "$root_src" ] && [ "$src" = "$root_src" ]; then
+        continue
+      fi
       printf '%s\n' "$cand"
       return 0
-    done < <(find "$base" -mindepth 1 -maxdepth 2 -type d 2>/dev/null | sort -r)
+    done < <(find "$base" -mindepth 1 -maxdepth 3 -type d 2>/dev/null | sort -r)
+  done
+
+  # 3) Rescue / live writable mounts.
+  for cand in /run/spike-rescue/dest-writable /media/writable /mnt/writable; do
+    if is_writable_dir "$cand"; then
+      printf '%s\n' "$cand"
+      return 0
+    fi
   done
 
   if command -v findmnt >/dev/null 2>&1; then
-    local w lab
-    # Prefer a real partition-root mount of LABEL=writable (not /var/log).
+    local w
     while IFS= read -r w; do
       [ -n "$w" ] || continue
       case "$w" in
@@ -133,31 +196,15 @@ pick_usb() {
         return 0
       fi
     done < <(findmnt -n -o TARGET -S LABEL=writable 2>/dev/null || true)
-
-    # Last resort: casper /var/log bind (better than losing logs).
-    w="$(findmnt -n -o TARGET -S LABEL=writable 2>/dev/null | head -n1 || true)"
-    if [ -n "$w" ] && is_writable_dir "$w"; then
-      echo "note: using casper writable bind at $w (prefer remount at partition root)" >&2
-      printf '%s\n' "$w"
-      return 0
-    fi
   fi
-
-  for cand in /media/writable /mnt/writable /log-persistence; do
-    if is_writable_dir "$cand"; then
-      printf '%s\n' "$cand"
-      return 0
-    fi
-  done
 
   echo "error: no writable USB found." >&2
-  echo "  Plug in a USB stick, wait for it to appear under /run/media/${USER_NAME}/," >&2
-  echo "  or mount the live stick writable partition, then re-run:" >&2
+  echo "  Plug in a spare USB stick, wait a second, then re-run — or Mount it from" >&2
+  echo "  the panel Disks & USB applet — then:" >&2
   echo "  spike-save-logs /run/media/${USER_NAME}/<stick-name>" >&2
-  if [ -b /dev/disk/by-label/writable ]; then
-    echo "  hint: LABEL=writable exists but is not mounted — try:" >&2
-    echo "    udisksctl mount -b /dev/disk/by-label/writable" >&2
-  fi
+  echo "  Currently mounted media:" >&2
+  findmnt -nr -o TARGET,SOURCE,FSTYPE -t fuseblk,vfat,exfat,ntfs,ext4,ext3,ext2,btrfs 2>/dev/null \
+    | grep -E '/run/media|/media/' >&2 || echo "  (none under /run/media or /media)" >&2
   return 1
 }
 

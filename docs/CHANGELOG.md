@@ -147,6 +147,7 @@ Security fixes follow responsible disclosure. If a vulnerability is fixed before
 ├── shell **0.0.41** + installer **0.0.16**: night-light.log; install-from-live.log on target; drop live capture binary
 ├── shell **0.0.42** + installer **0.0.17**: UDisks2 USB hotplug/notify; Storage Mount/Eject; spike-greeter on boot
 ├── shell **0.0.43**: desktop/hardware helpers as Depends; ISO list + verify hook require them (no Recommends-only gaps)
+├── shell **0.0.53**: spare-USB spike-save-logs mounts removable partitions; Desktop without Terminal=
 ├── shell **0.0.52**: spike-save-logs auto-mounts LABEL=writable; keep terminal + kdialog on failure
 ├── installer **0.0.26** + branding **0.0.2**: Plymouth default via update-alternatives (Ubuntu)
 ├── shell **0.0.51**: Fn volume/brightness via evdev KEY_* (/dev/input); Meta+L/Space still KWin

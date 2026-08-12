@@ -4,6 +4,12 @@ Append-only. Newest sessions at the **top**.
 
 ---
 
+## 2026-08-12 — Copy Spike Logs fails on spare USB
+
+Jessie uses a **different** stick (not live writable). Failures: spare USB often unmounted, and Desktop `Terminal=true` can no-op without a wired terminal. Shell **0.0.53**: auto-mount all USB partitions via udisksctl; prefer `/run/media/$USER` USB mounts; Desktop runs without Terminal (kdialog/notify). Manual: panel **Disks & USB → Mount**, then `spike-save-logs /run/media/$USER/<name>`.
+
+---
+
 ## 2026-08-12 — Copy Spike Logs to USB fails (no mount)
 
 Jessie: Desktop log-copy looked broken. Common cause: re-plugged live stick `LABEL=writable` is not auto-mounted (`HintAuto=false`), so `spike-save-logs` found no dest. Shell **0.0.52**: auto `udisksctl mount` for writable, clearer kdialog/notify errors, keep terminal open; host `spike-collect-usb-logs.sh` prefers udisksctl too. Manual copy still fine as fallback.
