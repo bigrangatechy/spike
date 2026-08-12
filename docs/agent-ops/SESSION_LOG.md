@@ -4,6 +4,12 @@ Append-only. Newest sessions at the **top**.
 
 ---
 
+## 2026-08-12 — lost+found log bundles were failed Desktop shortcut attempts
+
+USB had empty-ish `spike-logs-*` under `lost+found` from nested-session Desktop failures; useful files were loose root copies (`session-latest.log`, etc.). Shell **0.0.56**: pick_usb only volume roots (skip lost+found); greeter/ journal capture; collect script accepts root-level session logs.
+
+---
+
 ## 2026-08-12 — Copy-logs Desktop nests spike-session; greeter still blanks
 
 Installed: Desktop “Copy Spike Logs” started a **second** spike-session (profile.d + login-shell/`gio` path). Greeter still goes black ~1–2s. Shell **0.0.55** + installer **0.0.27**: profile.d skips if `kwin_wayland` already running; DesktopIcons launches Exec directly with `SPIKE_SESSION_STARTED=1`; greeter unbinds fbcon + 15s keep-alive. Jessie copying logs manually — mount spare SanDisk and run `./scripts/spike-collect-usb-logs.sh /run/media/$USER/<label>`.

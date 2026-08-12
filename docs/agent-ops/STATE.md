@@ -15,11 +15,11 @@
 | `dev-guide/` | 📝 Core filled (01–09, 12, 19); remaining stubs point at product docs |
 | agent-ops core | ✅ Written |
 | ISO / build tooling | ✅ live-build; hybrid remaster + debug capture |
-| Installer stack | ✅ **0.0.27** + shell **0.0.55** + rescue **0.0.15** + branding **0.0.2** + config **0.0.13** |
+| Installer stack | ✅ **0.0.27** + shell **0.0.56** + rescue **0.0.15** + branding **0.0.2** + config **0.0.13** |
 | `scripts/build-iso.sh` | ✅ Packages config + **branding** + shell + rescue + installer + migration + lb build |
 | Stage 1 live ISO | ✅ Hardware boot + login |
 | Stage 2 (`spike-config`) | ✅ **0.0.13** GRUB theme when theme.txt present (font optional) |
-| Stage 3 (Spike Shell) | 📝 **0.0.55** greeter fbcon unbind; no nested session from Desktop icons |
+| Stage 3 (Spike Shell) | 📝 **0.0.56** log-copy skips lost+found; greeter journal in bundle |
 | Stage 4 (installer) | ✅ **0.0.27** — profile.d nest guard; Plymouth/GRUB; writable backup |
 | Preinstalled apps | 📝 Seeded: Mozilla FF/TB `.deb` + VLC + LibreOffice; Discover Flatpak/AppStream |
 
@@ -67,6 +67,7 @@ Implementation: `spike-live.list.chroot` + `config/spike-archives/` (staged by `
 
 | Date | Item |
 | :-: | :-: |
+| 2026-08-12 | shell **0.0.56**: spike-save-logs skip lost+found; capture greeter journal |
 | 2026-08-12 | shell **0.0.55** + installer **0.0.27**: no nested session from Desktop; greeter fbcon unbind |
 | 2026-08-12 | shell **0.0.54**: brightness-udev + spike backlight udev; verify writes |
 | 2026-08-12 | shell **0.0.53**: spare USB log copy — mount removable partitions; no Terminal= desktop |

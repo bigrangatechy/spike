@@ -66,8 +66,24 @@ do
   copied=1
 done
 
+# Manual Dolphin copies often land session/install logs at the stick root.
+if [[ -f "$SRC/session-latest.log" || -f "$SRC/install-from-live.log" || -f "$SRC/night-light.log" ]]; then
+  stamp="$(date -u +%Y%m%dT%H%M%SZ)"
+  bundle="${DEST_ROOT}/manual-usb-${stamp}"
+  mkdir -p "$bundle"
+  echo "  manual root logs → $(basename "$bundle")"
+  for f in session-latest.log install-from-live.log night-light.log install.log; do
+    [[ -f "$SRC/$f" ]] || continue
+    cp -a "$SRC/$f" "$bundle/"
+  done
+  if [[ -n "${SUDO_UID:-}" ]]; then
+    chown -R "${SUDO_UID}:${SUDO_GID:-${SUDO_UID}}" "$bundle" || true
+  fi
+  copied=1
+fi
+
 if [[ "$copied" -eq 0 ]]; then
-  echo "warning: no spike-capture-*/spike-logs-*/install-logs-* found under $SRC" >&2
+  echo "warning: no spike-capture-*/spike-logs-*/install-logs-* (or root session logs) under $SRC" >&2
   ls -la "$SRC" >&2 || true
   exit 2
 fi

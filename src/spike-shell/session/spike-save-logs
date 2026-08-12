@@ -141,11 +141,10 @@ pick_usb() {
       [ -n "$cand" ] || continue
       is_writable_dir "$cand" || continue
       case "$cand" in
-        /cdrom|/log-persistence) continue ;;
+        /cdrom|/log-persistence|*/lost+found|*/lost+found/*|/var/log|/var/log/*) continue ;;
       esac
-      if [ "$cand" = "/var/log" ] || [ "$cand" = "/var/log/" ]; then
-        continue
-      fi
+      # Prefer the volume root (…/LABEL), not nested dirs like lost+found.
+      [ "$(dirname "$cand")" = "$base" ] || continue
       src="$(findmnt -n -o SOURCE -T "$cand" 2>/dev/null || true)"
       if [ -n "$root_src" ] && [ "$src" = "$root_src" ]; then
         continue
@@ -155,7 +154,7 @@ pick_usb() {
         printf '%s\n' "$cand"
         return 0
       fi
-    done < <(find "$base" -mindepth 1 -maxdepth 3 -type d 2>/dev/null | sort -r)
+    done < <(find "$base" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | sort -r)
   done
 
   # 2) Any writable media mount (non-USB fallback: SD cards, etc.).
@@ -165,15 +164,16 @@ pick_usb() {
       [ -n "$cand" ] || continue
       is_writable_dir "$cand" || continue
       case "$cand" in
-        /cdrom|/log-persistence|/var/log|/var/log/*) continue ;;
+        /cdrom|/log-persistence|*/lost+found|*/lost+found/*|/var/log|/var/log/*) continue ;;
       esac
+      [ "$(dirname "$cand")" = "$base" ] || continue
       src="$(findmnt -n -o SOURCE -T "$cand" 2>/dev/null || true)"
       if [ -n "$root_src" ] && [ "$src" = "$root_src" ]; then
         continue
       fi
       printf '%s\n' "$cand"
       return 0
-    done < <(find "$base" -mindepth 1 -maxdepth 3 -type d 2>/dev/null | sort -r)
+    done < <(find "$base" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | sort -r)
   done
 
   # 3) Rescue / live writable mounts.
@@ -351,9 +351,28 @@ fi
   ls -la /etc/NetworkManager/system-connections 2>&1 || true
 } >"$OUT/network/nmcli.txt" 2>&1 || true
 
-# Filtered journal — shell / kwin / NM / night light / installer
+# Greeter wipe diagnosis (runs as root before login — not in session-latest.log)
+mkdir -p "$OUT/greeter"
+journalctl -b --no-pager -u spike-greeter.service \
+  >"$OUT/greeter/spike-greeter.service.txt" 2>&1 || true
+journalctl -b --no-pager -u console-setup.service -u setvtrgb.service \
+  -u plymouth-quit.service -u plymouth-quit-wait.service -u getty@tty1.service \
+  >"$OUT/greeter/console-plymouth-getty.txt" 2>&1 || true
+{
+  echo "=== fb / vtcon ==="
+  ls -la /sys/class/graphics/ /sys/class/vtconsole/ 2>&1 || true
+  for f in /sys/class/vtconsole/vtcon*/bind /sys/class/graphics/fbcon/cursor_blink; do
+    [ -e "$f" ] || continue
+    echo -n "$f="; cat "$f" 2>/dev/null || echo "?"
+  done
+  echo "=== spike-greeter unit ==="
+  systemctl cat spike-greeter.service 2>&1 || true
+  systemctl status spike-greeter.service --no-pager 2>&1 || true
+} >"$OUT/greeter/fb-vtcon-status.txt" 2>&1 || true
+
+# Filtered journal — shell / kwin / NM / night light / installer / greeter
 journalctl -b --no-pager \
-  -g 'spike-shell|spike-session|spike-config|spike-install|spike-rescue|kwin|NightLight|NightColor|NetworkManager|nmcli|PackageKit|pkgcli|wayland|libinput|seat|drm|LayerShell' \
+  -g 'spike-shell|spike-session|spike-greeter|spike-config|spike-install|spike-rescue|kwin|NightLight|NightColor|NetworkManager|nmcli|PackageKit|pkgcli|wayland|libinput|seat|drm|LayerShell|fbcon|console-setup|setfont|linuxfb' \
   >"$OUT/journal-filtered.txt" 2>&1 || true
 
 journalctl -b --no-pager -u NetworkManager.service -u PackageKit.service \
@@ -378,10 +397,11 @@ Contents (focused — not a full system dump):
   packages.txt             — spike-* package versions
   spike-config-state.txt   — settings state
   session-logs/            — spike-session + install.log
+  greeter/                 — spike-greeter + console-setup/plymouth (login blank)
   config/kwinrc            — Night Light keys
   config/nightlight-dbus.txt
   network/nmcli.txt        — Wi‑Fi / connections (no passwords)
-  journal-filtered.txt     — shell/kwin/NM/installer lines this boot
+  journal-filtered.txt     — shell/kwin/NM/installer/greeter lines this boot
 EOF
 
 sync || true
