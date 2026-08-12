@@ -3,9 +3,10 @@ Type=Application
 Version=1.0
 Name=Copy Spike Logs to USB
 Comment=Save session / Night Light / Wi‑Fi diagnostics onto a plugged-in USB stick
-# No Terminal= — Spike may not wire x-terminal-emulator; use kdialog/notify instead.
-Exec=/usr/bin/spike-save-logs
+# SPIKE_SESSION_STARTED blocks profile.d from nesting a second spike-session
+# if anything wraps this in a login shell.
+Exec=env SPIKE_SESSION_STARTED=1 /usr/bin/spike-save-logs
 Icon=document-save
 Terminal=false
 Categories=System;X-Spike-Tools;
-StartupNotify=true
+StartupNotify=false

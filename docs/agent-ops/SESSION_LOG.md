@@ -4,6 +4,12 @@ Append-only. Newest sessions at the **top**.
 
 ---
 
+## 2026-08-12 — Copy-logs Desktop nests spike-session; greeter still blanks
+
+Installed: Desktop “Copy Spike Logs” started a **second** spike-session (profile.d + login-shell/`gio` path). Greeter still goes black ~1–2s. Shell **0.0.55** + installer **0.0.27**: profile.d skips if `kwin_wayland` already running; DesktopIcons launches Exec directly with `SPIKE_SESSION_STARTED=1`; greeter unbinds fbcon + 15s keep-alive. Jessie copying logs manually — mount spare SanDisk and run `./scripts/spike-collect-usb-logs.sh /run/media/$USER/<label>`.
+
+---
+
 ## 2026-08-12 — Brightness applet/Fn dead on live (volume OK)
 
 Volume Fn changes the applet (evdev OK) but no toast — Spike Notifications is tray-history only, no on-screen OSD yet. Brightness slider and Fn did nothing: ISO had `brightnessctl` but not **`brightness-udev`** (Recommends-only), so `/sys/class/backlight/*/brightness` stayed root-only and logind SetBrightness often fails under seatd. Shell **0.0.54**: Depends `brightness-udev`, ships `90-spike-backlight.rules`, BrightnessClient tries devices + verifies write. Interim on current install: `sudo apt install brightness-udev` then `sudo udevadm trigger -s backlight` (or `sudo chmod g+w /sys/class/backlight/*/brightness && sudo chgrp video …`).

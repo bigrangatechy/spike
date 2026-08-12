@@ -6,6 +6,7 @@
 #include <QGridLayout>
 #include <QIcon>
 #include <QProcess>
+#include <QProcessEnvironment>
 #include <QRegularExpression>
 #include <QStandardPaths>
 #include <QToolButton>
@@ -159,15 +160,25 @@ void DesktopIcons::launch(const DesktopEntry &entry)
   if (cmd.isEmpty()) {
     return;
   }
-  if (QProcess::startDetached(QStringLiteral("gio"),
-                              {QStringLiteral("launch"), entry.path})) {
-    return;
-  }
   const QStringList parts = QProcess::splitCommand(cmd);
   if (parts.isEmpty()) {
     return;
   }
-  QProcess::startDetached(parts.first(), parts.mid(1));
+  // Never launch the Wayland session entry from a Desktop icon (nests KWin).
+  const QString bin = QFileInfo(parts.first()).fileName();
+  if (bin == QLatin1String("spike-session") || bin == QLatin1String("spike-greeter")) {
+    return;
+  }
+  // Direct exec — avoid gio/xdg-terminal login-shell paths that re-trigger
+  // profile.d → spike-session on installed systems.
+  QProcess proc;
+  QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
+  env.insert(QStringLiteral("SPIKE_SESSION_STARTED"), QStringLiteral("1"));
+  proc.setProgram(parts.first());
+  proc.setArguments(parts.mid(1));
+  proc.setProcessEnvironment(env);
+  proc.setWorkingDirectory(QDir::homePath());
+  proc.startDetached();
 }
 
 void DesktopIcons::reload()

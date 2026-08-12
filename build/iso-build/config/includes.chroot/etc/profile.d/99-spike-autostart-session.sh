@@ -22,6 +22,17 @@ esac
 
 command -v spike-session >/dev/null 2>&1 || return 0
 
+# Never nest: Desktop Terminal= launches / login shells must not start a second
+# KWin on top of an already-running session for this user.
+if command -v pgrep >/dev/null 2>&1; then
+  pgrep -u "$(id -u)" -x kwin_wayland >/dev/null 2>&1 && return 0
+fi
+if [ -n "${XDG_RUNTIME_DIR:-}" ]; then
+  for _sock in "${XDG_RUNTIME_DIR}/wayland"-*; do
+    [ -S "$_sock" ] && return 0
+  done
+fi
+
 export SPIKE_SESSION_STARTED=1
 echo "spike: starting desktop session (Ctrl+Alt+F2 for a text console)…"
 exec spike-session

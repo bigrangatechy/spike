@@ -1,6 +1,7 @@
 #include "lock/PamAuth.hpp"
 
 #include <QApplication>
+#include <QDir>
 #include <QFile>
 #include <QFormLayout>
 #include <QLabel>
@@ -56,6 +57,15 @@ void claimGraphicsVt()
   if (write(g_ttyFd, kTermCtl, sizeof(kTermCtl) - 1) < 0) {
     // best-effort
   }
+  // Keep fbcon unbound so late setfont cannot blank the greeter.
+  QDir vtcon(QStringLiteral("/sys/class/vtconsole"));
+  for (const QString &e : vtcon.entryList({QStringLiteral("vtcon*")}, QDir::Dirs | QDir::NoDotAndDotDot)) {
+    QFile bind(vtcon.absoluteFilePath(e + QStringLiteral("/bind")));
+    if (bind.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+      bind.write("0\n");
+      bind.close();
+    }
+  }
 }
 
 QString defaultUsername()
@@ -106,7 +116,7 @@ int main(int argc, char *argv[])
   QApplication app(argc, argv);
   QApplication::setApplicationName(QStringLiteral("spike-greeter"));
   QApplication::setOrganizationName(QStringLiteral("Spike"));
-  QApplication::setApplicationVersion(QStringLiteral("0.0.50"));
+  QApplication::setApplicationVersion(QStringLiteral("0.0.55"));
 
   auto *win = new QWidget;
   win->setObjectName(QStringLiteral("SpikeGreeter"));
@@ -194,17 +204,16 @@ int main(int argc, char *argv[])
   win->showFullScreen();
   pass->setFocus();
 
-  // Re-assert KD_GRAPHICS + repaint for several seconds. Installed boots often
-  // get a late console-setup/setfont or fbcon redraw ~1s after first paint
-  // (UI flashes then blanks while PAM still accepts input).
+  // Re-assert KD_GRAPHICS + unbind fbcon + repaint. Installed boots often get a
+  // late console-setup/setfont or fbcon redraw ~1–2s after first paint.
   auto *keepAlive = new QTimer(win);
-  keepAlive->setInterval(200);
+  keepAlive->setInterval(250);
   QObject::connect(keepAlive, &QTimer::timeout, win, [win, keepAlive]() {
     claimGraphicsVt();
     win->update();
     win->repaint();
     static int ticks = 0;
-    if (++ticks >= 25) { // ~5s
+    if (++ticks >= 60) { // ~15s
       keepAlive->stop();
     }
   });

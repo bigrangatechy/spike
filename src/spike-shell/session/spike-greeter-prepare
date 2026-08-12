@@ -18,6 +18,12 @@ fi
 if [ -w /sys/class/graphics/fbcon/cursor_blink ]; then
   echo 0 >/sys/class/graphics/fbcon/cursor_blink 2>/dev/null || true
 fi
+# Unbind fbcon from the VT consoles — late setfont/console-setup otherwise
+# redraws text over the greeter ~1–2s after first paint (looks like a black flash).
+for _vtcon in /sys/class/vtconsole/vtcon*/bind; do
+  [ -w "$_vtcon" ] || continue
+  echo 0 >"$_vtcon" 2>/dev/null || true
+done
 if [ -w /sys/class/graphics/fb0/blank ]; then
   echo 0 >/sys/class/graphics/fb0/blank 2>/dev/null || true
 fi
@@ -39,8 +45,7 @@ while [ "$i" -lt 50 ]; do
   sleep 0.1
 done
 
-# Short settle so console-setup/setfont and Plymouth DRM handoff finish before
-# Qt paints (installed boots often wipe linuxfb ~1s after first frame).
-sleep 0.25
+# Settle after Plymouth DRM handoff / console-setup.
+sleep 0.4
 
 exit 0
