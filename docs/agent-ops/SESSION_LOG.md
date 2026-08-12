@@ -4,6 +4,12 @@ Append-only. Newest sessions at the **top**.
 
 ---
 
+## 2026-08-12 — Brightness applet/Fn dead on live (volume OK)
+
+Volume Fn changes the applet (evdev OK) but no toast — Spike Notifications is tray-history only, no on-screen OSD yet. Brightness slider and Fn did nothing: ISO had `brightnessctl` but not **`brightness-udev`** (Recommends-only), so `/sys/class/backlight/*/brightness` stayed root-only and logind SetBrightness often fails under seatd. Shell **0.0.54**: Depends `brightness-udev`, ships `90-spike-backlight.rules`, BrightnessClient tries devices + verifies write. Interim on current install: `sudo apt install brightness-udev` then `sudo udevadm trigger -s backlight` (or `sudo chmod g+w /sys/class/backlight/*/brightness && sudo chgrp video …`).
+
+---
+
 ## 2026-08-12 — Copy Spike Logs fails on spare USB
 
 Jessie uses a **different** stick (not live writable). Failures: spare USB often unmounted, and Desktop `Terminal=true` can no-op without a wired terminal. Shell **0.0.53**: auto-mount all USB partitions via udisksctl; prefer `/run/media/$USER` USB mounts; Desktop runs without Terminal (kdialog/notify). Manual: panel **Disks & USB → Mount**, then `spike-save-logs /run/media/$USER/<name>`.

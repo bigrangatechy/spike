@@ -19,7 +19,7 @@ MVP for this skeleton (**0.0.49**):
 | Volume tray | ✅ 0–150%, middle-click mute |
 | Battery tray | ✅ UPower + ETA; **block sleep/locking** switch (logind inhibit) |
 | Notifications tray | ✅ in-process `org.freedesktop.Notifications` |
-| Brightness | ✅ sysfs + logind `SetBrightness` (+ brightnessctl fallback) |
+| Brightness | ✅ brightnessctl/sysfs/logind + `brightness-udev` / spike udev rules |
 | Removable / Updates / Night Light | ✅ UDisks2 hotplug + Notify + automount; Updates/Night Light as before |
 | Bluetooth / Airplane / Keyboard Layout | ✅ conditional |
 | Session menu | ✅ Spike lock screen + suspend confirm if inhibit on |

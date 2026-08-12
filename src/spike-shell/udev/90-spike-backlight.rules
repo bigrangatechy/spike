@@ -1,0 +1,7 @@
+# Backup if brightness-udev is absent; otherwise that package owns 90-brightnessctl.rules.
+ACTION=="add", SUBSYSTEM=="backlight", TEST=="brightness", \
+  RUN+="/bin/chgrp video /sys/class/backlight/%k/brightness", \
+  RUN+="/bin/chmod g+w /sys/class/backlight/%k/brightness"
+ACTION=="add", SUBSYSTEM=="leds", KERNEL=="*::kbd_backlight", TEST=="brightness", \
+  RUN+="/bin/chgrp video /sys/class/leds/%k/brightness", \
+  RUN+="/bin/chmod g+w /sys/class/leds/%k/brightness"

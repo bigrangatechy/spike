@@ -286,9 +286,10 @@ All changes take effect immediately (no reboot required).
 Hardware interface:
 
 ```
-├── Primary: /sys/class/backlight/*/brightness (read; write when permitted)
-├── Preferred write path: logind Session.SetBrightness (unprivileged seat)
-└── Fallback: brightnessctl -d <device> set <value>
+├── Unprivileged writes need video-group ACL on sysfs (package brightness-udev
+│   and/or spike-shell 90-spike-backlight.rules) — brightnessctl alone is not enough
+├── Write order: brightnessctl → sysfs → logind Session.SetBrightness (self/session id)
+└── Client verifies the backlight value changed; tries each /sys/class/backlight device
 ```
 
 Controls:

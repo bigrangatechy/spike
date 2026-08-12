@@ -172,6 +172,8 @@ bluez
 rfkill
 wmctrl
 brightnessctl
+# udev rules so video-group can write /sys/class/backlight (not a brightnessctl Depends)
+brightness-udev
 playerctl
 kglobalacceld
 # Boot splash (spike-branding Depends: plymouth; list explicitly so live-build keeps it)

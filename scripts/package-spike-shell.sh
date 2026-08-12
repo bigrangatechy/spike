@@ -136,11 +136,13 @@ if [[ -f "$LOCK_QML" ]]; then
   install -m 644 "$LOCK_QML" \
     "${DEST}/usr/share/plasma/shells/org.kde.plasma.desktop/contents/lockscreen/LockScreen.qml"
 fi
-mkdir -p "${DEST}/etc/xdg"
+mkdir -p "${DEST}/etc/xdg" "${DEST}/usr/lib/udev/rules.d"
 if [[ -f "${ROOT}/build/iso-build/config/includes.chroot/etc/xdg/kscreenlockerrc" ]]; then
   install -m 644 "${ROOT}/build/iso-build/config/includes.chroot/etc/xdg/kscreenlockerrc" \
     "${DEST}/etc/xdg/kscreenlockerrc"
 fi
+install -m 644 "${SRC}/udev/90-spike-backlight.rules" \
+  "${DEST}/usr/lib/udev/rules.d/90-spike-backlight.rules"
 # KWin script → panel task list (Wayland window icons)
 mkdir -p "${DEST}/usr/share/kwin/scripts"
 cp -a "${SRC}/kwin-scripts/spike-tasklist" "${DEST}/usr/share/kwin/scripts/"
@@ -164,7 +166,7 @@ Section: x11
 Priority: optional
 Architecture: ${ARCH}
 Maintainer: BigRangaTech <spike@bigrangatech.com>
-Depends: libqt6widgets6 | libqt6widgets6t64, libqt6gui6 | libqt6gui6t64, libqt6core6t64 | libqt6core6, libqt6dbus6 | libqt6dbus6t64, qt6-wayland, liblayershellqtinterface6, layer-shell-qt, libkf6kcmutils6, libkf6kcmutilscore6, libkf6coreaddons6, libpam0g, udisks2, gvfs, kwin-wayland, xwayland, dbus-user-session, seatd, libseat1, breeze-cursor-theme, breeze-icon-theme, qt6-svg-plugins, libkf6kcmutils-bin, pulseaudio-utils, upower, bluez, rfkill, wmctrl, brightnessctl, playerctl, kglobalacceld, xdg-utils
+Depends: libqt6widgets6 | libqt6widgets6t64, libqt6gui6 | libqt6gui6t64, libqt6core6t64 | libqt6core6, libqt6dbus6 | libqt6dbus6t64, qt6-wayland, liblayershellqtinterface6, layer-shell-qt, libkf6kcmutils6, libkf6kcmutilscore6, libkf6coreaddons6, libpam0g, udisks2, gvfs, kwin-wayland, xwayland, dbus-user-session, seatd, libseat1, breeze-cursor-theme, breeze-icon-theme, qt6-svg-plugins, libkf6kcmutils-bin, pulseaudio-utils, upower, bluez, rfkill, wmctrl, brightnessctl, brightness-udev, playerctl, kglobalacceld, xdg-utils
 Recommends: spike-config, gvfs-backends, smartmontools, nm-connection-editor
 Description: Spike Linux desktop shell (Qt6 Widgets)
  Bottom panel, Kickoff launcher, Network/Volume/Battery tray applets, Settings

@@ -242,6 +242,15 @@ need_bin udisksctl
 need_bin rfkill
 need_bin wmctrl
 need_bin brightnessctl
+need_pkg brightness-udev
+if [ ! -f /usr/lib/udev/rules.d/90-brightnessctl.rules ] \
+   && [ ! -f /usr/lib/udev/rules.d/90-spike-backlight.rules ] \
+   && [ ! -f /etc/udev/rules.d/90-spike-backlight.rules ]; then
+  echo "E: backlight udev rules missing (brightness-udev or spike-shell 90-spike-backlight)" >&2
+  fail=1
+else
+  echo "I: backlight udev rules present"
+fi
 need_bin playerctl
 need_bin bluetoothctl
 need_bin nmcli
