@@ -82,10 +82,17 @@ int batchListSystems()
   out << QStringLiteral("systems=%1\n").arg(systems.size());
   for (int i = 0; i < systems.size(); ++i) {
     const auto &s = systems.at(i);
-    out << QStringLiteral("%1\t%2\t%3\t%4\t%5\n")
-               .arg(i)
-               .arg(s.partition.path, s.osLabel, s.partition.fstype)
-               .arg(s.users.join(QLatin1Char(',')));
+    // Build without multi-arg .arg() — labels can contain % and break place markers.
+    QString line = QString::number(i);
+    line += QLatin1Char('\t');
+    line += s.partition.path;
+    line += QLatin1Char('\t');
+    line += s.osLabel;
+    line += QLatin1Char('\t');
+    line += s.partition.fstype;
+    line += QLatin1Char('\t');
+    line += s.users.join(QLatin1Char(','));
+    out << line << QLatin1Char('\n');
   }
   out.flush();
   if (!engine.lastScanSummary().isEmpty()) {

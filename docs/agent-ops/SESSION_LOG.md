@@ -4,6 +4,18 @@ Append-only. Newest sessions at the **top**.
 
 ---
 
+## 2026-08-12 — installer UX pass notes (queued)
+
+Jessie: after install, “remove boot USB” confuses restore users; want keep-USB prompts, a calm static Finish/reboot UI when not debugging, and a dedicated **installed** debug mode (alongside live debug GRUB). Noted in `INSTALLER.md` UX pass backlog. Timing reminder: Layer 4 restore already runs during `install-all` (before Finish), not at first login — prompts should protect the USB through install completion.
+
+---
+
+## 2026-08-12 — installer backup scan missed installed system
+
+USB logs: rescue *did* mount/probe `/dev/nvme0n1p2` during Step 7, but UI showed none. Fixes: rescue **0.0.14** skips entire live USB disk + tiny partitions; safer `--list-systems` output; `/etc/spike/installed` detection. Installer **0.0.22** runs scan offscreen, logs `/var/log/spike/backup-scan.log`, stricter `/dev/` parse.
+
+---
+
 ## 2026-08-12 — Fn / media keyboard shortcuts
 
 Volume ±/mute, brightness ±, media play/next/prev, Meta+L lock, Meta+Space launcher. KWin `spike-shortcuts` → D-Bus `org.spike.Shell.Shortcuts`; session starts `plasma-kglobalaccel`. Shell **0.0.49** + ISO `playerctl`. Greeter stay-visible and installer lazy backup scan still in tree for next ISO.

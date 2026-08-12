@@ -106,6 +106,8 @@ private:
   QVector<BackupSession> m_backupSessions;
   bool m_cancel = false;
   bool m_includeInventoryOnScan = true;
+  /** Parent disk of the live ISO (/cdrom), e.g. /dev/sda — skip all its partitions. */
+  QString m_liveDisk;
 };
 
 } // namespace spike

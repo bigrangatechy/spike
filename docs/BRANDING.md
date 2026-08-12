@@ -380,6 +380,7 @@ Spike's mascot is a dog named Spike. The logo is a stylized illustration of this
 ```
 /usr/share/spike/branding/logo/
 ├── spike-logo-full.svg              → Full logo (dog + wordmark), dark bg
+├── spike-logo-full-tagline.svg      → Full logo + tagline
 ├── spike-logo-full-light.svg        → Full logo, light bg variant
 ├── spike-emblem.svg                 → Emblem (dog only), dark bg
 ├── spike-emblem-light.svg           → Emblem, light bg variant

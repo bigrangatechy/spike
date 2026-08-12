@@ -1,18 +1,29 @@
-# Spike emblem (source: logo.png)
+# Spike logo assets
 
-Master asset is the circular dog + circuit emblem.
+**Source of truth:** SVG. Raster PNGs are derived for GRUB / Plymouth / icons.
+
+## SVG (preferred)
 
 | File | Use |
 |------|-----|
-| `spike-emblem.png` | Full-res transparent master (1024²) |
-| `spike-emblem-16.png` … `512.png` | Freedesktop / panel / app icons |
-| `spike-emblem-96.png` | Same size as GRUB emblem |
-| `../grub-theme/spike-emblem.png` | GRUB menu (96px) |
-| `../grub-theme/tagline.png` | GRUB tagline under emblem |
-| `../plymouth/spike-*/logo.png` | Boot splash (256px) |
-| `../plymouth/spike-*/tagline.png` | Boot tagline: *Let's make tech repairable again* |
-| `spike-emblem-source-1024.png` | Archival flat source (no alpha) |
-| `logo.png` | Original drop-in (kept) |
+| `spike-logo-full.svg` | **Interim master** — dog + “Spike” wordmark (docs, splash, website; use until emblem SVG exists) |
+| `spike-logo-full-tagline.svg` | Full logo + tagline (*Let's make tech repairable again*) |
+| `spike-emblem.svg` | Dog only — preferred later for GRUB / Plymouth / small icons |
 
-Start / launcher icons: use **24**, **32**, or **48** from this folder.
+Until `spike-emblem.svg` exists, keep the existing emblem **PNG** set for boot/icons (do not replace those with full-logo renders — the wordmark gets muddy at 16–96px).
+
+## PNG rasters (keep for boot / icons)
+
+| File | Size | Use |
+|------|------|-----|
+| `spike-emblem-16.png` … `512.png` | 16–512 | Freedesktop / panel / app icons |
+| `spike-emblem-96.png` | 96 | Same as GRUB emblem |
+| `../grub-theme/spike-emblem.png` | 96 | GRUB menu |
+| `../plymouth/spike-*/logo.png` | 256 | Boot splash |
+| `spike-emblem.png` | 1024 | Raster master (should be real PNG, not JPEG) |
+
+Export emblem rasters from **`spike-emblem.svg`** when available. Until then, leave the
+current `spike-emblem-*.png` / GRUB / Plymouth PNGs as-is; use `spike-logo-full.svg` for
+places that want the wordmark (docs, larger UI).
+
 Artwork license: CC-BY-SA 4.0 (see repo `LICENSE-CC-BY-SA-4.0`).

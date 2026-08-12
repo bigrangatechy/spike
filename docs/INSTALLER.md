@@ -1384,6 +1384,39 @@ If the user selects "Fresh install and restore my data":
    └── User finds their files in their home directory
 ```
 
+**Implementation note (current code):** Layer 4 restore runs *inside* `install-all`
+(while the live session still has the backup USB mounted), **before** Finish / reboot —
+not at first login. The Finish screen must not imply the user should unplug the backup
+USB *during* install; after `RESTORE_STATUS=ok|failed|skipped` it is safe to remove media
+and reboot.
+
+### UX pass backlog (post-Alpha polish)
+
+Capture for the installer UX pass (do not block the next ISO smoke):
+
+1. **Keep-USB / restore prompts**
+   - Step 7 (when restore is checked): clear copy that the **backup USB (or installer USB
+     with `SpikeBackup/`) must stay plugged until installation finishes**.
+   - Installation progress: short sticky note if restore is pending.
+   - Finish: branch copy —
+     - restore ok → “Your files were restored. You can remove the USB and reboot.”
+     - restore failed → “Keep the USB; use Rescue → Restore, or retry.”
+     - no restore → current “remove live USB and reboot.”
+   - Avoid the generic “remove the boot USB” message when it would make users unplug the
+     only copy of their backup mid-flow.
+
+2. **Static Finish / reboot UI (non-debug)**
+   - Replace the plain-text Finish dump with a calm full-screen panel: success icon,
+     one sentence, primary **Reboot** / **Shut down**, secondary “copy logs to USB.”
+   - Debug / verbose plan dump stays behind a **Show details** control (or only when
+     live `debug` cmdline / future installed debug mode is on).
+
+3. **Installed-system debug mode** (companion to live “Spike Live (debug logging)”)
+   - Settings → Advanced (or Boot): **Debug mode** toggle.
+   - When on: richer logging under `/var/log/spike/`, optional verbose Finish/first-run
+     details, easier “Copy Spike Logs to USB.”
+   - When off: quiet defaults; no developer dump on Finish.
+
 ### What Gets Restored
 
 **Restored from SpikeBackup/:**

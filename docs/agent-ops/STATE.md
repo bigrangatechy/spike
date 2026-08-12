@@ -15,19 +15,19 @@
 | `dev-guide/` | 📝 Core filled (01–09, 12, 19); remaining stubs point at product docs |
 | agent-ops core | ✅ Written |
 | ISO / build tooling | ✅ live-build; hybrid remaster + debug capture |
-| Installer stack | ✅ **0.0.21** + shell **0.0.49** + rescue **0.0.13** (Fn keys; greeter; lazy backup) |
+| Installer stack | ✅ **0.0.22** + shell **0.0.49** + rescue **0.0.14** (backup scan harden; Fn keys; greeter) |
 | `scripts/build-iso.sh` | ✅ Packages config + shell + rescue + installer + **migration** + lb build |
 | Stage 1 live ISO | ✅ Hardware boot + login |
 | Stage 2 (`spike-config`) | ✅ **0.0.12** power profile live apply (governor + Wi‑Fi powersave) |
 | Stage 3 (Spike Shell) | 📝 **0.0.49** Fn/media shortcuts + kglobalaccel; greeter KD_GRAPHICS; Updates; UDisks |
-| Stage 4 (installer) | ✅ **0.0.21** — disk scan only when backup checked; “can take a while” message |
+| Stage 4 (installer) | ✅ **0.0.22** — backup-scan log + offscreen list-systems; lazy checkbox scan |
 | Preinstalled apps | 📝 Seeded: Mozilla FF/TB `.deb` + VLC + LibreOffice; Discover Flatpak/AppStream |
 
 ## In Progress
 
 | Item | Notes |
 | :-: | :-: |
-| Rebuild smoke | shell **0.0.49** Fn volume/brightness; greeter visible; installer **0.0.21** Step 7 + backup/restore E2E |
+| Rebuild smoke | installer **0.0.22** + rescue **0.0.14** backup finds installed OS; shell **0.0.49** Fn keys |
 | Spike APT host | Waiting on hosting hardware — plumbing shipped (`UPDATES.md`, Enabled: no) |
 | Stage 3 — first-run polish | Wizard shipped **0.0.31**; tour/a11y/Flatpak/update hooks still placeholders |
 
@@ -67,6 +67,7 @@ Implementation: `spike-live.list.chroot` + `config/spike-archives/` (staged by `
 
 | Date | Item |
 | :-: | :-: |
+| 2026-08-12 | rescue **0.0.14** + installer **0.0.22**: backup scan finds installed OS reliably |
 | 2026-08-12 | shell **0.0.49**: Fn/media keys via KWin spike-shortcuts + kglobalacceld |
 | 2026-08-12 | shell **0.0.48**: greeter no longer wiped by getty TTYReset race |
 | 2026-08-12 | installer **0.0.21**: Step 7 disk scan only when backup checkbox checked |
@@ -91,9 +92,9 @@ Implementation: `spike-live.list.chroot` + `config/spike-archives/` (staged by `
 
 ## Next Suggested Work
 
-1. Rebuild ISO → smoke fixes + **Copy Spike Logs to USB** → collect `spike-logs-*` on host.  
-2. Confirm first-run wizard + brightness / block-sleep.  
-3. Fill first-run placeholder hooks as apps land.  
+1. Rebuild ISO → smoke installer **0.0.22** + rescue **0.0.14** backup/restore E2E + Fn keys + greeter.  
+2. **Installer UX pass (queued):** keep-USB/restore prompts; static Finish/reboot UI (non-debug); installed-system debug mode — see `INSTALLER.md` § UX pass backlog.  
+3. Confirm first-run wizard + brightness / block-sleep.  
 4. spike-migration inventory/conflict UI (not Alpha-blocking).  
 
 ## How To Update This File

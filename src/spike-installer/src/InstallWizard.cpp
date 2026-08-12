@@ -7,12 +7,15 @@
 #include <QCheckBox>
 #include <QComboBox>
 #include <QCompleter>
+#include <QDir>
+#include <QFile>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QLineEdit>
 #include <QListWidget>
 #include <QMessageBox>
 #include <QProcess>
+#include <QProcessEnvironment>
 #include <QPushButton>
 #include <QStackedWidget>
 #include <QTextEdit>
@@ -389,6 +392,10 @@ void InstallWizard::startBackupSystemScan()
 
   m_listSystemsProc = new QProcess(this);
   m_listSystemsProc->setProcessChannelMode(QProcess::SeparateChannels);
+  // Avoid fighting the installer's Wayland session for a display connection.
+  QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
+  env.insert(QStringLiteral("QT_QPA_PLATFORM"), QStringLiteral("offscreen"));
+  m_listSystemsProc->setProcessEnvironment(env);
   connect(m_listSystemsProc, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), this,
           &InstallWizard::onListSystemsFinished);
   m_listSystemsProc->start(QStringLiteral("spike-rescue"), {QStringLiteral("--list-systems")});
@@ -466,28 +473,54 @@ void InstallWizard::onListSystemsFinished(int /*exitCode*/, QProcess::ExitStatus
   const QString err = QString::fromUtf8(proc->readAllStandardError()).trimmed();
   proc->deleteLater();
 
+  // Persist for post-mortem (writable USB /var/log often captures this).
+  {
+    QDir().mkpath(QStringLiteral("/var/log/spike"));
+    QFile log(QStringLiteral("/var/log/spike/backup-scan.log"));
+    if (log.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text)) {
+      log.write(QByteArrayLiteral("=== stdout ===\n"));
+      log.write(out.toUtf8());
+      log.write(QByteArrayLiteral("\n=== stderr ===\n"));
+      log.write(err.toUtf8());
+      log.write(QByteArrayLiteral("\n"));
+    }
+  }
+
   m_backupSystemList->clear();
   for (const QString &line : out.split(QLatin1Char('\n'), Qt::SkipEmptyParts)) {
     if (line.startsWith(QLatin1String("systems=")) || line.startsWith(QLatin1Char('[')) ||
-        line.startsWith(QLatin1String("ERROR")) || line.startsWith(QLatin1String("WARN"))) {
+        line.startsWith(QLatin1String("ERROR")) || line.startsWith(QLatin1String("WARN")) ||
+        line.startsWith(QLatin1String("Partitions considered"))) {
       continue;
     }
     const QStringList p = line.split(QLatin1Char('\t'));
     if (p.size() < 3) {
       continue;
     }
-    auto *item = new QListWidgetItem(
-        QStringLiteral("[%1] %2 — %3 (%4)")
-            .arg(p.at(0), p.value(2), p.value(1), p.value(3)));
-    item->setData(Qt::UserRole, p.value(1)); // partition path
+    // Expected: index \t /dev/… \t label \t fstype \t users
+    const QString part = p.value(1);
+    if (!part.startsWith(QLatin1String("/dev/"))) {
+      continue;
+    }
+    QString text = QStringLiteral("[%1] ").arg(p.at(0));
+    text += p.value(2);
+    text += QStringLiteral(" — ");
+    text += part;
+    text += QStringLiteral(" (");
+    text += p.value(3);
+    text += QLatin1Char(')');
+    auto *item = new QListWidgetItem(text);
+    item->setData(Qt::UserRole, part);
     m_backupSystemList->addItem(item);
   }
   if (m_backupSystemList->count() == 0) {
     QString msg = QStringLiteral("(No systems found — check disks or uncheck backup)");
     if (!err.isEmpty()) {
-      // Last non-empty stderr line is usually the scan summary.
       const QStringList elines = err.split(QLatin1Char('\n'), Qt::SkipEmptyParts);
       msg += QStringLiteral("\n") + elines.last();
+    }
+    if (!out.trimmed().isEmpty()) {
+      msg += QStringLiteral("\n(raw: ") + out.trimmed().left(200) + QStringLiteral(")");
     }
     m_backupSystemList->addItem(msg);
   } else {

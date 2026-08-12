@@ -477,7 +477,19 @@ bool RescueEngine::isLiveDevice(const QString &devName, const QString &label,
       mountpoints.contains(QLatin1String("/lib/live"))) {
     return true;
   }
-  // Casper often uses the USB that also has "writable".
+  // Any partition on the live USB disk (including unlabeled gap slices).
+  if (!m_liveDisk.isEmpty()) {
+    const QString path = QStringLiteral("/dev/") + devName;
+    if (path == m_liveDisk) {
+      return true;
+    }
+    if (path.startsWith(m_liveDisk + QLatin1String("p")) && path.size() > m_liveDisk.size() + 1) {
+      return path.at(m_liveDisk.size() + 1).isDigit();
+    }
+    if (path.startsWith(m_liveDisk) && path.size() > m_liveDisk.size()) {
+      return path.at(m_liveDisk.size()).isDigit();
+    }
+  }
   Q_UNUSED(devName);
   return false;
 }
@@ -651,13 +663,15 @@ DetectedSystem RescueEngine::probeMounted(const BlockPartition &part, const QStr
   sys.partition = part;
   sys.mountPoint = mnt;
 
-  if (QFile::exists(mnt + QStringLiteral("/etc/os-release"))) {
+  if (QFile::exists(mnt + QStringLiteral("/etc/os-release")) ||
+      QFile::exists(mnt + QStringLiteral("/etc/spike/installed"))) {
     QFile release(mnt + QStringLiteral("/etc/os-release"));
     QString text;
     if (release.open(QIODevice::ReadOnly | QIODevice::Text)) {
       text = QString::fromUtf8(release.readAll());
     }
-    if (text.contains(QLatin1String("Spike"), Qt::CaseInsensitive) ||
+    if (QFile::exists(mnt + QStringLiteral("/etc/spike/installed")) ||
+        text.contains(QLatin1String("Spike"), Qt::CaseInsensitive) ||
         text.contains(QLatin1String("ID=spike"))) {
       sys.os = OsKind::SpikeLinux;
     } else {
@@ -710,6 +724,34 @@ void RescueEngine::scanSystems()
   appendDebug(QStringLiteral("scanSystems: start"));
   cleanupMounts();
   m_systems.clear();
+  m_liveDisk.clear();
+  {
+    // Identify the live USB whole-disk so unlabeled gap partitions are skipped too.
+    const QStringList mounts = {QStringLiteral("/cdrom"), QStringLiteral("/lib/live/mount/medium"),
+                                QStringLiteral("/run/live/medium")};
+    for (const QString &mp : mounts) {
+      const QString src =
+          runCapture(QStringLiteral("findmnt"),
+                     {QStringLiteral("-n"), QStringLiteral("-o"), QStringLiteral("SOURCE"),
+                      QStringLiteral("-T"), mp})
+              .trimmed();
+      if (!src.startsWith(QLatin1String("/dev/"))) {
+        continue;
+      }
+      const QString parent =
+          runCapture(QStringLiteral("lsblk"), {QStringLiteral("-no"), QStringLiteral("PKNAME"), src})
+              .trimmed();
+      if (!parent.isEmpty()) {
+        m_liveDisk = QStringLiteral("/dev/") + parent;
+        break;
+      }
+      m_liveDisk = src;
+      break;
+    }
+    if (!m_liveDisk.isEmpty()) {
+      appendDebug(QStringLiteral("live disk: %1").arg(m_liveDisk));
+    }
+  }
   emit scanProgress(QStringLiteral("Listing block devices…"), 5);
 
   const QString json = runCapture(
@@ -751,8 +793,11 @@ void RescueEngine::scanSystems()
       p.removable = rm;
       const QString mp = mountpointsFromJson(obj);
       p.isLiveMedium = isLiveDevice(p.name, p.label, mp);
-      if (p.fstype != QLatin1String("swap") && p.fstype != QLatin1String("crypto_LUKS") &&
-          !p.isLiveMedium && !p.path.isEmpty()) {
+      // Skip tiny slices (USB ISO gap partitions are often a few hundred KB).
+      constexpr qint64 kMinProbeBytes = 64LL * 1024 * 1024;
+      const bool tooSmall = p.sizeBytes > 0 && p.sizeBytes < kMinProbeBytes;
+      if (!tooSmall && p.fstype != QLatin1String("swap") &&
+          p.fstype != QLatin1String("crypto_LUKS") && !p.isLiveMedium && !p.path.isEmpty()) {
         // Allow empty fstype — mount will blkid.
         parts.append(p);
       }
