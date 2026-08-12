@@ -16,10 +16,12 @@ tty / display manager
         ▼
 spike-session (wayland session entry)
         │
+        ├── plasma-kglobalaccel (Fn / media global shortcuts)
         ├── compositor / layer-shell stack (as packaged)
         └── spike-shell
                   ├── Panel (applets: network, volume, battery, …)
                   ├── Launcher (Kickoff-style; scans *.desktop)
+                  ├── ShellShortcuts (KWin spike-shortcuts → D-Bus)
                   ├── Settings host (KCMs + custom pages via org.spike.Config)
                   ├── FirstRunWizard (installed only; see firstrun/)
                   ├── LockController + SpikeLockScreen (PAM)
@@ -38,8 +40,16 @@ src/spike-shell/src/
 ├── settings/
 ├── network/
 ├── audio/
-└── power/             → BatteryClient, BrightnessClient, SleepInhibit
+├── power/             → BatteryClient, BrightnessClient, SleepInhibit
+└── shortcuts/         → ShellShortcuts + ShortcutsAdaptor (Fn/media keys)
 ```
+
+### Global shortcuts (0.0.49+)
+
+`spike-session` starts `plasma-kglobalaccel`. Shell loads KWin script `spike-shortcuts`,
+which `registerShortcut`s XF86 volume/brightness/media + Meta+L / Meta+Space and calls
+`org.spike.Shell.Shortcuts` on the session bus. Actions use `VolumeClient` /
+`BrightnessClient` / `playerctl` / `LockController` / launcher toggle.
 
 ### First-run wizard (0.0.31+)
 
@@ -57,7 +67,7 @@ Drop-in hooks: `firstrun::runDesktopTour`, `verifyFlatpakRuntimes`, `checkSecuri
 
 - **Manually block sleep and screen locking** — battery popup + Settings → Power; holds
   logind `Inhibit("sleep:idle", …, "block")` (`SleepInhibit`).
-- **Lock Screen** — Session menu / Super+L / `PrepareForSleep` / session `Lock` →
+- **Lock Screen** — Session menu / Meta+L (global) / `PrepareForSleep` / session `Lock` →
   `SpikeLockScreen` (PAM service `spike-lock`, packaged under `/etc/pam.d/`).
 - Manual Suspend asks for confirmation when the inhibit switch is on.
 

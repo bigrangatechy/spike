@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(spike-shell VERSION 0.0.47 LANGUAGES CXX)
+project(spike-shell VERSION 0.0.49 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -69,6 +69,10 @@ add_executable(spike-shell
   src/panel/applets/WindowListApplet.hpp
   src/panel/applets/TaskListAdaptor.cpp
   src/panel/applets/TaskListAdaptor.hpp
+  src/shortcuts/ShellShortcuts.cpp
+  src/shortcuts/ShellShortcuts.hpp
+  src/shortcuts/ShortcutsAdaptor.cpp
+  src/shortcuts/ShortcutsAdaptor.hpp
   src/notify/NotificationDaemon.cpp
   src/notify/NotificationDaemon.hpp
   src/notify/NotificationAdaptor.cpp
@@ -178,6 +182,8 @@ target_link_libraries(spike-greeter PRIVATE Qt6::Widgets ${CMAKE_DL_LIBS})
 install(TARGETS spike-greeter RUNTIME DESTINATION bin)
 install(FILES session/spike-greeter.service DESTINATION lib/systemd/system)
 install(PROGRAMS session/spike-greeter-prepare DESTINATION lib/spike)
+install(FILES session/getty@tty1.service.d/spike-greeter-coexist.conf
+        DESTINATION lib/systemd/system/getty@tty1.service.d)
 
 install(FILES session/spike.desktop DESTINATION share/wayland-sessions)
 install(PROGRAMS session/spike-session DESTINATION bin)
@@ -185,4 +191,6 @@ install(PROGRAMS session/spike-seed-home DESTINATION bin)
 install(PROGRAMS session/spike-fix-mozilla-home DESTINATION bin)
 install(FILES pam/spike-lock DESTINATION etc/pam.d)
 install(DIRECTORY kwin-scripts/spike-tasklist
+        DESTINATION share/kwin/scripts)
+install(DIRECTORY kwin-scripts/spike-shortcuts
         DESTINATION share/kwin/scripts)

@@ -4,16 +4,15 @@
 #include "lock/LockController.hpp"
 #include "panel/Panel.hpp"
 #include "settings/InputConfig.hpp"
+#include "shortcuts/ShellShortcuts.hpp"
 
 #include <QApplication>
 #include <QFile>
 #include <QIcon>
-#include <QKeySequence>
 #include <QPalette>
 #include <QProcess>
 #include <QScreen>
 #include <QSettings>
-#include <QShortcut>
 #include <QStandardPaths>
 #include <QTimer>
 
@@ -62,7 +61,7 @@ int main(int argc, char *argv[])
 {
   QApplication app(argc, argv);
   QApplication::setApplicationName(QStringLiteral("spike-shell"));
-  QApplication::setApplicationVersion(QStringLiteral("0.0.47"));
+  QApplication::setApplicationVersion(QStringLiteral("0.0.49"));
   QApplication::setOrganizationName(QStringLiteral("BigRangaTech"));
 
   // Breeze SVG icons need qt6-svg-plugins on the live image.
@@ -96,11 +95,11 @@ int main(int argc, char *argv[])
   // Restore sleep/lock inhibit + watch PrepareForSleep / Session.Lock.
   (void)spike::LockController::instance();
 
-  // Optional Super+L (works when shell windows have focus; KWin global shortcut later).
-  auto *lockShortcut = new QShortcut(QKeySequence(QStringLiteral("Meta+L")), &panel);
-  QObject::connect(lockShortcut, &QShortcut::activated, []() {
-    spike::LockController::instance().lockScreen();
-  });
+  // Fn / media keys + Meta+L / Meta+Space (KWin script → D-Bus; needs kglobalacceld).
+  auto *shortcuts = new spike::ShellShortcuts(&app);
+  shortcuts->setLockHandler([]() { spike::LockController::instance().lockScreen(); });
+  shortcuts->setLauncherHandler([&panel]() { panel.toggleLauncher(); });
+  shortcuts->start();
 
   // Re-apply saved pointer/keyboard prefs once KWin InputDevice nodes exist.
   QTimer::singleShot(1500, []() {

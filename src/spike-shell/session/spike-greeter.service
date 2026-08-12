@@ -6,6 +6,9 @@ After=systemd-user-sessions.service seatd.service
 After=plymouth-quit.service plymouth-quit-wait.service
 Wants=plymouth-quit.service plymouth-quit-wait.service
 Conflicts=getty@tty1.service
+# Stop getty fully *before* greeter paints — otherwise getty's TTYReset can
+# wipe the framebuffer right after the login UI flashes on screen.
+After=getty@tty1.service
 # If linuxfb greeter fails, bring text login back (avoid black screen after GRUB).
 OnFailure=getty@tty1.service
 StartLimitBurst=3

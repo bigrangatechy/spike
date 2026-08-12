@@ -147,7 +147,10 @@ Security fixes follow responsible disclosure. If a vulnerability is fixed before
 ├── shell **0.0.41** + installer **0.0.16**: night-light.log; install-from-live.log on target; drop live capture binary
 ├── shell **0.0.42** + installer **0.0.17**: UDisks2 USB hotplug/notify; Storage Mount/Eject; spike-greeter on boot
 ├── shell **0.0.43**: desktop/hardware helpers as Depends; ISO list + verify hook require them (no Recommends-only gaps)
+├── shell **0.0.49**: Fn volume/brightness/media + Meta+L/Space (KWin spike-shortcuts → D-Bus)
+├── shell **0.0.48**: greeter stays visible (After=getty; KD_GRAPHICS; no VT deallocate on getty stop)
 ├── shell **0.0.47** + installer **0.0.20**: Spike APT plumbing (Enabled: no); Updates Apply → unattended-upgrades
+├── installer **0.0.21**: Step 7 disk scan only when backup checked; “can take a while” message
 ├── rescue **0.0.13** + installer **0.0.19** + shell **0.0.46**: backup timeouts; greeter waits for Plymouth (quiet boot)
 ├── **Alpha opened** (2026-08-09): installer E2E + blacklist smoke confirmed
 

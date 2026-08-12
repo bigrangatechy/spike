@@ -30,6 +30,9 @@ private slots:
   void goNext();
   void goBack();
   void refreshBackupUi();
+  void onDoBackupToggled(bool checked);
+  void startBackupSystemScan();
+  void stopBackupSystemScan();
   void onListSystemsFinished(int exitCode, QProcess::ExitStatus status);
   void refreshWifiUi();
   void connectWifi();

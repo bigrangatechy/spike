@@ -117,6 +117,9 @@ install -m 644 "${SRC}/session/spike-greeter.service" \
   "${DEST}/lib/systemd/system/spike-greeter.service"
 install -m 755 "${SRC}/session/spike-greeter-prepare" \
   "${DEST}/usr/lib/spike/spike-greeter-prepare"
+mkdir -p "${DEST}/lib/systemd/system/getty@tty1.service.d"
+install -m 644 "${SRC}/session/getty@tty1.service.d/spike-greeter-coexist.conf" \
+  "${DEST}/lib/systemd/system/getty@tty1.service.d/spike-greeter-coexist.conf"
 mkdir -p "${DEST}/usr/share/spike/desktop" "${DEST}/usr/share/applications"
 install -m 644 "${SRC}/session/spike-save-logs.desktop" \
   "${DEST}/usr/share/spike/desktop/spike-save-logs.desktop"
@@ -141,6 +144,7 @@ fi
 # KWin script → panel task list (Wayland window icons)
 mkdir -p "${DEST}/usr/share/kwin/scripts"
 cp -a "${SRC}/kwin-scripts/spike-tasklist" "${DEST}/usr/share/kwin/scripts/"
+cp -a "${SRC}/kwin-scripts/spike-shortcuts" "${DEST}/usr/share/kwin/scripts/"
 cp "${SRC}/README.md" "${DEST}/usr/share/doc/${PKG_NAME}/README"
 
 cat >"${DEST}/usr/share/doc/${PKG_NAME}/copyright" <<'EOF'
@@ -160,7 +164,7 @@ Section: x11
 Priority: optional
 Architecture: ${ARCH}
 Maintainer: BigRangaTech <spike@bigrangatech.com>
-Depends: libqt6widgets6 | libqt6widgets6t64, libqt6gui6 | libqt6gui6t64, libqt6core6t64 | libqt6core6, libqt6dbus6 | libqt6dbus6t64, qt6-wayland, liblayershellqtinterface6, layer-shell-qt, libkf6kcmutils6, libkf6kcmutilscore6, libkf6coreaddons6, libpam0g, udisks2, gvfs, kwin-wayland, xwayland, dbus-user-session, seatd, libseat1, breeze-cursor-theme, breeze-icon-theme, qt6-svg-plugins, libkf6kcmutils-bin, pulseaudio-utils, upower, bluez, rfkill, wmctrl, brightnessctl, xdg-utils
+Depends: libqt6widgets6 | libqt6widgets6t64, libqt6gui6 | libqt6gui6t64, libqt6core6t64 | libqt6core6, libqt6dbus6 | libqt6dbus6t64, qt6-wayland, liblayershellqtinterface6, layer-shell-qt, libkf6kcmutils6, libkf6kcmutilscore6, libkf6coreaddons6, libpam0g, udisks2, gvfs, kwin-wayland, xwayland, dbus-user-session, seatd, libseat1, breeze-cursor-theme, breeze-icon-theme, qt6-svg-plugins, libkf6kcmutils-bin, pulseaudio-utils, upower, bluez, rfkill, wmctrl, brightnessctl, playerctl, xdg-utils
 Recommends: spike-config, gvfs-backends, smartmontools, nm-connection-editor
 Description: Spike Linux desktop shell (Qt6 Widgets)
  Bottom panel, Kickoff launcher, Network/Volume/Battery tray applets, Settings

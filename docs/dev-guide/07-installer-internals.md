@@ -53,10 +53,11 @@ wizard, run **spike-config --detect** (KERNEL.md module blacklist), regenerate a
 Finish. Wi‑Fi step uses nmcli (system-wide permissions preferred for handoff). Storage requires typing **ERASE**. Installer E2E
 gate is **met** (Alpha); remaining work is polish (`STATE.md`).
 
-**Step 7 note:** Entering the backup page used to call `spike-rescue --list-systems` with
-`waitForFinished` on the GUI thread while rescue walked personal-file trees — that hung
-the Variant→Backup transition. Installer now scans asynchronously; rescue **0.0.12**
-`--list-systems` skips the inventory `find-files` walk (OS/users only).
+**Step 7 note:** Disk scan (`spike-rescue --list-systems`) starts only when “Back up files
+from this computer before install” is checked (or Refresh with that checked) — not on page
+entry. While scanning, the list shows that it can take a while; unchecking cancels the scan.
+USB destination / existing SpikeBackup refresh stays cheap and always runs. Scan is async
+(90s kill). Rescue **≥0.0.12** `--list-systems` skips the inventory `find-files` walk.
 
 **GRUB / boot note:** Live squashfs ships `grub-*-bin` without metapackages and a
 casper-oriented initrd (`BOOT=casper` baked into conf.d). Helper sanitizes

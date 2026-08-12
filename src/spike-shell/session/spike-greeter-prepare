@@ -14,6 +14,18 @@ if command -v chvt >/dev/null 2>&1; then
   chvt 1 2>/dev/null || true
 fi
 
+# Quiet the kernel console so it does not paint over linuxfb after Qt draws.
+if [ -w /sys/class/graphics/fbcon/cursor_blink ]; then
+  echo 0 >/sys/class/graphics/fbcon/cursor_blink 2>/dev/null || true
+fi
+if command -v setterm >/dev/null 2>&1 && [ -c /dev/tty1 ]; then
+  setterm --blank 0 --powersave off --cursor off </dev/tty1 >/dev/tty1 2>/dev/null || true
+fi
+# Hide cursor / disable blanking via CSI (works even without setterm).
+if [ -c /dev/tty1 ]; then
+  printf '\033[9;0]\033[?33l\033[?25l\033[?1c' >/dev/tty1 2>/dev/null || true
+fi
+
 # Wait briefly for a usable framebuffer / DRM node after splash teardown.
 i=0
 while [ "$i" -lt 50 ]; do

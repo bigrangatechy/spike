@@ -1,6 +1,6 @@
 # Spike Agent Ops — Current State
 
-**Last updated:** 2026-08-11  
+**Last updated:** 2026-08-12  
 **Phase label:** **Alpha** (installer E2E met — live → install → reboot to installed desktop)  
 **Note:** Pre-alpha gate from `DECISIONS.md` is closed. Alpha focus: Tier‑1 desktop completeness (preinstalled apps, first-run polish, hardware matrix). Beta is still later. See `ROADMAP.md` Phase 2.
 
@@ -15,19 +15,19 @@
 | `dev-guide/` | 📝 Core filled (01–09, 12, 19); remaining stubs point at product docs |
 | agent-ops core | ✅ Written |
 | ISO / build tooling | ✅ live-build; hybrid remaster + debug capture |
-| Installer stack | ✅ **0.0.20** + shell **0.0.47** + rescue **0.0.13** (Spike APT plumbing; greeter; backup) |
+| Installer stack | ✅ **0.0.21** + shell **0.0.49** + rescue **0.0.13** (Fn keys; greeter; lazy backup) |
 | `scripts/build-iso.sh` | ✅ Packages config + shell + rescue + installer + **migration** + lb build |
 | Stage 1 live ISO | ✅ Hardware boot + login |
 | Stage 2 (`spike-config`) | ✅ **0.0.12** power profile live apply (governor + Wi‑Fi powersave) |
-| Stage 3 (Spike Shell) | 📝 **0.0.47** Updates Apply + greeter + getty OnFailure; UDisks; Rescue **0.0.13** |
-| Stage 4 (installer) | ✅ **0.0.20** — Spike APT seed + greeter + getty fallback; backup --partition |
+| Stage 3 (Spike Shell) | 📝 **0.0.49** Fn/media shortcuts + kglobalaccel; greeter KD_GRAPHICS; Updates; UDisks |
+| Stage 4 (installer) | ✅ **0.0.21** — disk scan only when backup checked; “can take a while” message |
 | Preinstalled apps | 📝 Seeded: Mozilla FF/TB `.deb` + VLC + LibreOffice; Discover Flatpak/AppStream |
 
 ## In Progress
 
 | Item | Notes |
 | :-: | :-: |
-| Rebuild smoke | installer **0.0.20** + rescue **0.0.13** + shell **0.0.47**: greeter UI + backup scan |
+| Rebuild smoke | shell **0.0.49** Fn volume/brightness; greeter visible; installer **0.0.21** Step 7 + backup/restore E2E |
 | Spike APT host | Waiting on hosting hardware — plumbing shipped (`UPDATES.md`, Enabled: no) |
 | Stage 3 — first-run polish | Wizard shipped **0.0.31**; tour/a11y/Flatpak/update hooks still placeholders |
 
@@ -67,6 +67,9 @@ Implementation: `spike-live.list.chroot` + `config/spike-archives/` (staged by `
 
 | Date | Item |
 | :-: | :-: |
+| 2026-08-12 | shell **0.0.49**: Fn/media keys via KWin spike-shortcuts + kglobalacceld |
+| 2026-08-12 | shell **0.0.48**: greeter no longer wiped by getty TTYReset race |
+| 2026-08-12 | installer **0.0.21**: Step 7 disk scan only when backup checkbox checked |
 | 2026-08-10 | shell **0.0.41** + installer **0.0.16**: USB save-logs; night-light.log; install-from-live.log on target |
 | 2026-08-10 | installer **0.0.14** + shell **0.0.39**: Step 7 backup on wipe disk; NM keyfiles; auto-login opt-in; night light; Sleep |
 | 2026-08-10 | ISO: drop `packagekit-tools` (not on resolute); shell **0.0.38** uses `pkgcli refresh` |

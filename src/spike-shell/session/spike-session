@@ -178,6 +178,22 @@ start_audio() {
 start_audio
 sync || true
 
+# Global Fn/media shortcuts (KWin registerShortcut → kglobalacceld).
+start_global_shortcuts() {
+  if ! command -v systemctl >/dev/null 2>&1; then
+    return 0
+  fi
+  echo "spike-session: starting plasma-kglobalaccel (Fn volume/brightness keys)"
+  systemctl --user start --no-block plasma-kglobalaccel.service 2>&1 || true
+  if ! systemctl --user is-active --quiet plasma-kglobalaccel.service 2>/dev/null; then
+    if [[ -x /usr/lib/x86_64-linux-gnu/libexec/kglobalacceld ]]; then
+      /usr/lib/x86_64-linux-gnu/libexec/kglobalacceld >/dev/null 2>&1 &
+      echo "spike-session: launched kglobalacceld directly"
+    fi
+  fi
+}
+start_global_shortcuts
+
 # Discover / Flatpak / PackageKit indexes (browsers can work while Discover looks "offline").
 refresh_software_indexes() {
   if ! ip -4 route show default 2>/dev/null | grep -q . \

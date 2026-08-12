@@ -927,7 +927,7 @@ At panel startup:
 ├── Current layout (highlighted)
 ├── List of configured layouts
 ├── Click to switch layout
-├── Keyboard shortcut: Super+Space to cycle layouts
+├── Keyboard shortcut: Meta+Space opens launcher (layout cycle: applet / Settings for now)
 └── "Keyboard Settings" button
 ```
 
@@ -1037,7 +1037,7 @@ The settings panel is a hybrid: custom Spike pages for Spike-specific settings a
 ├── Sound (KCM) — plasma-pa / kcm_pulseaudio (standalone; needs PipeWire)
 ├── Power (custom) — org.spike.Config power + logind drop-in (not powerdevil KCM); Apply does not restart logind mid-session
 │   └── Lid / power button / idle suspend / governor; dimming & charge limits later
-├── Keyboard (custom) — repeat rate via ~/.config/kcminputrc (KWin); shortcuts later
+├── Keyboard (custom) — repeat rate via ~/.config/kcminputrc (KWin); Fn/media via spike-shortcuts
 │   └── Note: upstream kcm_keyboard lives in plasma-desktop; not shipped
 ├── Mouse/Touchpad (custom) — speed / tap-to-click via kcminputrc
 │   └── Note: upstream kcm_touchpad lives in plasma-desktop; not shipped
@@ -1244,6 +1244,7 @@ Boot sequence (after kernel and systemd):
 ├── Username + password fields
 ├── Auto-login: Optional, set during installer or in Settings → Users (default off)
 ├── Graphical login: spike-greeter on tty1 when auto-login is off; getty kept as OnFailure fallback
+│   (After=getty so stop finishes before paint; KD_GRAPHICS kept so fbcon cannot wipe the UI)
 ├── Session: spike-session (only option — no dropdown)
 └── Power options: Restart, Shut Down (accessible without login)
 ```

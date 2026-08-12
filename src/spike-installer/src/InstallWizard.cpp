@@ -241,6 +241,8 @@ void InstallWizard::buildUi()
     lay->addWidget(m_doBackup);
     lay->addWidget(new QLabel(QStringLiteral("System to back up:"), page));
     m_backupSystemList = new QListWidget(page);
+    m_backupSystemList->addItem(
+        QStringLiteral("(Check the box above to scan disks for systems to back up)"));
     lay->addWidget(m_backupSystemList);
     lay->addWidget(new QLabel(QStringLiteral("Backup destination (USB / writable):"), page));
     m_backupDestList = new QListWidget(page);
@@ -255,6 +257,7 @@ void InstallWizard::buildUi()
     auto *refresh = new QPushButton(QStringLiteral("Refresh USB / backups"), page);
     lay->addWidget(refresh);
     connect(refresh, &QPushButton::clicked, this, &InstallWizard::refreshBackupUi);
+    connect(m_doBackup, &QCheckBox::toggled, this, &InstallWizard::onDoBackupToggled);
     m_stack->addWidget(page);
   }
 
@@ -358,23 +361,30 @@ void InstallWizard::fillBackupDestAndSessions()
   }
 }
 
-void InstallWizard::refreshBackupUi()
+void InstallWizard::stopBackupSystemScan()
 {
-  fillBackupDestAndSessions();
-
-  if (!m_backupSystemList) {
-    return;
-  }
-
   if (m_listSystemsProc) {
     m_listSystemsProc->disconnect();
     m_listSystemsProc->kill();
     m_listSystemsProc->deleteLater();
     m_listSystemsProc = nullptr;
   }
+  m_listSystemsBusy = false;
+}
+
+void InstallWizard::startBackupSystemScan()
+{
+  if (!m_backupSystemList) {
+    return;
+  }
+
+  stopBackupSystemScan();
 
   m_backupSystemList->clear();
-  m_backupSystemList->addItem(QStringLiteral("(Scanning disks for systems — UI stays responsive…)"));
+  m_backupSystemList->addItem(
+      QStringLiteral("Scanning disks for systems…\n"
+                     "This can take a while on large or slow disks — the installer stays "
+                     "responsive. You can uncheck backup to skip."));
   m_listSystemsBusy = true;
 
   m_listSystemsProc = new QProcess(this);
@@ -400,6 +410,40 @@ void InstallWizard::refreshBackupUi()
   });
 }
 
+void InstallWizard::onDoBackupToggled(bool checked)
+{
+  if (!m_backupSystemList) {
+    return;
+  }
+  if (checked) {
+    startBackupSystemScan();
+    return;
+  }
+  stopBackupSystemScan();
+  m_backupSystemList->clear();
+  m_backupSystemList->addItem(
+      QStringLiteral("(Check the box above to scan disks for systems to back up)"));
+}
+
+void InstallWizard::refreshBackupUi()
+{
+  // Destinations / existing sessions are cheap — always refresh.
+  fillBackupDestAndSessions();
+
+  if (!m_backupSystemList) {
+    return;
+  }
+  // Disk system scan only when the user opted into backup.
+  if (m_doBackup && m_doBackup->isChecked()) {
+    startBackupSystemScan();
+  } else {
+    stopBackupSystemScan();
+    m_backupSystemList->clear();
+    m_backupSystemList->addItem(
+        QStringLiteral("(Check the box above to scan disks for systems to back up)"));
+  }
+}
+
 void InstallWizard::onListSystemsFinished(int /*exitCode*/, QProcess::ExitStatus /*status*/)
 {
   m_listSystemsBusy = false;
@@ -409,6 +453,12 @@ void InstallWizard::onListSystemsFinished(int /*exitCode*/, QProcess::ExitStatus
     if (proc) {
       proc->deleteLater();
     }
+    return;
+  }
+
+  // User unchecked backup while the scan was running.
+  if (m_doBackup && !m_doBackup->isChecked()) {
+    proc->deleteLater();
     return;
   }
 
@@ -617,7 +667,16 @@ void InstallWizard::applyPageToUi(int index)
     }
   }
   if (index == 6) {
-    refreshBackupUi();
+    // USB destinations only — do not scan disks until backup is checked.
+    fillBackupDestAndSessions();
+    if (m_doBackup && m_doBackup->isChecked()) {
+      startBackupSystemScan();
+    } else if (m_backupSystemList) {
+      stopBackupSystemScan();
+      m_backupSystemList->clear();
+      m_backupSystemList->addItem(
+          QStringLiteral("(Check the box above to scan disks for systems to back up)"));
+    }
   }
   if (index == 7) {
     m_diskList->clear();

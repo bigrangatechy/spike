@@ -172,6 +172,7 @@ bluez
 rfkill
 wmctrl
 brightnessctl
+playerctl
 libkf6kcmutils-bin
 nm-connection-editor
 xdg-utils

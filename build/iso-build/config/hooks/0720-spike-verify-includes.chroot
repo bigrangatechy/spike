@@ -242,6 +242,7 @@ need_bin udisksctl
 need_bin rfkill
 need_bin wmctrl
 need_bin brightnessctl
+need_bin playerctl
 need_bin bluetoothctl
 need_bin nmcli
 need_bin lsblk

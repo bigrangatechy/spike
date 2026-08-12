@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Name": "Spike Shortcuts",
+        "Description": "Fn / media keys and Meta+L for Spike Shell via D-Bus",
+        "Icon": "preferences-desktop-keyboard",
+        "Id": "spike-shortcuts",
+        "ServiceTypes": [
+            "KWin/Script"
+        ]
+    },
+    "X-Plasma-API": "javascript",
+    "X-Plasma-MainScript": "code/main.js"
+}

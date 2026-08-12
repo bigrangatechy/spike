@@ -7,10 +7,15 @@
 #include <QLineEdit>
 #include <QProcess>
 #include <QPushButton>
+#include <QTimer>
 #include <QVBoxLayout>
 #include <QWidget>
 
+#include <fcntl.h>
+#include <sys/ioctl.h>
 #include <unistd.h>
+
+#include <linux/kd.h>
 
 #include <cstdlib>
 #include <cstring>
@@ -21,6 +26,28 @@
  * On success: exec login -f <user> so profile.d starts spike-session.
  */
 namespace {
+
+// Keep the VT in KD_GRAPHICS so fbcon/getty teardown cannot redraw over linuxfb.
+int g_ttyFd = -1;
+
+void claimGraphicsVt()
+{
+  if (g_ttyFd < 0) {
+    g_ttyFd = open("/dev/tty1", O_RDWR | O_NOCTTY | O_CLOEXEC);
+    if (g_ttyFd < 0) {
+      g_ttyFd = open("/dev/tty", O_RDWR | O_NOCTTY | O_CLOEXEC);
+    }
+  }
+  if (g_ttyFd < 0) {
+    return;
+  }
+  ioctl(g_ttyFd, KDSETMODE, KD_GRAPHICS);
+  // No blanking, no blink, hide cursor (same sequence Qt linuxfb uses).
+  static const char kTermCtl[] = "\033[9;0]\033[?33l\033[?25l\033[?1c";
+  if (write(g_ttyFd, kTermCtl, sizeof(kTermCtl) - 1) < 0) {
+    // best-effort
+  }
+}
 
 QString defaultUsername()
 {
@@ -63,10 +90,14 @@ int main(int argc, char *argv[])
     qputenv("QT_QPA_FB", "/dev/fb0");
   }
 
+  // Claim graphics mode before Qt opens fb — and keep the fd open for the
+  // process lifetime so a late getty/console reset cannot flip us back to text.
+  claimGraphicsVt();
+
   QApplication app(argc, argv);
   QApplication::setApplicationName(QStringLiteral("spike-greeter"));
   QApplication::setOrganizationName(QStringLiteral("Spike"));
-  QApplication::setApplicationVersion(QStringLiteral("0.0.47"));
+  QApplication::setApplicationVersion(QStringLiteral("0.0.48"));
 
   auto *win = new QWidget;
   win->setObjectName(QStringLiteral("SpikeGreeter"));
@@ -138,5 +169,18 @@ int main(int argc, char *argv[])
 
   win->showFullScreen();
   pass->setFocus();
+
+  // Re-assert graphics mode + repaint shortly after show. Covers the race where
+  // getty@tty1 finishes TTYReset just after the first frame (UI flashes then
+  // vanishes while the greeter still accepts keyboard input).
+  auto reassert = [win]() {
+    claimGraphicsVt();
+    win->update();
+    win->repaint();
+  };
+  QTimer::singleShot(100, win, reassert);
+  QTimer::singleShot(500, win, reassert);
+  QTimer::singleShot(1500, win, reassert);
+
   return app.exec();
 }

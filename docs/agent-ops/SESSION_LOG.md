@@ -4,6 +4,24 @@ Append-only. Newest sessions at the **top**.
 
 ---
 
+## 2026-08-12 — Fn / media keyboard shortcuts
+
+Volume ±/mute, brightness ±, media play/next/prev, Meta+L lock, Meta+Space launcher. KWin `spike-shortcuts` → D-Bus `org.spike.Shell.Shortcuts`; session starts `plasma-kglobalaccel`. Shell **0.0.49** + ISO `playerctl`. Greeter stay-visible and installer lazy backup scan still in tree for next ISO.
+
+---
+
+## 2026-08-12 — greeter flashes then blank (still accepts password)
+
+Installed: login UI appears briefly then vanishes; typing password + Enter still logs in. Cause: getty@tty1 Conflicts stop racing with greeter paint — getty TTYReset clears fb after first frame. Shell **0.0.48**: `After=getty@tty1`, getty drop-in `TTYVTDisallocate=no`, prepare quiets fbcon, greeter keeps KD_GRAPHICS + delayed repaint.
+
+---
+
+## 2026-08-12 — installer: scan disks only when backup checked
+
+Backup page no longer runs `--list-systems` on entry. Scan starts when “Back up files…” is checked (or Refresh with that checked), with a “can take a while” message. Installer **0.0.21**.
+
+---
+
 ## 2026-08-11 — Spike APT update plumbing (host deferred)
 
 Publish path ready before package-hosting hardware: `generate-spike-apt-key.sh` + `publish-spike-apt-repo.sh` → `build/apt-repo/`. ISO ships `spike.sources` (**Enabled: no**) + keyring + `unattended-upgrades`. Installer **0.0.20** seeds APT source on target; shell **0.0.47** Settings → Updates Apply wires Ubuntu security auto-install. Flip `Enabled: yes` + upload repo when `packages.bigrangatech.com` is live (`docs/UPDATES.md`).

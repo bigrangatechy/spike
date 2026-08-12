@@ -417,7 +417,9 @@ All variant differences are applied as install-time configuration. The codebase 
 
 ### Scan Process
 
-When the user reaches this step, the installer has already scanned the target drive for personal files. The scan happens silently in the background during earlier steps.
+**Current (installer ≥0.0.21):** Disk scan for systems to back up does **not** start when the page opens. It starts only after the user checks “Back up files from this computer before install” (or taps Refresh while that box is checked). While scanning, the UI shows that the scan can take a while; unchecking cancels it. USB destinations and existing SpikeBackup sessions still refresh immediately (cheap).
+
+**Product intent (full inventory UX):** When implemented, the installer may also summarize personal-file counts after the system is selected.
 
 **Scan targets:**
 
