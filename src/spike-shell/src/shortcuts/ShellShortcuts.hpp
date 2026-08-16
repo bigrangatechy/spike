@@ -4,14 +4,12 @@
 
 #include <functional>
 
-class QLabel;
-class QTimer;
-
 namespace spike {
 
 class VolumeClient;
 class BrightnessClient;
 class EvdevMediaKeys;
+class OsdPopup;
 
 /**
  * Session-wide media / Fn keys: evdev KEY_* listener (volume/brightness/media) plus
@@ -52,8 +50,7 @@ private:
   VolumeClient *m_volume = nullptr;
   BrightnessClient *m_brightness = nullptr;
   EvdevMediaKeys *m_evdev = nullptr;
-  QLabel *m_osd = nullptr;
-  QTimer *m_osdHide = nullptr;
+  OsdPopup *m_osd = nullptr;
   VoidHandler m_lock;
   VoidHandler m_launcher;
   bool m_started = false;

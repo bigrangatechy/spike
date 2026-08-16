@@ -15,11 +15,11 @@
 | `dev-guide/` | 📝 Core filled (01–09, 12, 19); remaining stubs point at product docs |
 | agent-ops core | ✅ Written |
 | ISO / build tooling | ✅ live-build; hybrid remaster + debug capture |
-| Installer stack | ✅ **0.0.28** + shell **0.0.57** + rescue **0.0.15** + branding **0.0.2** + config **0.0.14** |
+| Installer stack | ✅ **0.0.28** + shell **0.0.58** + rescue **0.0.15** + branding **0.0.2** + config **0.0.14** |
 | `scripts/build-iso.sh` | ✅ Packages config + **branding** + shell + rescue + installer + migration + lb build |
 | Stage 1 live ISO | ✅ Hardware boot + login |
 | Stage 2 (`spike-config`) | ✅ **0.0.14** `acpi_backlight=native` in default boot params |
-| Stage 3 (Spike Shell) | 📝 **0.0.57** brightness Fn: full event* scan + ctl ±% + OSD |
+| Stage 3 (Spike Shell) | 📝 **0.0.58** layer-shell OSD for volume/brightness Fn |
 | Stage 4 (installer) | ✅ **0.0.28** — `acpi_backlight=native` on installed GRUB |
 | Preinstalled apps | 📝 Seeded: Mozilla FF/TB `.deb` + VLC + LibreOffice; Discover Flatpak/AppStream |
 
@@ -67,6 +67,8 @@ Implementation: `spike-live.list.chroot` + `config/spike-archives/` (staged by `
 
 | Date | Item |
 | :-: | :-: |
+| 2026-08-16 | shell **0.0.58**: Wayland layer-shell OSD for volume/brightness Fn |
+| 2026-08-16 | shell **0.0.57** + installer **0.0.28** + config **0.0.14**: brightness Fn + acpi_backlight=native |
 | 2026-08-12 | shell **0.0.56**: spike-save-logs skip lost+found; capture greeter journal |
 | 2026-08-12 | shell **0.0.55** + installer **0.0.27**: no nested session from Desktop; greeter fbcon unbind |
 | 2026-08-12 | shell **0.0.54**: brightness-udev + spike backlight udev; verify writes |

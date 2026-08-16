@@ -4,6 +4,12 @@ Append-only. Newest sessions at the **top**.
 
 ---
 
+## 2026-08-16 — Volume Fn works but no OSD
+
+Widget changes because VolumeClient works; Spike Notifications is tray-history only, and a plain Qt ToolTip window is invisible under KWin Wayland. Shell **0.0.58**: `OsdPopup` on layer-shell Overlay (volume + brightness).
+
+---
+
 ## 2026-08-16 — Brightness Fn still dead after brightness-udev (volume OK)
 
 Smoke: GRUB/Plymouth/greeter stay OK; volume Fn OK; brightness Fn dead live+installed. Shell **0.0.57**: always scan `/dev/input/event*` (Video Bus), more KEY_BRIGHTNESS*, `brightnessctl ±%`, visible OSD. Live/install/config: `acpi_backlight=native` (Intel panel). Installer **0.0.28**, config **0.0.14**.
