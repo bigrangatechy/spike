@@ -20,6 +20,11 @@ public:
   int percentage() const;
   /** 1–100; returns false if no write path changed the backlight. */
   bool setPercentage(int pct);
+  /** Relative step via brightnessctl ±N% first, then absolute setPercentage. */
+  bool adjustBy(int deltaPct);
+
+signals:
+  void changed();
 
 private:
   bool discover();
@@ -30,6 +35,7 @@ private:
   bool writeSysfs(int raw) const;
   bool writeLogind(int raw) const;
   bool writeBrightnessctl(int raw) const;
+  bool writeBrightnessctlRelative(int deltaPct) const;
   bool appliedNear(int raw) const;
   bool trySetRaw(int raw);
 

@@ -173,7 +173,7 @@ set color_normal=light-gray/black
 set color_highlight=white/black
 
 menuentry "Spike Live" {
-	linux	/casper/${KERNEL} boot=casper hostname=spike-live username=spike quiet splash ---
+	linux	/casper/${KERNEL} boot=casper hostname=spike-live username=spike quiet splash acpi_backlight=native ---
 	initrd	/casper/${INITRD}
 }
 
@@ -183,7 +183,7 @@ menuentry "Spike Live (debug logging)" {
 }
 
 menuentry "Spike Live (safe graphics)" {
-	linux	/casper/${KERNEL} boot=casper hostname=spike-live username=spike nomodeset quiet splash ---
+	linux	/casper/${KERNEL} boot=casper hostname=spike-live username=spike nomodeset quiet splash acpi_backlight=native ---
 	initrd	/casper/${INITRD}
 }
 EOF
@@ -216,7 +216,7 @@ set color_normal=light-gray/black
 set color_highlight=white/black
 
 menuentry "Spike Live" {
-	linux	/casper/${KERNEL} boot=casper hostname=spike-live username=spike quiet splash ---
+	linux	/casper/${KERNEL} boot=casper hostname=spike-live username=spike quiet splash acpi_backlight=native ---
 	initrd	/casper/${INITRD}
 }
 
@@ -226,7 +226,7 @@ menuentry "Spike Live (debug logging)" {
 }
 
 menuentry "Spike Live (safe graphics)" {
-	linux	/casper/${KERNEL} boot=casper hostname=spike-live username=spike nomodeset quiet splash ---
+	linux	/casper/${KERNEL} boot=casper hostname=spike-live username=spike nomodeset quiet splash acpi_backlight=native ---
 	initrd	/casper/${INITRD}
 }
 EOF

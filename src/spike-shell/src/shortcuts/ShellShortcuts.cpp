@@ -10,6 +10,7 @@
 #include <QDBusMessage>
 #include <QDBusReply>
 #include <QFile>
+#include <QLabel>
 #include <QProcess>
 #include <QStandardPaths>
 #include <QStringList>
@@ -90,6 +91,7 @@ void ShellShortcuts::setLauncherHandler(VoidHandler handler)
 
 void ShellShortcuts::notifyOsd(const QString &summary, const QString &body)
 {
+  // Tray history (no toast UI yet).
   QDBusMessage msg = QDBusMessage::createMethodCall(
       QStringLiteral("org.freedesktop.Notifications"), QStringLiteral("/org/freedesktop/Notifications"),
       QStringLiteral("org.freedesktop.Notifications"), QStringLiteral("Notify"));
@@ -97,6 +99,26 @@ void ShellShortcuts::notifyOsd(const QString &summary, const QString &body)
       << QVariantMap{{QStringLiteral("transient"), true}, {QStringLiteral("urgency"), uchar(0)}}
       << 1500;
   QDBusConnection::sessionBus().asyncCall(msg);
+
+  // Visible OSD — Notifications daemon is history-only.
+  if (!m_osd) {
+    m_osd = new QLabel(nullptr, Qt::ToolTip | Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
+    m_osd->setAlignment(Qt::AlignCenter);
+    m_osd->setMargin(16);
+    m_osd->setStyleSheet(
+        QStringLiteral("QLabel { background: rgba(20,20,28,210); color: #f2f2f7; "
+                       "border-radius: 10px; font-size: 18px; padding: 12px 20px; }"));
+    m_osdHide = new QTimer(this);
+    m_osdHide->setSingleShot(true);
+    QObject::connect(m_osdHide, &QTimer::timeout, m_osd, &QWidget::hide);
+  }
+  m_osd->setText(QStringLiteral("%1\n%2").arg(summary, body));
+  m_osd->adjustSize();
+  // Centre roughly on the primary screen without needing QScreen plumbing in all builds.
+  m_osd->move(80, 80);
+  m_osd->show();
+  m_osd->raise();
+  m_osdHide->start(1500);
 }
 
 void ShellShortcuts::volumeUp()
@@ -141,8 +163,7 @@ void ShellShortcuts::brightnessUp()
     notifyOsd(QStringLiteral("Brightness"), QStringLiteral("No backlight control"));
     return;
   }
-  const int next = qMin(100, m_brightness->percentage() + 5);
-  if (m_brightness->setPercentage(next)) {
+  if (m_brightness->adjustBy(5)) {
     notifyOsd(QStringLiteral("Brightness"), QStringLiteral("%1%").arg(m_brightness->percentage()));
   } else {
     notifyOsd(QStringLiteral("Brightness"), QStringLiteral("Adjust failed"));
@@ -155,8 +176,7 @@ void ShellShortcuts::brightnessDown()
     notifyOsd(QStringLiteral("Brightness"), QStringLiteral("No backlight control"));
     return;
   }
-  const int next = qMax(1, m_brightness->percentage() - 5);
-  if (m_brightness->setPercentage(next)) {
+  if (m_brightness->adjustBy(-5)) {
     notifyOsd(QStringLiteral("Brightness"), QStringLiteral("%1%").arg(m_brightness->percentage()));
   } else {
     notifyOsd(QStringLiteral("Brightness"), QStringLiteral("Adjust failed"));

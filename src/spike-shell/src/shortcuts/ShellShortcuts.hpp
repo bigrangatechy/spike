@@ -4,6 +4,9 @@
 
 #include <functional>
 
+class QLabel;
+class QTimer;
+
 namespace spike {
 
 class VolumeClient;
@@ -49,6 +52,8 @@ private:
   VolumeClient *m_volume = nullptr;
   BrightnessClient *m_brightness = nullptr;
   EvdevMediaKeys *m_evdev = nullptr;
+  QLabel *m_osd = nullptr;
+  QTimer *m_osdHide = nullptr;
   VoidHandler m_lock;
   VoidHandler m_launcher;
   bool m_started = false;

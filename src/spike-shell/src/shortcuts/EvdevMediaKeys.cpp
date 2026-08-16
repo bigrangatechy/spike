@@ -1,5 +1,6 @@
 #include "shortcuts/EvdevMediaKeys.hpp"
 
+#include <QDebug>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
@@ -18,7 +19,6 @@ namespace {
 
 bool hasKey(int fd, int key)
 {
-  // KEY_MAX is large; use enough longs for the bitmask.
   static constexpr size_t kBytes = (KEY_MAX / 8) + 1;
   unsigned char mask[kBytes];
   std::memset(mask, 0, sizeof(mask));
@@ -28,13 +28,25 @@ bool hasKey(int fd, int key)
   return mask[key / 8] & (1u << (key % 8));
 }
 
-bool looksLikeKeyboard(int fd)
+bool looksLikeMediaKeys(int fd)
 {
-  // Prefer devices that can emit volume or brightness — covers dedicated media
-  // keyboards and Fn-row laptops without grabbing every HID gadget.
+  // Volume often lives on the AT keyboard; brightness on "Video Bus" /
+  // "Consumer Control" — open any node that can emit either class.
   return hasKey(fd, KEY_VOLUMEUP) || hasKey(fd, KEY_VOLUMEDOWN) || hasKey(fd, KEY_MUTE) ||
          hasKey(fd, KEY_BRIGHTNESSUP) || hasKey(fd, KEY_BRIGHTNESSDOWN) ||
+         hasKey(fd, KEY_BRIGHTNESS_CYCLE) || hasKey(fd, KEY_BRIGHTNESS_ZERO) ||
+         hasKey(fd, KEY_BRIGHTNESS_MAX) || hasKey(fd, KEY_BRIGHTNESS_MIN) ||
          hasKey(fd, KEY_PLAYPAUSE) || hasKey(fd, KEY_NEXTSONG) || hasKey(fd, KEY_PREVIOUSSONG);
+}
+
+QString deviceName(int fd)
+{
+  char name[256];
+  std::memset(name, 0, sizeof(name));
+  if (ioctl(fd, EVIOCGNAME(sizeof(name) - 1), name) < 0) {
+    return QStringLiteral("(unknown)");
+  }
+  return QString::fromUtf8(name);
 }
 
 } // namespace
@@ -68,15 +80,19 @@ bool EvdevMediaKeys::openDevice(const QString &path)
   if (fd < 0) {
     return false;
   }
-  if (!looksLikeKeyboard(fd)) {
+  if (!looksLikeMediaKeys(fd)) {
     ::close(fd);
     return false;
   }
+  const QString name = deviceName(fd);
   Device d;
   d.fd = fd;
   d.notifier = new QSocketNotifier(fd, QSocketNotifier::Read, this);
   QObject::connect(d.notifier, &QSocketNotifier::activated, this, [this, fd]() { onReadable(fd); });
   m_devices.append(d);
+  qInfo().noquote() << "spike-evdev: listening" << path << name
+                     << (hasKey(fd, KEY_BRIGHTNESSUP) ? "(brightness)" : "")
+                     << (hasKey(fd, KEY_VOLUMEUP) ? "(volume)" : "");
   return true;
 }
 
@@ -87,6 +103,9 @@ void EvdevMediaKeys::start()
   if (!dir.exists()) {
     return;
   }
+
+  // Always include event* — Video Bus / Consumer Control are easy to miss if we
+  // only walk by-path/by-id (or if those dirs are incomplete at session start).
   QStringList paths;
   for (const QString &sub : {QStringLiteral("by-path"), QStringLiteral("by-id")}) {
     QDir s(dir.filePath(sub));
@@ -97,11 +116,10 @@ void EvdevMediaKeys::start()
       paths << s.absoluteFilePath(e);
     }
   }
-  if (paths.isEmpty()) {
-    for (const QString &e : dir.entryList({QStringLiteral("event*")}, QDir::System | QDir::Files)) {
-      paths << dir.absoluteFilePath(e);
-    }
+  for (const QString &e : dir.entryList({QStringLiteral("event*")}, QDir::System | QDir::Files)) {
+    paths << dir.absoluteFilePath(e);
   }
+
   QSet<QString> seen;
   for (const QString &p : paths) {
     const QString canon = QFileInfo(p).canonicalFilePath();
@@ -112,6 +130,7 @@ void EvdevMediaKeys::start()
       seen.insert(canon);
     }
   }
+  qInfo().noquote() << "spike-evdev: opened" << m_devices.size() << "input device(s)";
 }
 
 void EvdevMediaKeys::onReadable(int fd)
@@ -139,10 +158,17 @@ void EvdevMediaKeys::onReadable(int fd)
       emit volumeMute();
       break;
     case KEY_BRIGHTNESSUP:
+    case KEY_BRIGHTNESS_MAX:
       emit brightnessUp();
       break;
     case KEY_BRIGHTNESSDOWN:
+    case KEY_BRIGHTNESS_MIN:
+    case KEY_BRIGHTNESS_ZERO:
       emit brightnessDown();
+      break;
+    case KEY_BRIGHTNESS_CYCLE:
+      // Treat cycle as a step up (common laptop Fn behaviour).
+      emit brightnessUp();
       break;
     case KEY_PLAYPAUSE:
     case KEY_PLAY:

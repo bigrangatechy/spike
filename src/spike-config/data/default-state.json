@@ -74,6 +74,7 @@
     "boot_parameters": [
       "quiet",
       "splash",
+      "acpi_backlight=native",
       "zswap.enabled=0",
       "transparent_hugepage=madvise"
     ]

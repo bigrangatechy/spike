@@ -661,7 +661,7 @@ GRUB_DEFAULT=0
 GRUB_TIMEOUT_STYLE=menu
 GRUB_TIMEOUT=5
 GRUB_DISTRIBUTOR="Spike"
-GRUB_CMDLINE_LINUX_DEFAULT="quiet splash"
+GRUB_CMDLINE_LINUX_DEFAULT="quiet splash acpi_backlight=native"
 GRUB_CMDLINE_LINUX=""
 GRUB_DISABLE_OS_PROBER=true
 EOF
@@ -801,7 +801,7 @@ insmod ext2
 insmod gzio
 menuentry "Spike Linux" {
   search --no-floppy --fs-uuid --set=root $uuid_root
-  linux /boot/vmlinuz-$kver root=UUID=$uuid_root ro quiet splash boot=local
+  linux /boot/vmlinuz-$kver root=UUID=$uuid_root ro quiet splash acpi_backlight=native boot=local
   initrd /boot/initrd.img-$kver
 }
 EOF
@@ -818,7 +818,7 @@ insmod ext2
 insmod gzio
 menuentry "Spike Linux" {
   search --no-floppy --fs-uuid --set=root $uuid_boot
-  linux /vmlinuz-$kver root=UUID=$uuid_root ro quiet splash boot=local
+  linux /vmlinuz-$kver root=UUID=$uuid_root ro quiet splash acpi_backlight=native boot=local
   initrd /initrd.img-$kver
 }
 EOF

@@ -4,6 +4,12 @@ Append-only. Newest sessions at the **top**.
 
 ---
 
+## 2026-08-16 — Brightness Fn still dead after brightness-udev (volume OK)
+
+Smoke: GRUB/Plymouth/greeter stay OK; volume Fn OK; brightness Fn dead live+installed. Shell **0.0.57**: always scan `/dev/input/event*` (Video Bus), more KEY_BRIGHTNESS*, `brightnessctl ±%`, visible OSD. Live/install/config: `acpi_backlight=native` (Intel panel). Installer **0.0.28**, config **0.0.14**.
+
+---
+
 ## 2026-08-12 — lost+found log bundles were failed Desktop shortcut attempts
 
 USB had empty-ish `spike-logs-*` under `lost+found` from nested-session Desktop failures; useful files were loose root copies (`session-latest.log`, etc.). Shell **0.0.56**: pick_usb only volume roots (skip lost+found); greeter/ journal capture; collect script accepts root-level session logs.

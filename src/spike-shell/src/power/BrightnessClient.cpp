@@ -198,6 +198,62 @@ bool BrightnessClient::trySetRaw(int raw)
   return false;
 }
 
+bool BrightnessClient::writeBrightnessctlRelative(int deltaPct) const
+{
+  if (QStandardPaths::findExecutable(QStringLiteral("brightnessctl")).isEmpty()) {
+    return false;
+  }
+  const QString spec = (deltaPct >= 0) ? QStringLiteral("+%1%").arg(deltaPct)
+                                       : QStringLiteral("%1%").arg(deltaPct);
+  QProcess proc;
+  // Prefer named device; fall back to default.
+  QStringList args;
+  if (!m_deviceName.isEmpty()) {
+    args << QStringLiteral("-d") << m_deviceName;
+  }
+  args << QStringLiteral("set") << spec;
+  const int before = readBrightness();
+  proc.start(QStringLiteral("brightnessctl"), args);
+  if (!proc.waitForStarted(2000) || !proc.waitForFinished(3000)) {
+    proc.kill();
+    return false;
+  }
+  if (proc.exitStatus() != QProcess::NormalExit || proc.exitCode() != 0) {
+    if (!m_deviceName.isEmpty()) {
+      proc.start(QStringLiteral("brightnessctl"), {QStringLiteral("set"), spec});
+      if (!proc.waitForStarted(2000) || !proc.waitForFinished(3000)) {
+        proc.kill();
+        return false;
+      }
+      if (proc.exitStatus() != QProcess::NormalExit || proc.exitCode() != 0) {
+        return false;
+      }
+    } else {
+      return false;
+    }
+  }
+  return readBrightness() != before;
+}
+
+bool BrightnessClient::adjustBy(int deltaPct)
+{
+  if (!m_hasBacklight && !discover()) {
+    return false;
+  }
+  if (deltaPct == 0) {
+    return true;
+  }
+  if (writeBrightnessctlRelative(deltaPct)) {
+    emit changed();
+    return true;
+  }
+  const int next = qBound(1, percentage() + deltaPct, 100);
+  if (setPercentage(next)) {
+    return true;
+  }
+  return false;
+}
+
 bool BrightnessClient::setPercentage(int pct)
 {
   if (!m_hasBacklight && !discover()) {
@@ -223,6 +279,7 @@ bool BrightnessClient::setPercentage(int pct)
     const int maxv = readMax();
     const int raw = qBound(1, qRound(maxv * (wantPct / 100.0)), maxv);
     if (trySetRaw(raw)) {
+      emit changed();
       return true;
     }
   }

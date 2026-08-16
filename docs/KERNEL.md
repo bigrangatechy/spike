@@ -39,7 +39,7 @@ Spike locks to the LTS kernel series for the lifetime of the release. Point rele
 The following kernel boot parameters are applied in GRUB2's configuration at install time:
 
 ```
-GRUB_CMDLINE_LINUX_DEFAULT="quiet splash zswap.enabled=0 transparent_hugepage=madvise i915.modeset=1 amdgpu.modeset=1 nouveau.modeset=1 loglevel=3"
+GRUB_CMDLINE_LINUX_DEFAULT="quiet splash zswap.enabled=0 transparent_hugepage=madvise acpi_backlight=native i915.modeset=1 amdgpu.modeset=1 nouveau.modeset=1 loglevel=3"
 ```
 
 ### Parameter Breakdown

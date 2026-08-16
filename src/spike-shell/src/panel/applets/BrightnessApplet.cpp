@@ -22,6 +22,7 @@ BrightnessApplet::BrightnessApplet(QWidget *parent)
   connect(this, &QPushButton::clicked, this, &BrightnessApplet::togglePopup);
 
   m_client = new BrightnessClient(this);
+  connect(m_client, &BrightnessClient::changed, this, &BrightnessApplet::refresh);
 
   m_popup = new QWidget(nullptr, Qt::Popup | Qt::FramelessWindowHint);
   m_popup->setMinimumWidth(240);
