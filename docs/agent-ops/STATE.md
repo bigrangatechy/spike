@@ -67,6 +67,7 @@ Implementation: `spike-live.list.chroot` + `config/spike-archives/` (staged by `
 
 | Date | Item |
 | :-: | :-: |
+| 2026-08-16 | shell **0.0.59**: Night Light via wlsunset (KWin plugin absent on ISO) |
 | 2026-08-16 | shell **0.0.58**: Wayland layer-shell OSD for volume/brightness Fn |
 | 2026-08-16 | shell **0.0.57** + installer **0.0.28** + config **0.0.14**: brightness Fn + acpi_backlight=native |
 | 2026-08-12 | shell **0.0.56**: spike-save-logs skip lost+found; capture greeter journal |
