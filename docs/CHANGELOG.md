@@ -147,6 +147,7 @@ Security fixes follow responsible disclosure. If a vulnerability is fixed before
 ├── shell **0.0.41** + installer **0.0.16**: night-light.log; install-from-live.log on target; drop live capture binary
 ├── shell **0.0.42** + installer **0.0.17**: UDisks2 USB hotplug/notify; Storage Mount/Eject; spike-greeter on boot
 ├── shell **0.0.43**: desktop/hardware helpers as Depends; ISO list + verify hook require them (no Recommends-only gaps)
+├── shell **0.0.59**: Night Light applies via wlsunset (KWin NightLight plugin not packaged)
 ├── shell **0.0.58**: layer-shell Overlay OSD for volume/brightness (ToolTip was invisible on Wayland)
 ├── shell **0.0.57** + installer **0.0.28** + config **0.0.14**: brightness Fn (event* + ctl ±%) + acpi_backlight=native
 ├── shell **0.0.56**: spike-save-logs volume-root only (no lost+found); greeter/ in USB bundle

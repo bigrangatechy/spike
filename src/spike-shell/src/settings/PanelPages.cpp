@@ -224,8 +224,8 @@ QWidget *makeNightLightSettingsPage(QWidget *parent, ConfigClient *config, QLabe
   auto *lay = new QVBoxLayout(w);
   lay->addWidget(new QLabel(QStringLiteral("<h2>Night Light</h2>"), w));
   auto *hint = new QLabel(
-      QStringLiteral("Enable Night Light and color temperature. Writes KWin [NightColor] "
-                     "and calls NightLight preview() for an immediate gamma change."),
+      QStringLiteral("Enable Night Light and color temperature. Applies via wlsunset "
+                     "(KWin NightLight plugin is not on Spike's kwin-wayland package)."),
       w);
   hint->setWordWrap(true);
   lay->addWidget(hint);

@@ -12,6 +12,7 @@
 #include <QFile>
 #include <QLabel>
 #include <QMetaObject>
+#include <QProcess>
 #include <QPushButton>
 #include <QRegularExpression>
 #include <QSlider>
@@ -33,7 +34,6 @@ QString kwinrcPath()
 
 void nightLightLog(const QString &line)
 {
-  // Prefer /var/log/spike (adm-writable on installed); fall back to ~/.local/state.
   QString path = QStringLiteral("/var/log/spike/night-light.log");
   QFile f(path);
   if (!f.open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Text)) {
@@ -51,7 +51,7 @@ void nightLightLog(const QString &line)
   ts << QDateTime::currentDateTimeUtc().toString(Qt::ISODate) << ' ' << line << '\n';
 }
 
-/** Write/merge NightColor keys; ensure nightlight plugin is on (Mode=0 Constant). */
+/** Best-effort kwinrc for Plasma-shaped installs; Spike applies gamma via wlsunset. */
 void writeNightColorConfig(bool enabled, int temperature)
 {
   const QString path = kwinrcPath();
@@ -83,11 +83,9 @@ void writeNightColorConfig(bool enabled, int temperature)
   upsertGroup(&text, QStringLiteral("NightColor"),
               {QStringLiteral("Active=%1").arg(enabled ? QStringLiteral("true")
                                                        : QStringLiteral("false")),
-               // KWin stores NightLightMode enum as int: Constant=0, DarkLight=1
                QStringLiteral("Mode=0"), QStringLiteral("NightTemperature=%1").arg(temperature),
                QStringLiteral("DayTemperature=6500")});
 
-  // Ensure plugin flag without wiping other [Plugins] keys.
   if (text.contains(QLatin1String("[Plugins]"))) {
     if (text.contains(QLatin1String("nightlightEnabled="))) {
       text.replace(QRegularExpression(QStringLiteral(R"(nightlightEnabled=\S*)")),
@@ -110,43 +108,49 @@ void writeNightColorConfig(bool enabled, int temperature)
   }
 }
 
-bool reconfigureKwin()
+void reconfigureKwin()
 {
   QDBusInterface kwin(QStringLiteral("org.kde.KWin"), QStringLiteral("/KWin"),
                       QStringLiteral("org.kde.KWin"), QDBusConnection::sessionBus());
-  if (!kwin.isValid()) {
-    return false;
+  if (kwin.isValid()) {
+    kwin.call(QStringLiteral("reconfigure"));
   }
-  kwin.call(QStringLiteral("reconfigure"));
-  return true;
 }
 
-void callPreview(bool enabled, int temperature)
+/** KWin registers Night Light as its *own* bus name, not under org.kde.KWin. */
+bool callKwinNightLight(bool enabled, int temperature)
 {
+  const QString service = QStringLiteral("org.kde.KWin.NightLight");
+  const QString path = QStringLiteral("/org/kde/KWin/NightLight");
+  const QString iface = QStringLiteral("org.kde.KWin.NightLight");
+
+  // Probe: service must own the name (plugin loaded).
+  QDBusInterface probe(service, path, iface, QDBusConnection::sessionBus());
+  if (!probe.isValid()) {
+    nightLightLog(QStringLiteral("KWin NightLight service absent (plugin not loaded)"));
+    return false;
+  }
+
   if (enabled) {
-    QDBusMessage preview = QDBusMessage::createMethodCall(
-        QStringLiteral("org.kde.KWin"), QStringLiteral("/org/kde/KWin/NightLight"),
-        QStringLiteral("org.kde.KWin.NightLight"), QStringLiteral("preview"));
+    QDBusMessage preview = QDBusMessage::createMethodCall(service, path, iface, QStringLiteral("preview"));
     preview << static_cast<uint>(temperature);
     const QDBusMessage reply = QDBusConnection::sessionBus().call(preview);
     if (reply.type() == QDBusMessage::ErrorMessage) {
-      nightLightLog(QStringLiteral("preview(%1) error: %2")
-                        .arg(temperature)
-                        .arg(reply.errorMessage()));
-    } else {
-      nightLightLog(QStringLiteral("preview(%1) ok").arg(temperature));
+      nightLightLog(QStringLiteral("preview(%1) error: %2").arg(temperature).arg(reply.errorMessage()));
+      return false;
     }
+    nightLightLog(QStringLiteral("preview(%1) ok").arg(temperature));
   } else {
-    QDBusMessage stop = QDBusMessage::createMethodCall(
-        QStringLiteral("org.kde.KWin"), QStringLiteral("/org/kde/KWin/NightLight"),
-        QStringLiteral("org.kde.KWin.NightLight"), QStringLiteral("stopPreview"));
+    QDBusMessage stop =
+        QDBusMessage::createMethodCall(service, path, iface, QStringLiteral("stopPreview"));
     const QDBusMessage reply = QDBusConnection::sessionBus().call(stop);
     if (reply.type() == QDBusMessage::ErrorMessage) {
       nightLightLog(QStringLiteral("stopPreview error: %1").arg(reply.errorMessage()));
-    } else {
-      nightLightLog(QStringLiteral("stopPreview ok"));
+      return false;
     }
+    nightLightLog(QStringLiteral("stopPreview ok"));
   }
+  return true;
 }
 
 } // namespace
@@ -196,36 +200,90 @@ void NightLightApplet::applyFromConfig(bool enabled, int temperature)
 {
   m_enabled = enabled;
   m_temperature = qBound(3000, temperature, 6500);
-  tryKwinSet(m_enabled, m_temperature);
+  applyNightLight(m_enabled, m_temperature);
   refresh();
 }
 
-bool NightLightApplet::tryKwinSet(bool enabled, int temperature)
+void NightLightApplet::stopGammaHelper()
 {
-  // KWin 6 NightLight D-Bus is mostly read-only; enablement lives in kwinrc
-  // [NightColor] with Mode=Constant (0). preview() applies temperature immediately.
-  nightLightLog(QStringLiteral("apply enabled=%1 temp=%2 kwinrc=%3")
-                    .arg(enabled ? QStringLiteral("true") : QStringLiteral("false"))
-                    .arg(temperature)
-                    .arg(kwinrcPath()));
-  writeNightColorConfig(enabled, temperature);
-  const bool reconfigured = reconfigureKwin();
-  nightLightLog(QStringLiteral("reconfigure=%1").arg(reconfigured ? QStringLiteral("ok")
-                                                                  : QStringLiteral("fail")));
-  callPreview(enabled, temperature);
-  // Plugin may need a beat after reconfigure before preview sticks.
-  QTimer::singleShot(250, qApp, [enabled, temperature]() { callPreview(enabled, temperature); });
-  QTimer::singleShot(750, qApp, [enabled, temperature]() {
-    reconfigureKwin();
-    callPreview(enabled, temperature);
-  });
+  if (!m_gamma) {
+    return;
+  }
+  m_gamma->terminate();
+  if (!m_gamma->waitForFinished(1500)) {
+    m_gamma->kill();
+    m_gamma->waitForFinished(500);
+  }
+  m_gamma->deleteLater();
+  m_gamma = nullptr;
+}
 
-  QDBusInterface night(QStringLiteral("org.kde.KWin"), QStringLiteral("/org/kde/KWin/NightLight"),
-                       QStringLiteral("org.kde.KWin.NightLight"), QDBusConnection::sessionBus());
-  const bool valid = night.isValid();
-  nightLightLog(QStringLiteral("NightLight iface valid=%1")
-                    .arg(valid ? QStringLiteral("true") : QStringLiteral("false")));
-  return valid;
+bool NightLightApplet::startGammaHelper(int temperature)
+{
+  stopGammaHelper();
+  const QString wlsunset = QStandardPaths::findExecutable(QStringLiteral("wlsunset"));
+  const QString gammastep = QStandardPaths::findExecutable(QStringLiteral("gammastep"));
+
+  m_gamma = new QProcess(this);
+  m_gamma->setProcessChannelMode(QProcess::MergedChannels);
+
+  if (!wlsunset.isEmpty()) {
+    // Same day/night temps → constant CCT; process must stay up (wlr-gamma).
+    m_gamma->start(wlsunset, {QStringLiteral("-t"), QString::number(temperature),
+                              QStringLiteral("-T"), QString::number(temperature)});
+    nightLightLog(QStringLiteral("start wlsunset -t/-T %1").arg(temperature));
+  } else if (!gammastep.isEmpty()) {
+    // Equal day/night + equator → constant temperature continuously.
+    m_gamma->start(gammastep,
+                   {QStringLiteral("-m"), QStringLiteral("wayland"), QStringLiteral("-l"),
+                    QStringLiteral("0:0"), QStringLiteral("-t"),
+                    QStringLiteral("%1:%1").arg(temperature)});
+    nightLightLog(QStringLiteral("start gammastep wayland %1K").arg(temperature));
+  } else {
+    nightLightLog(QStringLiteral("no wlsunset/gammastep in PATH"));
+    m_gamma->deleteLater();
+    m_gamma = nullptr;
+    return false;
+  }
+
+  if (!m_gamma->waitForStarted(2000)) {
+    nightLightLog(QStringLiteral("gamma helper failed to start: %1")
+                      .arg(QString::fromUtf8(m_gamma->readAll())));
+    m_gamma->deleteLater();
+    m_gamma = nullptr;
+    return false;
+  }
+  return true;
+}
+
+bool NightLightApplet::tryKwinNightLight(bool enabled, int temperature)
+{
+  writeNightColorConfig(enabled, temperature);
+  reconfigureKwin();
+  return callKwinNightLight(enabled, temperature);
+}
+
+bool NightLightApplet::applyNightLight(bool enabled, int temperature)
+{
+  nightLightLog(QStringLiteral("apply enabled=%1 temp=%2")
+                    .arg(enabled ? QStringLiteral("true") : QStringLiteral("false"))
+                    .arg(temperature));
+
+  // Prefer real gamma via wlsunset — Spike's kwin-wayland package does not ship
+  // the NightLight plugin, so kwinrc/D-Bus alone never changes the screen.
+  bool ok = false;
+  if (enabled) {
+    ok = startGammaHelper(temperature);
+  } else {
+    stopGammaHelper();
+    ok = true;
+    nightLightLog(QStringLiteral("gamma helper stopped"));
+  }
+
+  // Best-effort KWin path (correct bus name) when/if the plugin appears.
+  tryKwinNightLight(enabled, temperature);
+
+  return ok;
 }
 
 void NightLightApplet::refresh()
@@ -259,9 +317,8 @@ void NightLightApplet::refresh()
 void NightLightApplet::onToggle(bool on)
 {
   m_enabled = on;
-  tryKwinSet(m_enabled, m_temperature);
+  applyNightLight(m_enabled, m_temperature);
   refresh();
-  // Persist via Panel → spike-config so Settings stays in sync.
   QWidget *w = this;
   while (w) {
     if (w->objectName() == QLatin1String("SpikePanel")) {
@@ -280,7 +337,7 @@ void NightLightApplet::onTemp(int kelvin)
     m_tempLabel->setText(QStringLiteral("%1 K").arg(kelvin));
   }
   if (m_enabled) {
-    tryKwinSet(true, kelvin);
+    applyNightLight(true, kelvin);
     QWidget *w = this;
     while (w) {
       if (w->objectName() == QLatin1String("SpikePanel")) {

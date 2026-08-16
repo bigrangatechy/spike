@@ -251,6 +251,7 @@ if [ ! -f /usr/lib/udev/rules.d/90-brightnessctl.rules ] \
 else
   echo "I: backlight udev rules present"
 fi
+need_bin wlsunset
 need_bin playerctl
 need_bin bluetoothctl
 need_bin nmcli

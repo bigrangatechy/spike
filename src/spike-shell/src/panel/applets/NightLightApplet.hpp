@@ -4,6 +4,7 @@
 
 class QCheckBox;
 class QLabel;
+class QProcess;
 class QSlider;
 class QWidget;
 
@@ -25,7 +26,11 @@ private slots:
   void onTemp(int kelvin);
 
 private:
-  bool tryKwinSet(bool enabled, int temperature);
+  bool applyNightLight(bool enabled, int temperature);
+  void stopGammaHelper();
+  bool startGammaHelper(int temperature);
+  bool tryKwinNightLight(bool enabled, int temperature);
+
   bool m_enabled = false;
   int m_temperature = 4500;
   bool m_userVisible = true;
@@ -33,6 +38,7 @@ private:
   QCheckBox *m_toggle = nullptr;
   QSlider *m_temp = nullptr;
   QLabel *m_tempLabel = nullptr;
+  QProcess *m_gamma = nullptr;
 };
 
 } // namespace spike

@@ -15,11 +15,11 @@
 | `dev-guide/` | 📝 Core filled (01–09, 12, 19); remaining stubs point at product docs |
 | agent-ops core | ✅ Written |
 | ISO / build tooling | ✅ live-build; hybrid remaster + debug capture |
-| Installer stack | ✅ **0.0.28** + shell **0.0.58** + rescue **0.0.15** + branding **0.0.2** + config **0.0.14** |
+| Installer stack | ✅ **0.0.28** + shell **0.0.59** + rescue **0.0.15** + branding **0.0.2** + config **0.0.14** |
 | `scripts/build-iso.sh` | ✅ Packages config + **branding** + shell + rescue + installer + migration + lb build |
 | Stage 1 live ISO | ✅ Hardware boot + login |
 | Stage 2 (`spike-config`) | ✅ **0.0.14** `acpi_backlight=native` in default boot params |
-| Stage 3 (Spike Shell) | 📝 **0.0.58** layer-shell OSD for volume/brightness Fn |
+| Stage 3 (Spike Shell) | 📝 **0.0.59** Night Light via wlsunset; layer-shell OSD; brightness Fn |
 | Stage 4 (installer) | ✅ **0.0.28** — `acpi_backlight=native` on installed GRUB |
 | Preinstalled apps | 📝 Seeded: Mozilla FF/TB `.deb` + VLC + LibreOffice; Discover Flatpak/AppStream |
 
@@ -27,7 +27,7 @@
 
 | Item | Notes |
 | :-: | :-: |
-| Rebuild smoke | shell **0.0.57** brightness Fn; backup+restore next |
+| Rebuild smoke | shell **0.0.59** Night Light + OSD + brightness; backup+restore |
 | Spike APT host | Waiting on hosting hardware — plumbing shipped (`UPDATES.md`, Enabled: no) |
 | Stage 3 — first-run polish | Wizard shipped **0.0.31**; tour/a11y/Flatpak/update hooks still placeholders |
 

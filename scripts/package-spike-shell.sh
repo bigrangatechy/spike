@@ -166,7 +166,7 @@ Section: x11
 Priority: optional
 Architecture: ${ARCH}
 Maintainer: BigRangaTech <spike@bigrangatech.com>
-Depends: libqt6widgets6 | libqt6widgets6t64, libqt6gui6 | libqt6gui6t64, libqt6core6t64 | libqt6core6, libqt6dbus6 | libqt6dbus6t64, qt6-wayland, liblayershellqtinterface6, layer-shell-qt, libkf6kcmutils6, libkf6kcmutilscore6, libkf6coreaddons6, libpam0g, udisks2, gvfs, kwin-wayland, xwayland, dbus-user-session, seatd, libseat1, breeze-cursor-theme, breeze-icon-theme, qt6-svg-plugins, libkf6kcmutils-bin, pulseaudio-utils, upower, bluez, rfkill, wmctrl, brightnessctl, brightness-udev, playerctl, kglobalacceld, xdg-utils
+Depends: libqt6widgets6 | libqt6widgets6t64, libqt6gui6 | libqt6gui6t64, libqt6core6t64 | libqt6core6, libqt6dbus6 | libqt6dbus6t64, qt6-wayland, liblayershellqtinterface6, layer-shell-qt, libkf6kcmutils6, libkf6kcmutilscore6, libkf6coreaddons6, libpam0g, udisks2, gvfs, kwin-wayland, xwayland, dbus-user-session, seatd, libseat1, breeze-cursor-theme, breeze-icon-theme, qt6-svg-plugins, libkf6kcmutils-bin, pulseaudio-utils, upower, bluez, rfkill, wmctrl, brightnessctl, brightness-udev, wlsunset, playerctl, kglobalacceld, xdg-utils
 Recommends: spike-config, gvfs-backends, smartmontools, nm-connection-editor
 Description: Spike Linux desktop shell (Qt6 Widgets)
  Bottom panel, Kickoff launcher, Network/Volume/Battery tray applets, Settings

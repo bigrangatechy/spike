@@ -4,6 +4,12 @@ Append-only. Newest sessions at the **top**.
 
 ---
 
+## 2026-08-16 — Night Light UI applies but screen CCT unchanged
+
+Logs: `No such object path '/org/kde/KWin/NightLight'` — calls used service `org.kde.KWin` while the plugin registers `org.kde.KWin.NightLight`, and Spike's `kwin-wayland` package has no nightlight plugin at all. Shell **0.0.59**: apply CCT with **wlsunset** (kept running); fix D-Bus name as best-effort; ship `wlsunset` on ISO.
+
+---
+
 ## 2026-08-16 — Volume Fn works but no OSD
 
 Widget changes because VolumeClient works; Spike Notifications is tray-history only, and a plain Qt ToolTip window is invisible under KWin Wayland. Shell **0.0.58**: `OsdPopup` on layer-shell Overlay (volume + brightness).
